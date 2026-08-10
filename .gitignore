@@ -1,0 +1,21 @@
+results/
+logs/
+*.bak
+__pycache__/
+*.pyc
+.venv-tilelang-musa/
+check_occ.py
+check_occ2.py
+debug_l2_util.py
+export_kernel.py
+get_kernel_src.py
+.git/
+
+# Build and packaging artifacts.
+build/
+dist/
+.cache/
+.pytest_cache/
+CMakeFiles/
+*.egg-info/
+*.o

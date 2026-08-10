@@ -1,0 +1,389 @@
+from __future__ import annotations
+
+# TODO: Add more documentation for each pass config
+
+import warnings
+from enum import Enum
+from typing import Any
+
+
+class PassConfigKey(str, Enum):
+    """Pass configuration keys for TileLang compiler."""
+
+    # TileLang specific configs: TL_XX
+
+    TL_SIMPLIFY = "tl.Simplify"
+    """Configuration for TileLang simplification passes.
+
+    This is a dict-based config with the following options:
+    - transitively_prove_inequalities: bool, default False
+    - convert_boolean_to_and_of_ors: bool, default False
+    - apply_constraints_to_boolean_branches: bool, default False
+    - propagate_knowns_to_prove_conditional: bool, default False
+    - propagate_knowns_to_simplify_expressions: bool, default False
+    - enable_simplify_let_inline: bool, default True
+
+    Usage:
+        with tvm.transform.PassContext(config={
+            "tl.Simplify": {"enable_simplify_let_inline": False}
+        }):
+            mod = tl.transform.Simplify()(mod)
+    """
+
+    TL_PROVENANCE_TRACE_ENABLE = "tl.provenance_trace_enable"
+    """Enable bounded exact-lineage deep trace injection. Default: False."""
+
+    TL_PROVENANCE_TRACE_ORDINAL = "tl.provenance_trace_ordinal"
+    """Source TileOp ordinal selected for deep trace injection."""
+
+    TL_PROVENANCE_TRACE_ORDINALS = "tl.provenance_trace_ordinals"
+    """Ordered source TileOp ordinals for bounded multi-TileOp deep trace."""
+
+    TL_PROVENANCE_TRACE_BUFFER = "tl.provenance_trace_buffer"
+    """Existing one-dimensional int64 input buffer used for two trace timestamps."""
+
+    TL_PROVENANCE_TRACE_LOOP_ORDINAL = "tl.provenance_trace_loop_ordinal"
+    """Exact lexical source-loop ordinal used for optional iteration sampling."""
+
+    TL_PROVENANCE_TRACE_ITERATION = "tl.provenance_trace_iteration"
+    """Zero-based relative source-loop iteration selected for optional tracing."""
+
+    TL_PROVENANCE_TRACE_BLOCKS = "tl.provenance_trace_blocks"
+    """Flattened exact block-coordinate x/y/z triples for bounded deep tracing."""
+
+    TL_PROVENANCE_TRACE_SEMANTICS = "tl.provenance_trace_semantics"
+    """One of single, source_envelope, or lowered_instance."""
+
+    TL_PROVENANCE_TRACE_INSTANCE_COUNTS = "tl.provenance_trace_instance_counts"
+    """Exact lowered instance count for each selected source ordinal."""
+
+    # TL_SIMPLIFY sub-config keys
+    TL_SIMPLIFY_TRANSITIVELY_PROVE_INEQUALITIES = "transitively_prove_inequalities"
+    """Enable transitive inequality proving in simplification. Default: False"""
+
+    TL_SIMPLIFY_CONVERT_BOOLEAN_TO_AND_OF_ORS = "convert_boolean_to_and_of_ors"
+    """Convert boolean expressions to AND of ORs form. Default: False"""
+
+    TL_SIMPLIFY_APPLY_CONSTRAINTS_TO_BOOLEAN_BRANCHES = "apply_constraints_to_boolean_branches"
+    """Apply constraints to simplify boolean branches. Default: False"""
+
+    TL_SIMPLIFY_PROPAGATE_KNOWNS_TO_PROVE_CONDITIONAL = "propagate_knowns_to_prove_conditional"
+    """Propagate known values to prove conditionals. Default: False"""
+
+    TL_SIMPLIFY_PROPAGATE_KNOWNS_TO_SIMPLIFY_EXPRESSIONS = "propagate_knowns_to_simplify_expressions"
+    """Propagate known values to simplify expressions. Default: False"""
+
+    TL_SIMPLIFY_ENABLE_LET_INLINE = "enable_simplify_let_inline"
+    """Enable inlining of let statements during simplification. Default: True"""
+
+    TL_DISABLE_DATA_RACE_CHECK = "tl.disable_data_race_check"
+    """Disable data race check in TileLang. Default: False"""
+
+    TL_DISABLE_PRELOWER_SEMANTIC_CHECK = "tl.disable_prelower_semantic_check"
+    """Disable Python-side pre-lower semantic checks. Default: False"""
+
+    TL_DISABLE_WARP_SPECIALIZED = "tl.disable_warp_specialized"
+    """Disable warp specialization optimization. Default: False"""
+
+    TL_ENABLE_FAST_MATH = "tl.enable_fast_math"
+    """
+        Enable fast math optimization. Default: False
+        if enabled, --use_fast_math will be passed to nvcc
+    """
+
+    TL_PTXAS_REGISTER_USAGE_LEVEL = "tl.ptxas_register_usage_level"
+    """The PTXAS register usage level in [0, 10], which controls the
+    aggressiveness of optimizations that affect register usage. Default: None"""
+
+    TL_ENABLE_PTXAS_VERBOSE_OUTPUT = "tl.enable_ptxas_verbose_output"
+    """Enable ptxas verbose output. Default: False"""
+
+    TL_DEVICE_COMPILE_FLAGS = "tl.device_compile_flags"
+    """Additional device compiler flags passed to nvcc/NVRTC.
+
+    Accepts either a string (parsed with shell-like splitting) or a list of
+    strings. Typical usage is to provide extra include paths, defines or
+    ptxas options, e.g.:
+
+    - "-I/opt/include -DMY_SWITCH=1 --ptxas-options=--verbose"
+    - ["-I/opt/include", "-DMY_SWITCH=1", "--ptxas-options=--verbose"]
+
+    These flags are appended to the compiler options used in the tvm_ffi
+    CUDA compile callback. Default: None
+    """
+
+    TL_CONFIG_INDEX_BITWIDTH = "tl.config_index_bitwidth"
+    """Bitwidth for configuration indices. Default: 32"""
+
+    TL_DISABLE_TMA_LOWER = "tl.disable_tma_lower"
+    """Deprecated flag — prevents plain T.copy() from auto-lowering to TMA store.
+
+    Temporarily re-enabled for backward compatibility. Will be removed in
+    v0.1.10.
+    """
+
+    TL_DISABLE_SAFE_MEMORY_ACCESS = "tl.disable_safe_memory_legalize"
+    """Disable automatic global-memory bounds checks inserted by
+    `tl.LegalizeSafeMemoryAccess`. Default: False
+
+    When enabled, TileLang will not rewrite global `BufferLoad`/`BufferStore`
+    with `if_then_else` guards. This can improve performance for kernels that
+    are already provably in-bounds, but may lead to undefined behavior if any
+    global memory access goes out of bounds.
+    """
+
+    TL_DISABLE_SAFE_COPY_PREDICATION = "tl.disable_safe_copy_predication"
+    """Disable automatic src/dst predication emitted by normal SIMT `T.copy`
+    lowering. Default: False
+
+    This is separate from `TL_DISABLE_SAFE_MEMORY_ACCESS`: it affects predicates
+    generated directly by `T.copy` lowering before `tl.LegalizeSafeMemoryAccess`
+    runs. Enabling it is only safe when the copied ranges are guaranteed to be
+    in bounds by launch geometry or explicit user guards.
+    """
+
+    TL_DISABLE_SAFE_ROBUST_COPY_PREDICATION = "tl.disable_safe_robust_copy_predication"
+    """Disable the extra predication on MUSA robust async copy lowering. Default: False
+
+    When enabled, predicated `musa_cp_async_robust(..., predicate)` emission is
+    forced to drop the predicate and use plain `musa_cp_async_robust(...)`
+    instead. This currently only affects the robust async-copy lowering path
+    and does not disable general `T.copy` boundary predicates.
+
+    This option is unsafe unless the provided robust range already captures the
+    intended zero-fill / out-of-bounds semantics.
+    """
+
+    TL_DISABLE_VECTORIZE_256 = "tl.disable_vectorize_256"
+    """Disable usage of LDG/STG 256. Default: False"""
+
+    TL_ENABLE_ASYNC_COPY = "tl.enable_async_copy"
+    """Enable lowering eligible global->shared copies to PTX `cp.async`.
+
+    When True (default), TileLang may lower:
+    - `T.copy(global -> shared, ...)` to `ptx_cp_async + commit + wait`
+    - `T.async_copy(global -> shared, ...)` to `ptx_cp_async + commit` (no wait)
+    - plain user-written global->shared copy stores (e.g. in `T.Parallel`) to
+      `ptx_cp_async + commit + wait`
+
+    Important: Automatic cp.async lowering is gated by the surrounding loop
+    context. TileLang will only auto-enable cp.async when the copy is observed
+    inside a software-pipelined loop annotated with `num_stages > 0`
+    (e.g. created by `T.Pipelined(..., num_stages=...)` or by pipeline planning).
+    Outside such loops, TileLang will prefer synchronous copy lowering even when
+    this flag is True.
+    You can request local cp.async injection on a specific parallel loop via
+    `T.Parallel(..., prefer_async=True)`.
+
+    When False, TileLang will avoid the cp.async lowering path for `T.copy`.
+    Explicit `T.async_copy` still requires cp.async support and may error if
+    it cannot be lowered.
+
+    Default: True
+    """
+
+    TL_ENABLE_LOWER_LDGSTG = "tl.enable_lower_ldgstg"
+    """Enable non-predicated LDG/STG lowering for global memory access.
+    When enabled, converts Ramp-based global buffer load/store to ldg/stg intrinsics.
+    Default: False"""
+
+    TL_ENABLE_LOWER_LDGSTG_PREDICATED = "tl.enable_lower_ldgstg_predicated"
+    """Enable predicated LDG/STG lowering.
+    When True, predicated loads (if_then_else with else=0) and
+    predicated stores (IfThenElse with empty then case) are lowered to
+    ldg/stg intrinsics. Default: False"""
+
+    TL_DISABLE_VECTORIZE_SINGLE_SIDE = "tl.disable_vectorize_single_side"
+    """Disable VectorizeSingleSide. Default: False"""
+
+    TL_ENABLE_VECTORIZE_PLANNER_VERBOSE = "tl.enable_vectorize_planner_verbose"
+    """Enable verbose output for vectorize planner. When enabled, prints detailed
+    information about each buffer's inferred vector size and which buffer determines
+    the final vectorization factor. Useful for debugging vectorization issues.
+    Default: False"""
+
+    TL_DISABLE_WGMMA = "tl.disable_wgmma"
+    """Disable usage of Hopper WGMMA. Default: False"""
+
+    TL_DEBUG_MERGE_SHARED_MEMORY_ALLOCATIONS = "tl.debug_merge_shared_memory_allocations"
+    """Enable debug information for merge shared memory allocations. Default: False"""
+
+    TL_ENABLE_AGGRESSIVE_SHARED_MEMORY_MERGE = "tl.enable_aggressive_shared_memory_merge"
+    """Enable aggressive merge of shared memory allocations. Default: False"""
+
+    TL_DISABLE_SHARED_MEMORY_REUSE = "tl.disable_shared_memory_reuse"
+    """Disable shared memory reuse planning in MergeSharedMemoryAllocations.
+    When enabled, shared memory allocations are still merged into a single
+    allocation but each buffer gets its own dedicated region without lifetime-based
+    reuse. Default: False"""
+
+    TL_DISABLE_SHUFFLE_ELECT = "tl.disable_shuffle_elect"
+    """Disable shuffle election optimization. Default: False"""
+
+    TL_DISABLE_LOOP_UNSWITCHING = "tl.disable_loop_unswitching"
+    """Disable loop unswitching optimization. Default: False"""
+
+    TL_LOOP_UNSWITCHING_ALLOW_NON_TRIVIAL_ELSE = "tl.loop_unswitching_allow_non_trivial_else"
+    """Allow loop unswitching even when the else-version of the loop body has side effects.
+
+    This is more aggressive and may increase code size. Default: False.
+    """
+
+    TL_DISABLE_THREAD_STORAGE_SYNC = "tl.disable_thread_storage_sync"
+    """Disable thread storage synchronization pass. When enabled, disables the
+    automatic insertion of thread synchronization barriers (e.g., __syncthreads())
+    for shared memory access coordination. This can be useful for performance
+    optimization in cases where manual synchronization is preferred or when
+    synchronization is not needed. Default: False"""
+
+    TL_FORCE_LET_INLINE = "tl.force_let_inline"
+    """Force TileLang to inline let bindings during simplification. Default: False"""
+
+    TL_AST_PRINT_ENABLE = "tl.ast_print_enable"
+    """Enable TIR AST printing for debugging purposes. Default: False"""
+
+    TL_LAYOUT_VISUALIZATION_ENABLE = "tl.layout_visualization_enable"
+    """Enable layout inference visualization. Default: False"""
+
+    TL_LAYOUT_VISUALIZATION_FORMATS = "tl.layout_visualization_formats"
+    """Layout visualization formats.
+    Acceptable values: "pdf", "png", "svg", "all"
+
+    """
+
+    TL_STORAGE_REWRITE_DETECT_INPLACE = "tl.storage_rewrite_detect_inplace"
+    """Control StorageRewrite inplace detection.
+
+    When False (default) StorageRewrite keeps distinct temporaries for patterns
+    such as `dst[i] = f(src[i])`, avoiding implicit aliasing:
+
+    ```
+    read_buf = T.alloc_buffer((1,), T.int32, scope="local.var")
+    write_buf = T.alloc_buffer((1,), T.int32, scope="local.var")
+    write_buf[0] = read_buf[0] * 2
+    f(write_buf[0])
+    ```
+
+    Setting the flag to True allows StorageRewrite to reuse the `read` buffer
+    for the write when it can prove the update is safely inplace, producing IR
+    like:
+
+    ```
+    read_buf = T.alloc_buffer((1,), T.int32, scope="local.var")
+    read_buf[0] = read_buf[0] * 2
+    f(read_buf[0])
+    ```
+
+    This reduces local memory usage but introduces aliasing between the buffers.
+
+    Usage:
+
+    ```python
+    from tilelang.transform import PassContext, PassConfigKey
+
+    with PassContext(
+        config={PassConfigKey.TL_STORAGE_REWRITE_DETECT_INPLACE.value: True}
+    ):
+        mod = tilelang.transform.StorageRewrite()(mod)
+    ```
+    """
+
+    # TIR related configs: TIR_XX
+
+    TIR_ENABLE_EQUIV_TERMS_IN_CSE = "tir.enable_equiv_terms_in_cse_tir"
+    """Enable equivalent terms in TIR Common Subexpression Elimination. Default: True"""
+
+    TIR_DISABLE_CSE = "tirx.disable_cse_tir"
+    """Disable TIR Common Subexpression Elimination. Default: False"""
+
+    TIR_SIMPLIFY = "tirx.Simplify"
+    """Enable/disable TIR simplification passes. Default: True"""
+
+    TIR_DISABLE_STORAGE_REWRITE = "tirx.disable_storage_rewrite"
+    """Disable storage rewrite optimization. Default: False"""
+
+    TIR_DISABLE_VECTORIZE = "tirx.disable_vectorize"
+    """Disable vectorization optimization. Default: False"""
+
+    TIR_USE_ASYNC_COPY = "tirx.use_async_copy"
+    """Enable asynchronous memory copy operations. Default: True"""
+
+    TIR_ENABLE_DEBUG = "tirx.enable_debug"
+    """Enable debug information in generated code. Default: False"""
+
+    TIR_MERGE_STATIC_SMEM = "tirx.merge_static_smem"
+    """Merge static shared memory allocations. Default: True"""
+
+    TIR_ADD_LOWER_PASS = "tirx.add_lower_pass"
+    """Additional lowering passes to be applied. Default: None"""
+
+    TIR_NOALIAS = "tirx.noalias"
+    """Enable pointer non-aliasing assumptions. Default: True"""
+
+    # Output debugging options
+
+    CUDA_KERNELS_OUTPUT_DIR = "cuda.kernels_output_dir"
+    """Output directory for generated CUDA kernels. Default: empty string"""
+
+    TL_DISABLE_OUT_OF_BOUND_WARNING = "tl.disable_out_of_bound_warning"
+    """Disable out-of-bound access warnings in safe memory access legalization. Default: True"""
+
+    TL_ENABLE_DUMP_IR = "tl.enable_dump_ir"
+    """Enable dumping IR during lowering between passes. Default: False"""
+
+    TL_DUMP_IR_DIR = "tl.dump_ir_path"
+    """Path to the directory where IR will be dumped. Default: ./dump_ir/"""
+
+    TL_DISABLE_INDEX_TYPE_PROMOTION = "tl.disable_index_type_promotion"
+    """Disable automatic promotion of index expressions to wider integer types.
+    Default: False
+
+    When enabled, TileLang will skip index-type promotion entirely in passes
+    such as `tl.FlattenBuffer` and `tl.ConfigIndexBitwidth`. This flag has
+    higher priority than `tl.config_index_bitwidth`.
+    """
+
+    TL_ENABLE_AUTO_UNROLL = "tl.enable_auto_unroll"
+    """Enable auto unroll for vectorize-split outer loops. Default: False"""
+
+    TL_DISABLE_SQMMA = "tl.disable_sqmma"
+    """Disable usage of PH1 SQMMA. Default: False"""
+
+    TL_DISABLE_PH1_WMMA = "tl.disable_ph1_wmma"
+    """Disable usage of PH1 WMMA. Default: False"""
+
+    TL_ENABLE_MUSA_BURST = "tl.enable_musa_burst"
+    """Enable MUSA burst SIMD vectorization when True. Default: False"""
+
+    TL_ENABLE_MUSA_TMA_PREFETCH = "tl.enable_musa_tma_prefetch"
+    """Enable automatic MUSA TMA descriptor prefetch insertion. Default: False"""
+
+    TL_ENABLE_REDUCE_BURST = "tl.enable_reduce_burst"
+    """Enable MUSA reduce SIMD optimizations when True. Default: False"""
+
+
+_DEPRECATED_PASS_CONFIG_MESSAGES = {
+    PassConfigKey.TL_DISABLE_TMA_LOWER.value: (
+        "`tl.disable_tma_lower` is deprecated and will be removed in v0.1.10. Use `T.copy(..., disable_tma=True)` per-copy instead."
+    ),
+}
+
+
+def normalize_pass_configs(pass_configs: dict[str | PassConfigKey, Any] | None) -> dict[str, Any]:
+    """Canonicalize known pass-config keys and emit compatibility warnings."""
+    if pass_configs is None:
+        return {}
+
+    normalized: dict[str, Any] = {}
+    warned_keys: set[str] = set()
+
+    for key, value in pass_configs.items():
+        normalized_key = key.value if isinstance(key, PassConfigKey) else key
+
+        normalized[normalized_key] = value
+
+        if normalized_key in _DEPRECATED_PASS_CONFIG_MESSAGES and normalized_key not in warned_keys:
+            warnings.warn(_DEPRECATED_PASS_CONFIG_MESSAGES[normalized_key], DeprecationWarning, stacklevel=3)
+            warned_keys.add(normalized_key)
+
+    return normalized

@@ -1,0 +1,31 @@
+diff --git a/src/tilesight/tilesight/fused_op_pipeline_wave/matmul_pipeline_wave.py b/src/tilesight/tilesight/fused_op_pipeline_wave/matmul_pipeline_wave.py
+index 363ffff..6691d05 100644
+--- a/src/tilesight/tilesight/fused_op_pipeline_wave/matmul_pipeline_wave.py
++++ b/src/tilesight/tilesight/fused_op_pipeline_wave/matmul_pipeline_wave.py
+@@ -392,13 +392,24 @@ def calculate_matmul_pipeline_wave(op_shape, tb_shape, wp_shape, stage_num, arch
+     ddr_util = ddr_time_roofline / total_latency if total_latency > 0 else 0
+     compute_util = compute_time_roofline / total_latency if total_latency > 0 else 0
+ 
++    # l2_util: 总 L2 流量 = 读 + 写, 与 ddr_util 同一 roofline 逻辑
++    total_store = gridM * gridN * tb_m * tb_n * out1_level[-1] * out1_level[0]
++    total_l2_traffic = (total_l2_read + total_store) * batch
++    l2_time_roofline = total_l2_traffic / arch.l2_bandwidth if arch.l2_bandwidth > 0 else 0
++    l2_util = l2_time_roofline / total_latency if total_latency > 0 else 0
++
++    # smem_util: 总 SMEM 流量 = 每迭代 × 迭代数 × grid 数
++    total_smem = smem_per_iter * gridM * gridN * gridK * batch
++    smem_time_roofline = total_smem / arch.smem_bandwidth if arch.smem_bandwidth > 0 else 0
++    smem_util = smem_time_roofline / total_latency if total_latency > 0 else 0
++
+     result = PipelineResult(
+         per_tile_latency=per_tile_latency,
+         total_latency=total_latency,
+         ddr_util=ddr_util,
+-        l2_util=0.0,  # can be refined
++        l2_util=l2_util,
+         l2_hit_rate=l2_hit_rate,
+-        smem_util=0.0,  # can be refined
++        smem_util=smem_util,
+         compute_util=compute_util,
+         smem_footprint=smem_footprint,
+         reg_footprint=reg_footprint,
