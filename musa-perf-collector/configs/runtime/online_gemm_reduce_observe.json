@@ -1,0 +1,13 @@
+{
+  "schema": "musa-perf-collector/online-config-v1",
+  "enabled": true,
+  "target": "musa",
+  "execution_backends": ["tvm_ffi"],
+  "artifact_policy": "compiler_exact_only",
+  "correctness_policy": "application_owned",
+  "compile_policy": "observe_only",
+  "launch_candidate_count": 3,
+  "launch_selector": {"indices": [1]},
+  "telemetry": {"enabled": true, "device": 0},
+  "output": "/root/musa-perf-collector/results/online"
+}

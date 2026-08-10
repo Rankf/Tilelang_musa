@@ -1,0 +1,48 @@
+{
+  "mode": "deep",
+  "device": 0,
+  "sampling_seed": 20260729,
+  "input_seed": 20260729,
+  "M": 128,
+  "N": 128,
+  "K": 64,
+  "threads": 256,
+  "baseline": {
+    "warmup_launches": 1000,
+    "repeat_launches": 20000,
+    "event_batch_size": 100,
+    "cache_policy": "preserve"
+  },
+  "telemetry": {
+    "enabled": true,
+    "interval_ms": 100,
+    "fields": ["Temp", "Power", "Freq"]
+  },
+  "standard": {
+    "max_profiled_launches": 2
+  },
+  "deep": {
+    "launch_indices": [0],
+    "block_coordinates": [[0, 0, 0]],
+    "tileop_families": ["gemm_dense", "reduce"],
+    "max_tileops_per_block": 3,
+    "max_iterations_per_tileop": 1,
+    "max_trace_records": 128,
+    "max_trace_bytes": 8192,
+    "measurement_barrier_policy": "forbid"
+  },
+  "budget": {
+    "max_total_duration_s": 30,
+    "max_profile_duration_ms": 500,
+    "max_profiled_launches": 2,
+    "max_instrumented_launches": 1,
+    "max_sampled_blocks_per_launch": 1,
+    "max_tileops_per_block": 3,
+    "max_iterations_per_tileop": 1,
+    "max_trace_records": 128,
+    "max_trace_bytes": 8192,
+    "max_counter_passes": 1,
+    "max_dropped_records": 0,
+    "on_budget_exceeded": "degrade"
+  }
+}

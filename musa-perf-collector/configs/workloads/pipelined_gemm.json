@@ -1,0 +1,11 @@
+{
+  "M": 128,
+  "N": 128,
+  "K": 128,
+  "block_M": 64,
+  "block_N": 64,
+  "block_K": 32,
+  "num_stages": 2,
+  "dtype": "float16",
+  "capacity_sweep_bytes": [32768, 131072, 524288]
+}

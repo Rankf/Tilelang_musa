@@ -1,0 +1,10 @@
+{
+  "workload": "online_multi_instance_gemm",
+  "M": 128,
+  "N": 128,
+  "K": 128,
+  "threads": 256,
+  "grid": [2, 2],
+  "pipeline_stages": 2,
+  "pipeline_iterations": 4
+}

@@ -1,0 +1,8 @@
+{
+  "mode": "deep", "device": 0, "input_seed": 20260729, "size": 128, "threads": 128,
+  "baseline": {"warmup_launches": 1000, "repeat_launches": 20000, "event_batch_size": 100, "cache_policy": "preserve"},
+  "telemetry": {"enabled": true, "interval_ms": 100, "fields": ["Temp", "Power", "Freq"]},
+  "standard": {"max_profiled_launches": 10},
+  "deep": {"trace_variant": "preallocated_tail_flush", "selected_interval": {"semantic_name": "cumsum_boundary"}, "timestamps_per_sample": 2, "launch_indices": [0], "block_coordinates": [[0, 0, 0]], "tileop_families": ["scan"], "max_tileops_per_block": 1, "max_iterations_per_tileop": 1, "max_trace_records": 128, "max_trace_bytes": 8192, "readback_policy": "async_after_window", "measurement_barrier_policy": "forbid"},
+  "budget": {"max_total_duration_s": 30, "max_profiled_launches": 10, "max_instrumented_launches": 1, "max_sampled_blocks_per_launch": 1, "max_tileops_per_block": 1, "max_iterations_per_tileop": 1, "max_trace_records": 128, "max_trace_bytes": 8192, "max_counter_passes": 1, "max_dropped_records": 0, "on_budget_exceeded": "degrade"}
+}

@@ -1,0 +1,7 @@
+{
+  "workload": "online_gemm_reduce",
+  "M": 128,
+  "N": 128,
+  "K": 64,
+  "threads": 256
+}
