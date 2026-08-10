@@ -1,0 +1,38 @@
+{
+  "status": "pass",
+  "date": "2026-07-29",
+  "target": "MTT S5000 / MUSA MP31",
+  "operator": "TileOPs GemmOp with MusaMP31DenseGemmKernel injected through kernel_map",
+  "validation": "compile, one execution, and torch FP32-matmul reference comparison",
+  "manifest_non_fp8_gemm_workloads": {
+    "planned": 14,
+    "passed": 14,
+    "failed": 0
+  },
+  "passed_manifest_cases": [
+    {"shape": [1024, 1024, 1024], "dtype": "float16", "layout": "NN", "label": "square-1k-nn"},
+    {"shape": [1024, 1024, 1024], "dtype": "bfloat16", "layout": "NN", "label": "square-1k-nn"},
+    {"shape": [128, 2112, 7168], "dtype": "bfloat16", "layout": "NT", "label": "ds-v3-decode-gate-up"},
+    {"shape": [128, 7168, 2048], "dtype": "bfloat16", "layout": "NT", "label": "ds-v3-decode-down"},
+    {"shape": [4096, 2112, 7168], "dtype": "bfloat16", "layout": "NT", "label": "ds-v3-prefill-gate-up"},
+    {"shape": [4096, 7168, 2048], "dtype": "bfloat16", "layout": "NT", "label": "ds-v3-prefill-down"},
+    {"shape": [4096, 4096, 7168], "dtype": "float16", "layout": "NT", "label": "ds-v3-prefill-attn-proj"},
+    {"shape": [4096, 4096, 7168], "dtype": "bfloat16", "layout": "NT", "label": "ds-v3-prefill-attn-proj"},
+    {"shape": [4096, 7168, 16384], "dtype": "bfloat16", "layout": "NT", "label": "k-dominant-7168x16384"},
+    {"shape": [4096, 24576, 1536], "dtype": "bfloat16", "layout": "NT", "label": "wide-n-24576"},
+    {"shape": [16, 4096, 7168], "dtype": "bfloat16", "layout": "NT", "label": "mid-m16-attn"},
+    {"shape": [32, 4096, 7168], "dtype": "bfloat16", "layout": "NT", "label": "mid-m32-attn"},
+    {"shape": [64, 7168, 2048], "dtype": "bfloat16", "layout": "NT", "label": "mid-m64-down"},
+    {"shape": [96, 2112, 7168], "dtype": "bfloat16", "layout": "NT", "label": "mid-m96-gate-up"}
+  ],
+  "additional_passed_coverage": [
+    {"shape": [128, 256, 512], "dtype": "float16", "layout": "TN"},
+    {"shape": [128, 256, 512], "dtype": "float16", "layout": "TT"},
+    {"shape": [65, 130, 129], "dtype": "float16", "layout": "NN", "purpose": "M/N/K tail"}
+  ],
+  "out_of_scope": [
+    "FP8 GemmFp8Op and block scaling; these belong to advanced_fp8_persistent.",
+    "Autotuning and schedule ranking.",
+    "Three-process stability and performance coverage for every manifest point."
+  ]
+}

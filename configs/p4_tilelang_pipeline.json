@@ -1,0 +1,16 @@
+{
+  "phase": "P4",
+  "benchmark": "tilelang_compute_suite",
+  "compile_flags": ["-resource-usage"],
+  "warmup": 100,
+  "graph_unroll": 100,
+  "graph_samples": 30,
+  "profiler_repeats": 50,
+  "stability": {"max_relative_span": 0.15, "max_over_median": 2.0, "max_graph_profiler_ratio_delta": 0.25},
+  "cases": [
+    {"id":"pipeline_fp16_1024_stage1","op":"gemm","dtype":"float16","accum_dtype":"float32","M":1024,"N":1024,"K":1024,"block_M":64,"block_N":64,"block_K":64,"num_warp":4,"policy":"default","num_stages":1},
+    {"id":"pipeline_fp16_1024_stage2","op":"gemm","dtype":"float16","accum_dtype":"float32","M":1024,"N":1024,"K":1024,"block_M":64,"block_N":64,"block_K":64,"num_warp":4,"policy":"default","num_stages":2},
+    {"id":"pipeline_fp16_1024_stage3","op":"gemm","dtype":"float16","accum_dtype":"float32","M":1024,"N":1024,"K":1024,"block_M":64,"block_N":64,"block_K":64,"num_warp":4,"policy":"default","num_stages":3},
+    {"id":"pipeline_fp16_1024_stage4","op":"gemm","dtype":"float16","accum_dtype":"float32","M":1024,"N":1024,"K":1024,"block_M":64,"block_N":64,"block_K":64,"num_warp":4,"policy":"default","num_stages":4}
+  ]
+}

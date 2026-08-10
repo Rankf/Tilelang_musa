@@ -1,0 +1,9 @@
+{
+  "phase": "P6",
+  "status": "preregistered_before_measurement",
+  "p5_model_path": "results/processed/p5_model/s5000_single_gpu_model_v1.json",
+  "p5_model_sha256": "9ef664f1e27f78bcd99cceb458750cf02319d6ae68de8573438cec69a17aeec0",
+  "holdout_configs": ["configs/p6_compute_holdout.json", "configs/p6_layout_holdout.json"],
+  "rules": ["No P5 parameter or rate update after P6 preflight", "Every case: compile then correctness then timing", "Three independent processes per case family", "Unknown P5 prediction is reported as coverage failure, never fitted using holdout timing"],
+  "required_families": ["unseen_gemm_shape", "unseen_reduce_shape", "unseen_fused_kernel", "unseen_layout_stride"]
+}

@@ -1,0 +1,67 @@
+{
+  "phase": "P2",
+  "benchmark": "tilelang_fp16_gemm",
+  "purpose": "Initial FP16 GEMM vertical slice. Results are effective throughput observations, not peak specifications.",
+  "dtype": "float16",
+  "accum_dtype": "float32",
+  "warmup": 200,
+  "samples": 200,
+  "repeats_per_sample": 1,
+  "stability": {
+    "metric": "(p90_us - p10_us) / median_us",
+    "max_relative_span": 0.15,
+    "max_over_median": 2.0
+  },
+  "cases": [
+    {
+      "id": "m256_n256_k256_b64x64x64_w4_default_s1",
+      "M": 256,
+      "N": 256,
+      "K": 256,
+      "block_M": 64,
+      "block_N": 64,
+      "block_K": 64,
+      "num_warp": 4,
+      "policy": "default",
+      "num_stages": 1
+    },
+    {
+      "id": "m256_n256_k256_b64x64x64_w8_m_s3",
+      "M": 256,
+      "N": 256,
+      "K": 256,
+      "block_M": 64,
+      "block_N": 64,
+      "block_K": 64,
+      "num_warp": 8,
+      "policy": "m",
+      "num_stages": 3
+    },
+    {
+      "id": "m512_n512_k512_b64x64x64_w4_default_s1",
+      "M": 512,
+      "N": 512,
+      "K": 512,
+      "block_M": 64,
+      "block_N": 64,
+      "block_K": 64,
+      "num_warp": 4,
+      "policy": "default",
+      "num_stages": 1
+    },
+    {
+      "id": "m512_n512_k512_b128x128x64_w4_default_s3",
+      "M": 512,
+      "N": 512,
+      "K": 512,
+      "block_M": 128,
+      "block_N": 128,
+      "block_K": 64,
+      "num_warp": 4,
+      "policy": "default",
+      "num_stages": 3
+    }
+  ],
+  "timing_scope": "Two hundred pre-created MUSA event pairs each surround exactly one preallocated TileLang GEMM call; all samples are enqueued before one final synchronization. Compilation, allocation, reference computation and correctness checking are excluded.",
+  "measurement_revision": "Supersedes per-sample event batches. Uses preallocated output, 200 warmups, pre-created per-call events, queued submission and one final synchronization to avoid allocator pollution and Python batch submission gaps."
+}

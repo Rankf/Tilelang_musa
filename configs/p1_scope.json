@@ -1,0 +1,37 @@
+{
+  "phase": "P1",
+  "status": "completed",
+  "completed_at": "2026-07-29",
+  "purpose": "Validate measurement infrastructure only. P1 records are excluded from P2-P5 hardware-parameter fitting.",
+  "runner": "scripts/p1_run_measurement_smoke.sh",
+  "benchmark": "benchmarks/p1_tilelang_elementwise_add.py",
+  "configuration": "configs/p1_elementwise_add_smoke.json",
+  "required_evidence": [
+    "MUSA event timing after compilation, allocation and correctness validation",
+    "Warm-up, repeated samples and p10/median/p90 stability statistics",
+    "Raw CSV, summary CSV and JSON metadata for every run",
+    "GPU state snapshots before and after every run",
+    "Pinned TileLang commit, local patch hash, harness/config/kernel-source hashes",
+    "Generated MUSA source, mcc command and runner log addressable from each result"
+  ],
+  "acceptance": {
+    "correctness": "pass",
+    "run_status": "measured",
+    "stability_metric": "(p90_us - p10_us) / median_us",
+    "maximum_relative_span": 0.15,
+    "independent_runs": 3
+  },
+  "verified_runs": [
+    "results/raw/p1/20260728T092151498074293Z",
+    "results/raw/p1/20260728T092223334167960Z",
+    "results/raw/p1/20260728T092254685206801Z"
+  ],
+  "prohibited_conclusions": [
+    "S5000 peak throughput",
+    "DDR, L2 or shared-memory bandwidth",
+    "cache capacity or mapping",
+    "register, matrix-fragment or occupancy constants",
+    "P2-P5 parameter fitting from P1 smoke values"
+  ],
+  "next_phase": "P2_compute_calibration"
+}

@@ -1,0 +1,15 @@
+{
+  "phase": "P6-v3",
+  "benchmark": "tilelang_compute_suite",
+  "purpose": "pre-registered after P6-v2 domain-extension failure and before P5 v2 fitting; all derived features lie within the stable P5.1 development domain",
+  "warmup": 100,
+  "graph_unroll": 100,
+  "graph_samples": 30,
+  "profiler_repeats": 50,
+  "stability": {"max_relative_span": 0.15, "max_over_median": 2.0, "max_graph_profiler_ratio_delta": 0.25},
+  "cases": [
+    {"id":"p6v3_gemm_896x1152x1024","op":"gemm","dtype":"float16","accum_dtype":"float32","M":896,"N":1152,"K":1024,"block_M":64,"block_N":64,"block_K":64,"num_warp":4,"policy":"default","num_stages":1},
+    {"id":"p6v3_reduce_6144x512","op":"reduce_sum","dtype":"float32","M":6144,"K":512,"threads":128},
+    {"id":"p6v3_fused_exp_add_24m","op":"fused_exp_add","dtype":"float32","N":25165824,"threads":256,"vector":8}
+  ]
+}

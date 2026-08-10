@@ -1,0 +1,57 @@
+{
+  "status": "pass",
+  "date": "2026-07-29",
+  "comparison_scope": "S5000 MUSA: repaired TileOPs kernel vs torch_musa torch.matmul",
+  "not_nvidia_cuda_comparison": true,
+  "shape": [1024, 1024, 1024],
+  "dtype": "float16",
+  "layout": "NN",
+  "timing": {
+    "method": "MUSA Event",
+    "warmup": 20,
+    "samples_per_process": 30,
+    "operations_per_sample": 20,
+    "independent_processes": 3
+  },
+  "trials": [
+    {
+      "trial": 1,
+      "repaired_median_us": 25.217999517917633,
+      "repaired_effective_tops": 85.15678043669531,
+      "native_median_us": 20.840999484062195,
+      "native_effective_tops": 103.04129845798673,
+      "repaired_over_native_throughput_ratio": 0.8264334952205254
+    },
+    {
+      "trial": 2,
+      "repaired_median_us": 26.116999983787537,
+      "repaired_effective_tops": 82.2255101785457,
+      "native_median_us": 22.25699946284294,
+      "native_effective_tops": 96.48576626805097,
+      "repaired_over_native_throughput_ratio": 0.852203525545019
+    },
+    {
+      "trial": 3,
+      "repaired_median_us": 25.023001432418823,
+      "repaired_effective_tops": 85.8203862474229,
+      "native_median_us": 20.987000316381454,
+      "native_effective_tops": 102.32446827209395,
+      "repaired_over_native_throughput_ratio": 0.8387083529153108
+    }
+  ],
+  "aggregate": {
+    "median_repaired_process_median_us": 25.217999517917633,
+    "median_repaired_effective_tops": 85.15678043669531,
+    "median_native_process_median_us": 20.987000316381454,
+    "median_native_effective_tops": 102.32446827209395,
+    "median_paired_throughput_ratio": 0.8387083529153108,
+    "repaired_process_median_relative_span": 0.04338288896849095,
+    "native_process_median_relative_span": 0.0674696049531384
+  },
+  "limitations": [
+    "This is not a comparison against an NVIDIA CUDA GPU.",
+    "Both paths use return-style operator calls that produce an output tensor.",
+    "Only one shape, dtype, layout, and fixed schedule were tested.",
+    "The result is a preliminary operator comparison, not a frozen calibration parameter."
+  ]
+}

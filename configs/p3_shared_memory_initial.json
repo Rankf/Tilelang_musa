@@ -1,0 +1,22 @@
+{
+  "phase": "P3",
+  "benchmark": "tilelang_global_memory",
+  "dtype": "float32",
+  "warmup": 20,
+  "graph_samples": 15,
+  "target_graph_replay_us": 8000,
+  "max_graph_unroll": 1000,
+  "target_profiler_us": 12000,
+  "max_profiler_repeats": 100,
+  "stability": {"max_relative_span": 0.15, "max_over_median": 2.0, "max_graph_profiler_ratio_delta": 0.25},
+  "cache_flush_bytes": 0,
+  "cases": [
+    {"id":"shared_base_r0","op":"shared_read","grid_blocks":4096,"threads":128,"cols":16,"repeats":0,"pattern_stride":1,"cache_condition":"warm"},
+    {"id":"shared_seq_r32","op":"shared_read","grid_blocks":4096,"threads":128,"cols":16,"repeats":32,"pattern_stride":1,"cache_condition":"warm"},
+    {"id":"shared_seq_r128","op":"shared_read","grid_blocks":4096,"threads":128,"cols":16,"repeats":128,"pattern_stride":1,"cache_condition":"warm"},
+    {"id":"shared_risk_stride2_r128","op":"shared_read","grid_blocks":4096,"threads":128,"cols":16,"repeats":128,"pattern_stride":2,"cache_condition":"warm"},
+    {"id":"shared_risk_stride4_r128","op":"shared_read","grid_blocks":4096,"threads":128,"cols":16,"repeats":128,"pattern_stride":4,"cache_condition":"warm"},
+    {"id":"shared_risk_stride8_r128","op":"shared_read","grid_blocks":4096,"threads":128,"cols":16,"repeats":128,"pattern_stride":8,"cache_condition":"warm"},
+    {"id":"shared_perm_stride15_r128","op":"shared_read","grid_blocks":4096,"threads":128,"cols":16,"repeats":128,"pattern_stride":15,"cache_condition":"warm"}
+  ]
+}

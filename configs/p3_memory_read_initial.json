@@ -1,0 +1,18 @@
+{
+  "phase": "P3",
+  "benchmark": "tilelang_global_memory",
+  "dtype": "float32",
+  "warmup": 20,
+  "graph_samples": 15,
+  "target_graph_replay_us": 8000,
+  "max_graph_unroll": 1000,
+  "target_profiler_us": 12000,
+  "max_profiler_repeats": 100,
+  "stability": {"max_relative_span": 0.15, "max_over_median": 2.0, "max_graph_profiler_ratio_delta": 0.25},
+  "cache_flush_bytes": 268435456,
+  "cases": [
+    {"id":"read_sum_64m","op":"read_sum","N":16777216,"items_per_thread":64,"threads":256,"cache_condition":"warm_and_post_256m_flush"},
+    {"id":"read_sum_256m","op":"read_sum","N":67108864,"items_per_thread":64,"threads":256,"cache_condition":"warm_and_post_256m_flush"},
+    {"id":"read_sum_512m","op":"read_sum","N":134217728,"items_per_thread":64,"threads":256,"cache_condition":"warm_and_post_256m_flush"}
+  ]
+}

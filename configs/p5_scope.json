@@ -1,0 +1,35 @@
+{
+  "phase": "P5",
+  "title": "versioned S5000 single-GPU parameter registry and interpretable development model",
+  "status": "completed_for_calibration_development_not_holdout_validated",
+  "model_version": "s5000-single-gpu-v1",
+  "inputs": [
+    "results/processed/p2_compute/aggregate.json",
+    "results/processed/p2_compute/formal_run_manifest.json",
+    "results/processed/p3_memory/s5000_memory_parameters_provisional.json",
+    "results/processed/p3_memory/aggregate_global_initial.csv",
+    "results/processed/p3_memory/aggregate_global_initial.json",
+    "results/processed/p3_memory/aggregate_fixed_grid_cache.csv",
+    "results/processed/p3_memory/aggregate_fixed_grid_cache.json",
+    "results/processed/p3_memory/aggregate_read_initial.csv",
+    "results/processed/p3_memory/aggregate_read_initial.json",
+    "results/processed/p3_memory/aggregate_shared_initial.csv",
+    "results/processed/p3_memory/aggregate_shared_initial.json",
+    "results/processed/p3_memory/aggregate_pointer_chase.csv",
+    "results/processed/p3_memory/aggregate_pointer_chase.json",
+    "results/processed/p4_occupancy_wave/s5000_occupancy_wave_parameters_provisional.json",
+    "results/processed/p4_occupancy_wave/aggregate_tilelang_pipeline.csv",
+    "results/processed/p4_occupancy_wave/aggregate_tilelang_pipeline.json",
+    "results/processed/p4_occupancy_wave/aggregate_tilelang_compute_wave.json",
+    "results/processed/p4_occupancy_wave/run_manifest.json",
+    "results/processed/p4_occupancy_wave/p4_1_manifest.json"
+  ],
+  "prediction_policy": {
+    "gemm": "2*M*N*K operations divided by an exact full-condition effective TFLOP/s lookup; shape transfer is deferred to P6",
+    "memory": "logical payload divided by an exact full-condition logical GB/s lookup including working-set, access pattern and layout fields; rate transfer is deferred to P6",
+    "resource": "resident CTA is reported only where an exact source/resource match exists; otherwise unknown",
+    "tail": "only the P4.2 dependent-compute kernel family carries its measured 0.392-2.790 us conditional interval; no universal tail term is applied"
+  },
+  "unknown_policy": "unknown or conditional intervals are emitted verbatim; no global residual correction or undocumented architecture constant is allowed",
+  "not_holdout_validation": true
+}

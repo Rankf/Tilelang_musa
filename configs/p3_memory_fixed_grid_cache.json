@@ -1,0 +1,22 @@
+{
+  "phase": "P3",
+  "benchmark": "tilelang_global_memory",
+  "dtype": "float32",
+  "warmup": 20,
+  "graph_samples": 15,
+  "target_graph_replay_us": 8000,
+  "max_graph_unroll": 1000,
+  "target_profiler_us": 12000,
+  "max_profiler_repeats": 100,
+  "stability": {"max_relative_span": 0.15, "max_over_median": 2.0, "max_graph_profiler_ratio_delta": 0.25},
+  "cache_flush_bytes": 1073741824,
+  "cases": [
+    {"id":"fixed_grid_copy_ws_8m","op":"fixed_grid_copy","N":2097152,"grid_blocks":1024,"threads":256,"vector":8,"cache_condition":"warm_and_post_256m_flush"},
+    {"id":"fixed_grid_copy_ws_16m","op":"fixed_grid_copy","N":4194304,"grid_blocks":1024,"threads":256,"vector":8,"cache_condition":"warm_and_post_256m_flush"},
+    {"id":"fixed_grid_copy_ws_32m","op":"fixed_grid_copy","N":8388608,"grid_blocks":1024,"threads":256,"vector":8,"cache_condition":"warm_and_post_256m_flush"},
+    {"id":"fixed_grid_copy_ws_64m","op":"fixed_grid_copy","N":16777216,"grid_blocks":1024,"threads":256,"vector":8,"cache_condition":"warm_and_post_256m_flush"},
+    {"id":"fixed_grid_copy_ws_128m","op":"fixed_grid_copy","N":33554432,"grid_blocks":1024,"threads":256,"vector":8,"cache_condition":"warm_and_post_256m_flush"},
+    {"id":"fixed_grid_copy_ws_256m","op":"fixed_grid_copy","N":67108864,"grid_blocks":1024,"threads":256,"vector":8,"cache_condition":"warm_and_post_256m_flush"},
+    {"id":"fixed_grid_copy_ws_512m","op":"fixed_grid_copy","N":134217728,"grid_blocks":1024,"threads":256,"vector":8,"cache_condition":"warm_and_post_256m_flush"}
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "phase": "P4",
+  "title": "single-GPU occupancy, resource, pipeline/wave calibration",
+  "status": "completed_with_p4_1_resource_extension",
+  "hardware": "1x MTT S5000 (MUSA capability 3.1)",
+  "software": {
+    "musa_sdk": "4.3.5",
+    "tilelang_musa_commit": "4d666968a005846314e9a84d8ff121c5dbffa9ee"
+  },
+  "evidence_tracks": [
+    {
+      "name": "native_musa_api",
+      "kernel": "benchmarks/p4_musa_occupancy_wave.mu",
+      "measures": ["musaDeviceProp resource limits", "musaFuncGetAttributes", "musaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags", "tail timing around API-derived wave capacity"],
+      "transfer_rule": "Exact active CTA/MP applies only to the exact native kernel/resource configuration."
+    },
+    {
+      "name": "tilelang_musa_generated_kernel",
+      "kernel": "FP32 fixed-grid copy from benchmarks/p3_tilelang_global_memory.py",
+      "measures": ["block-size throughput", "generated launch bounds and mcc target", "Driver API resource/occupancy query on MUBIN recompiled from retained formal source and command", "exact 480/960 wave-position timing"],
+      "transfer_rule": "Native occupancy values are not applied to TileLang. Recompiled-MUBIN values apply only to the matching generated source, compiler command, launch threads and dynamic shared size."
+    }
+  ],
+  "required_order": ["compile", "numerical_correctness", "timing", "three-process aggregation"],
+  "unknowns": ["byte identity between the originally executed formal MUBIN and the resource-query recompiled MUBIN", "scheduler-to-MP mapping", "a universal TileLang tail-step constant across kernel families"],
+  "not_in_scope": ["multi-GPU communication", "collectives", "physical cache mapping", "unverified compiler resource inference"]
+}

@@ -1,0 +1,32 @@
+{
+  "phase": "P3",
+  "status": "completed_with_known_limitations",
+  "updated_at": "2026-07-29",
+  "purpose": "Single-card TileLang-MUSA global-memory, cache-working-set, stride/alignment and shared-memory calibration.",
+  "formal_measurements": {
+    "global_memory": "configs/p3_memory_global_initial.json; three independent processes",
+    "fixed_grid_cache": "configs/p3_memory_fixed_grid_cache.json; three independent processes",
+    "read_dominated": "configs/p3_memory_read_initial.json; three independent processes",
+    "shared_memory": "configs/p3_shared_memory_initial.json; three independent processes",
+    "dependent_latency": "benchmarks/p3_musa_pointer_chase.mu; three native-MUSA processes"
+  },
+  "parameter_policy": "Only logical-payload effective rates are reported. They are conditional TileLang-MUSA path measurements, not physical DDR or cache specifications.",
+  "cache_conclusion": {
+    "candidate_effective_cache_workset_boundary": "unknown",
+    "reason": "fixed-grid 32 MiB is not repeatable; 4 KiB-64 MiB dependent pointer chasing is flat; post-256 MiB/1 GiB flush comparisons show no reproducible isolated cliff.",
+    "forbidden_inference": ["physical L2 capacity", "L1/L2 mapping", "cache bank count"]
+  },
+  "shared_conclusion": {
+    "status": "conditional_synthetic_only",
+    "reason": "repeated-read rate is baseline-subtracted and compiler emits a parallel-loop race warning despite numerical correctness; no bank mapping conclusion is allowed."
+  },
+  "artifacts": {
+    "aggregate_dir": "results/processed/p3_memory",
+    "parameter_csv": "results/processed/p3_memory/s5000_memory_parameters_provisional.csv",
+    "parameter_json": "results/processed/p3_memory/s5000_memory_parameters_provisional.json",
+    "report": "calibration_docs/09_p3_memory_cache_shared_audit.md",
+    "rerun_global": "scripts/p3_run_global_memory.sh",
+    "rerun_pointer_chase": "scripts/p3_run_pointer_chase.sh"
+  },
+  "next_phase": "P4 occupancy, pipeline and wave calibration."
+}

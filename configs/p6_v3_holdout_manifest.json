@@ -1,0 +1,11 @@
+{
+  "phase": "P6-v3",
+  "status": "preregistered_before_p5_v2_fitting_and_before_any_p6_v3_measurement",
+  "holdout_configs": ["configs/p6_v3_compute_holdout.json", "configs/p6_v3_layout_holdout.json"],
+  "rules": [
+    "P5 v2 builder must not read these case configurations or P6/P6-v2 measurement outputs.",
+    "P6-v3 preflight freezes the P5 v2 SHA and writes all numerical predictions before compilation or measurement.",
+    "Every case uses three independent processes and requires compile, correctness, and timing stability before error calculation.",
+    "No P6-v3 value can be used to change the P5 v2 model or its declared domain."
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "phase": "P1",
+  "benchmark": "tilelang_elementwise_add",
+  "purpose": "Measurement harness stability smoke only; not a hardware calibration point.",
+  "dtype": "float32",
+  "shape": [16777216],
+  "threads": 256,
+  "num_per_thread": 8,
+  "warmup": 10,
+  "samples": 15,
+  "repeats_per_sample": 20,
+  "stability": {
+    "metric": "(p90_us - p10_us) / median_us",
+    "max_relative_span": 0.15
+  },
+  "timing_scope": "MUSA events surround only repeated compiled-kernel calls; compilation, allocation, input initialization and correctness checking are excluded."
+}

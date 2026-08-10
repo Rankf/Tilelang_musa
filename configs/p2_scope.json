@@ -1,0 +1,35 @@
+{
+  "phase": "P2",
+  "status": "completed_with_known_limitations",
+  "updated_at": "2026-07-29",
+  "purpose": "Single-card TileLang-MUSA compute-path calibration using compile -> correctness -> timing.",
+  "formal_runs": [
+    "results/raw/p2_compute/20260729T020316095211165Z",
+    "results/raw/p2_compute/20260729T020444776690014Z",
+    "results/raw/p2_compute/20260729T020602462471032Z"
+  ],
+  "measurement": {
+    "allocation": "explicitly preallocated inputs and output; tilelang out_idx=[]",
+    "primary": "MUSAGraph replay with 100 captured kernel calls per replay and 30 samples",
+    "cross_check": "MUSA profiler self-device time over 50 direct calls",
+    "independent_processes": 3
+  },
+  "admission_policy": {
+    "correctness": "pass in all three processes",
+    "per_run_status": "measured in all three processes",
+    "per_run_graph_p10_p90_relative_span_max": 0.15,
+    "per_run_graph_max_over_median_max": 2.0,
+    "per_run_graph_profiler_ratio_delta_max": 0.25,
+    "cross_run_median_relative_span_max": 0.15
+  },
+  "result": {"total_cases": 20, "eligible_cases": 14, "pending_short_kernel_cases": 6},
+  "pending_cases": ["fp16_square_256", "fp16_square_512", "bf16_square_512", "vector_add_1m", "exp_1m", "rsqrt_1m"],
+  "superseded_evidence": "Earlier results/raw/p2 runs used allocation-polluted or host-submission-sensitive timing and remain evidence only.",
+  "artifacts": {
+    "aggregate_csv": "results/processed/p2_compute/aggregate.csv",
+    "aggregate_json": "results/processed/p2_compute/aggregate.json",
+    "outlier_report": "calibration_docs/07_p2_gemm_outlier_root_cause.md",
+    "completion_report": "calibration_docs/08_p2_compute_completion_audit.md"
+  },
+  "next_phase": "P3 memory/cache; short-kernel low-overhead timing remains a separate known limitation."
+}

@@ -1,0 +1,11 @@
+{
+  "phase": "P6-v2",
+  "status": "preregistered_before_p5_1_development_measurement",
+  "holdout_configs": ["configs/p6_v2_compute_holdout.json", "configs/p6_v2_layout_holdout.json"],
+  "rules": [
+    "These cases must not be read by the P5.1 builder or used for rule selection, parameter fitting, or domain changes.",
+    "After P5 v2 is frozen, preflight must create numerical predictions before any P6-v2 kernel is compiled or run.",
+    "Each family runs in three independent processes; compile, correctness, and timing failures remain distinct from model error.",
+    "The original P6 results are retrospective diagnostics only and cannot determine P5.1 parameters."
+  ]
+}

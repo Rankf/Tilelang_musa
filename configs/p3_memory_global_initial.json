@@ -1,0 +1,33 @@
+{
+  "phase": "P3",
+  "benchmark": "tilelang_global_memory",
+  "dtype": "float32",
+  "warmup": 20,
+  "graph_samples": 15,
+  "target_graph_replay_us": 8000,
+  "max_graph_unroll": 1000,
+  "target_profiler_us": 12000,
+  "max_profiler_repeats": 100,
+  "stability": {"max_relative_span": 0.15, "max_over_median": 2.0, "max_graph_profiler_ratio_delta": 0.25},
+  "cache_flush_bytes": 268435456,
+  "cases": [
+    {"id":"copy_ws_256k","op":"copy","N":65536,"threads":256,"vector":8,"cache_condition":"warm_and_post_256m_flush"},
+    {"id":"copy_ws_1m","op":"copy","N":262144,"threads":256,"vector":8,"cache_condition":"warm_and_post_256m_flush"},
+    {"id":"copy_ws_4m","op":"copy","N":1048576,"threads":256,"vector":8,"cache_condition":"warm_and_post_256m_flush"},
+    {"id":"copy_ws_16m","op":"copy","N":4194304,"threads":256,"vector":8,"cache_condition":"warm_and_post_256m_flush"},
+    {"id":"copy_ws_64m","op":"copy","N":16777216,"threads":256,"vector":8,"cache_condition":"warm_and_post_256m_flush"},
+    {"id":"copy_ws_256m","op":"copy","N":67108864,"threads":256,"vector":8,"cache_condition":"warm_and_post_256m_flush"},
+    {"id":"copy_ws_512m","op":"copy","N":134217728,"threads":256,"vector":8,"cache_condition":"warm_and_post_256m_flush"},
+    {"id":"fill_64m","op":"fill","N":16777216,"threads":256,"vector":8,"cache_condition":"warm"},
+    {"id":"fill_256m","op":"fill","N":67108864,"threads":256,"vector":8,"cache_condition":"warm"},
+    {"id":"triad_64m","op":"triad","N":16777216,"threads":256,"vector":8,"cache_condition":"warm"},
+    {"id":"triad_256m","op":"triad","N":67108864,"threads":256,"vector":8,"cache_condition":"warm"},
+    {"id":"stride1_16m","op":"strided_copy","N":4194304,"stride":1,"threads":256,"vector":8,"cache_condition":"warm"},
+    {"id":"stride2_16m","op":"strided_copy","N":4194304,"stride":2,"threads":256,"vector":8,"cache_condition":"warm"},
+    {"id":"stride4_16m","op":"strided_copy","N":4194304,"stride":4,"threads":256,"vector":8,"cache_condition":"warm"},
+    {"id":"stride8_16m","op":"strided_copy","N":4194304,"stride":8,"threads":256,"vector":8,"cache_condition":"warm"},
+    {"id":"stride16_16m","op":"strided_copy","N":4194304,"stride":16,"threads":256,"vector":8,"cache_condition":"warm"},
+    {"id":"copy_offset0_64m","op":"offset_copy","N":16777216,"offset_elements":0,"threads":256,"vector":8,"cache_condition":"warm"},
+    {"id":"copy_offset1_64m","op":"offset_copy","N":16777216,"offset_elements":1,"threads":256,"vector":8,"cache_condition":"warm"}
+  ]
+}

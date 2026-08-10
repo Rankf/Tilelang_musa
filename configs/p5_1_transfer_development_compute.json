@@ -1,0 +1,24 @@
+{
+  "phase": "P5.1-development",
+  "benchmark": "tilelang_compute_suite",
+  "purpose": "transfer-rule development only; excludes P6 and P6-v2 hold-outs",
+  "warmup": 100,
+  "graph_unroll": 100,
+  "graph_samples": 30,
+  "profiler_repeats": 50,
+  "stability": {"max_relative_span": 0.15, "max_over_median": 2.0, "max_graph_profiler_ratio_delta": 0.25},
+  "cases": [
+    {"id":"dev_gemm_768x1024x1024","op":"gemm","dtype":"float16","accum_dtype":"float32","M":768,"N":1024,"K":1024,"block_M":64,"block_N":64,"block_K":64,"num_warp":4,"policy":"default","num_stages":1},
+    {"id":"dev_gemm_1024x1280x1024","op":"gemm","dtype":"float16","accum_dtype":"float32","M":1024,"N":1280,"K":1024,"block_M":64,"block_N":64,"block_K":64,"num_warp":4,"policy":"default","num_stages":1},
+    {"id":"dev_gemm_768x1280x512","op":"gemm","dtype":"float16","accum_dtype":"float32","M":768,"N":1280,"K":512,"block_M":64,"block_N":64,"block_K":64,"num_warp":4,"policy":"default","num_stages":1},
+    {"id":"dev_gemm_1536x768x1024","op":"gemm","dtype":"float16","accum_dtype":"float32","M":1536,"N":768,"K":1024,"block_M":64,"block_N":64,"block_K":64,"num_warp":4,"policy":"default","num_stages":1},
+    {"id":"dev_gemm_1280x768x1536","op":"gemm","dtype":"float16","accum_dtype":"float32","M":1280,"N":768,"K":1536,"block_M":64,"block_N":64,"block_K":64,"num_warp":4,"policy":"default","num_stages":1},
+    {"id":"dev_reduce_2048x512","op":"reduce_sum","dtype":"float32","M":2048,"K":512,"threads":128},
+    {"id":"dev_reduce_8192x512","op":"reduce_sum","dtype":"float32","M":8192,"K":512,"threads":128},
+    {"id":"dev_reduce_2048x2048","op":"reduce_sum","dtype":"float32","M":2048,"K":2048,"threads":128},
+    {"id":"dev_reduce_8192x128","op":"reduce_sum","dtype":"float32","M":8192,"K":128,"threads":128},
+    {"id":"dev_fused_exp_add_4m","op":"fused_exp_add","dtype":"float32","N":4194304,"threads":256,"vector":8},
+    {"id":"dev_fused_exp_add_8m","op":"fused_exp_add","dtype":"float32","N":8388608,"threads":256,"vector":8},
+    {"id":"dev_fused_exp_add_32m","op":"fused_exp_add","dtype":"float32","N":33554432,"threads":256,"vector":8}
+  ]
+}

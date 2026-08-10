@@ -1,0 +1,40 @@
+{
+  "phase": "P0",
+  "status": "completed",
+  "completed_at": "2026-07-28",
+  "purpose": "Backend and environment audit only; no performance parameters.",
+  "controlled_source": {
+    "repository": "https://github.com/tile-ai/tilelang-musa.git",
+    "commit": "4d666968a005846314e9a84d8ff121c5dbffa9ee",
+    "target": "MTT S5000",
+    "musa_compute_capability": "3.1",
+    "python": "3.10.12",
+    "installed_version": "0.1.10+musa.1.git4d666968"
+  },
+  "required_evidence": [
+    "GPU, driver, SDK, compiler, Python, torch and torch_musa snapshots",
+    "Minimal native MUSA source, compile command, compiler log and runtime output",
+    "TileLang-MUSA repository/package/backend location and pinned commit",
+    "Generated MP31 MUSA source and mcc command",
+    "Numerically correct TileLang-MUSA smoke result"
+  ],
+  "evidence": {
+    "native_musa_run": "logs/run/p0_musa_smoke_stdout.log",
+    "tilelang_source": "logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0022.mu",
+    "tilelang_compile_command": "logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0022.mu.cmd",
+    "tilelang_run": "logs/run/p0_tilelang_add_global_repro.log",
+    "nan_fallback_validation": "logs/run/p0_tilelang_nan_fallback_final.log"
+  },
+  "local_backend_patch": [
+    "src/backend/musa/codegen/codegen_musa.cc",
+    "src/tl_templates/musa/fop.h",
+    "src/tl_templates/musa/reduce.h",
+    "testing/python/language/test_tilelang_language_reduce_maxmin_nan.py"
+  ],
+  "next_phase": "P1_measurement_harness",
+  "prohibited_conclusions": [
+    "S5000 peak throughput",
+    "cache capacity or mapping",
+    "register, matrix-fragment or occupancy constants"
+  ]
+}
