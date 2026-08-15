@@ -1,0 +1,107 @@
+{
+  "op": "gemm",
+  "shape": [
+    4096,
+    4096,
+    4096
+  ],
+  "tile": [
+    128,
+    128,
+    64
+  ],
+  "warps_per_block": 8,
+  "warp_tile": [
+    32,
+    64,
+    64
+  ],
+  "stage": 2,
+  "memory_profile": "s5000_fp16_gemm",
+  "memory_levels": {
+    "in1": [
+      1,
+      1,
+      1,
+      2
+    ],
+    "in2": [
+      1,
+      1,
+      1,
+      2
+    ],
+    "out1": [
+      1,
+      0,
+      1,
+      2
+    ]
+  },
+  "latency_us": 994.94,
+  "flop_count": 137438953472,
+  "compute_throughput_tflops": 138.14,
+  "ddr_util_pct": 9.7,
+  "l2_util_pct": 30.6,
+  "smem_util_pct": 74.9,
+  "compute_util_pct": 74.9,
+  "l2_hit_rate_pct": 92.8,
+  "tiles_per_sm": 3,
+  "waves": 5.7,
+  "pipeline": {
+    "prologue_us": 4.01,
+    "steady_per_iter_us": 0.82,
+    "epilogue_us": 8.31,
+    "memory_per_iter_us": 0.802,
+    "compute_per_iter_us": 0.8205
+  },
+  "cost_model": {
+    "status": "available",
+    "value_kind": "model_estimate",
+    "pipeline_iteration_cost_us": {
+      "memory": 0.802,
+      "compute": 0.8205,
+      "steady_state_after_overlap": 0.8205,
+      "overlap_rule": "max(memory, compute) for pipeline stage >= 2"
+    },
+    "memory_level_cost": {
+      "ddr": {
+        "resource": "ddr",
+        "traffic_bytes": 154157358,
+        "peak_bandwidth_gb_s": 1600.0,
+        "max_sustained_util_pct": 87.6,
+        "peak_roofline_cost_us": 96.3483,
+        "calibrated_service_cost_us": 109.9867,
+        "value_kind": "model_estimate"
+      },
+      "l2": {
+        "resource": "l2",
+        "traffic_bytes": 2181038080,
+        "peak_bandwidth_gb_s": 7168.0,
+        "max_sustained_util_pct": 34.2,
+        "peak_roofline_cost_us": 304.2743,
+        "calibrated_service_cost_us": 889.6909,
+        "value_kind": "model_estimate"
+      },
+      "shared_memory": {
+        "resource": "shared_memory",
+        "traffic_bytes": 8589934592,
+        "peak_bandwidth_gb_s": 11520.0,
+        "max_sustained_util_pct": 95.0,
+        "peak_roofline_cost_us": 745.654,
+        "calibrated_service_cost_us": 784.899,
+        "value_kind": "model_estimate"
+      }
+    },
+    "critical_path": {
+      "scope": "steady_state_pipeline_iteration",
+      "bottleneck": "compute",
+      "dominant_memory_level": "l2",
+      "cost_us_per_iter": 0.8205,
+      "reason": "steady-state compute cost 0.8205 us/iter is not less than memory cost 0.8020 us/iter"
+    }
+  },
+  "arch": "S5000",
+  "core_freq_ghz": 1.5,
+  "sm_count": 60
+}

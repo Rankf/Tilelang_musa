@@ -1,0 +1,41 @@
+2026-07-28 17:10:21  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `kernel` with `out_idx=-1`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0014.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0014.mu.cmd
+2026-07-28 17:10:22  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `kernel`
+2026-07-28 17:10:22  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `kernel` with `out_idx=-1`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0015.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0015.mu.cmd
+2026-07-28 17:10:24  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `kernel`
+2026-07-28 17:10:25  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `kernel` with `out_idx=-1`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0016.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0016.mu.cmd
+2026-07-28 17:10:27  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `kernel`
+2026-07-28 17:10:27  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `kernel` with `out_idx=-1`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0017.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0017.mu.cmd
+2026-07-28 17:10:28  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `kernel`
+.2026-07-28 17:10:29  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `kernel` with `out_idx=-1`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0018.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0018.mu.cmd
+2026-07-28 17:10:30  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `kernel`
+2026-07-28 17:10:30  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `kernel` with `out_idx=-1`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0019.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0019.mu.cmd
+2026-07-28 17:10:32  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `kernel`
+2026-07-28 17:10:32  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `kernel` with `out_idx=-1`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0020.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0020.mu.cmd
+2026-07-28 17:10:34  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `kernel`
+2026-07-28 17:10:34  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `kernel` with `out_idx=-1`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0021.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0021.mu.cmd
+2026-07-28 17:10:35  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `kernel`
+.
+=============================== warnings summary ===============================
+../../../usr/local/lib/python3.10/dist-packages/_pytest/config/__init__.py:1296
+  /usr/local/lib/python3.10/dist-packages/_pytest/config/__init__.py:1296: PytestConfigWarning: Unknown config option: verbosity_assertions
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+2 passed, 1 warning in 19.76s

@@ -1,0 +1,37 @@
+{
+  "phase": "P4",
+  "benchmark": "native_musa_occupancy_wave",
+  "purpose": "SDK occupancy API evidence plus empirical block/resource/wave timing; not a physical peak-performance test",
+  "device": "MTT S5000",
+  "musa_sdk": "4.3.5",
+  "timing": {
+    "method": "native MUSA events around one kernel launch; no Python submission path",
+    "warmup": 3,
+    "samples": 15,
+    "independent_processes": 3,
+    "iterations_per_thread": 512
+  },
+  "kernel": {
+    "operation": "dependent uint32 xorshift recurrence with exact host reference",
+    "static_shared_bytes": [0, 8192, 16384, 32768],
+    "block_threads": [64, 128, 256, 384, 512]
+  },
+  "timed_sweeps": {
+    "block_sweep_static_shared_bytes": 0,
+    "shared_sweep_block_threads": 256,
+    "saturated_grid_multiplier": 4,
+    "wave_grid_multipliers": [1, 2],
+    "wave_grid_offsets": [-1, 0, 1],
+    "small_grid_blocks": 1
+  },
+  "gates": {
+    "correctness": "exact uint32 output comparison",
+    "max_relative_p10_p90_span": 0.15,
+    "max_cross_process_relative_span": 0.20
+  },
+  "interpretation": {
+    "api_active_blocks_per_mp": "API-calculated maximum for this exact native test kernel, block size, static shared-memory footprint and zero dynamic shared memory",
+    "empirical_wave": "event-time behavior around API-derived capacity; not a claim about scheduler mapping or TileLang-generated kernels",
+    "tilelang_scope": "TileLang P4 follow-up must separately inspect generated resources because native-kernel resource use is not automatically transferable"
+  }
+}

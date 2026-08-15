@@ -1,0 +1,21 @@
+    PID    PPID STAT     ELAPSED CMD
+      1       0 Ss      06:50:01 /bin/bash /usr/local/bin/entrypoint.sh
+     46       1 S       06:50:00 bash /tmp/container_init_sugon.sh
+    153      46 S       06:49:40 /usr/bin/python /usr/local/bin/supervisord -n
+    355     153 S       06:49:39 /bin/bash /usr/local/bin/start_jupyter.sh
+    356     153 S       06:49:39 sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups
+    363     355 S       06:49:38 /usr/bin/python /usr/local/bin/jupyter-lab --notebook-dir=/data/ --allow-root --port 3000 --ip 0.0.0.0 --NotebookApp.base_url=/38080/vm-JSjOrGgsmQpIX5y0 --NotebookApp.allow_origin=*
+    378     356 Ss      06:49:36 sshd: root
+    490       1 Sl      06:49:30 node /usr/local/bin/codex -c features.code_mode_host=true app-server --listen unix://
+    501     490 Sl      06:49:30 /opt/node-v26.5.0-linux-x64/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex -c features.code_mode_host=true app-server --listen unix://
+    543     356 Ss      06:49:30 sshd: root@notty
+    547     543 Ss      06:49:30 /bin/sh -c printf '%b' '\205\066\072\002\145\155\230\302'; PATH="${CODEX_INSTALL_DIR:-$HOME/.local/bin}:$PATH"; export PATH; codex app-server proxy
+    558     547 Sl      06:49:30 node /usr/local/bin/codex app-server proxy
+    565     558 Sl      06:49:30 /opt/node-v26.5.0-linux-x64/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex app-server proxy
+    927     501 Sl      06:45:51 /opt/node-v26.5.0-linux-x64/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex-code-mode-host
+ 192953     501 Ss         00:04 /bin/bash -c python3 - <<'PY' import torch, torch_musa print('available=',torch.musa.is_available()) print('device_count=',torch.musa.device_count()) print('musa_version=',torch.version.musa) if torch.musa.is_available():     for i in range(torch.musa.device_count()):         print('device',i,torch.musa.get_device_name(i))         print(torch.musa.get_device_properties(i)) PY sed -n '1,240p' /usr/local/musa/include/mupti_profiler_target.h rg -n "muptiActivity|MUPTI_ACTIVITY_KIND|musaLaunchKernel|metric|counter" /usr/local/musa/include/mupti_activity.h /usr/local/musa/include/mupti_events.h /usr/local/musa/include/mupti_profiler_target.h | sed -n '1,260p'
+ 192954  192953 Rl         00:03 python3 -
+ 193020      46 S          00:01 sleep 1
+ 193023     501 Ss         00:00 /bin/bash -c python3 -m py_compile benchmarks/p7_3_1_gemm_development_slope.py && python3 -m json.tool configs/p7_3_1_gemm_development_slope_v1.json >/dev/null && bash -n scripts/p7_3_1_run_gemm_development_slope.sh && bash scripts/p7_1_recovery_gate.sh >/tmp/p731_gate.txt && stamp=$(date -u +%Y%m%dT%H%M%S%NZ); root="results/raw/p7_3_1_smoke/$stamp"; build="logs/build/p7_3_1_smoke/$stamp"; mkdir -p "$root" "$build" "$root/mubin"; cp configs/p7_3_1_gemm_development_slope_v1.json benchmarks/p7_3_1_gemm_development_slope.py benchmarks/p7_3_gemm_development_pilot.py "$root/"; MUSA_HOME=/usr/local/musa-4.3.5 PATH=/usr/local/musa-4.3.5/bin:$PATH LD_LIBRARY_PATH=/usr/local/musa-4.3.5/lib:${LD_LIBRARY_PATH:-} TILELANG_DUMP_KERNEL_SOURCE="$build" timeout --signal=TERM --kill-after=10s 360s .venv-tilelang-musa/bin/python benchmarks/p7_3_1_gemm_development_slope.py --config configs/p7_3_1_gemm_development_slope_v1.json --case devp_512_square --schedule s64x64x64_w4_st1_default --trial 1 --artifact-dir "$root/mubin" --output "$root/result.json" 2>&1 | tee "$root/run.log"; rc=${PIPESTATUS[0]}; echo runner_exit=$rc; echo root=$root; find "$root/mubin" -type f -printf '%f %s bytes\n'; python3 - "$root/result.json" <<'PY' import json,sys x=json.load(open(sys.argv[1])); print(x['status'],x.get('compile'),x.get('correctness'),x.get('mubin_path'),x.get('mubin_sha256'),x.get('fit')) PY
+ 193027  193023 S          00:00 bash scripts/p7_1_recovery_gate.sh
+ 193324  193027 R          00:00 ps -eo pid,ppid,stat,etime,cmd

@@ -1,0 +1,11 @@
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+muDNN(v3105) 2026-07-29 13:40:33.503795 0d:0h:0m:17s TID=0x5634694241810fee GPU=0 Handle=0x555b92b4eec0 ERROR# EXECUTION_FAILED in Fill::Run, Reason:
+     musa runtime failed fill.mu:838: err 999 = unknown error
+
+[W729 13:40:33.607666442 MUSAGraph.cpp:292] Warning: MUSA warning: unknown error (function reset)
+[W729 13:40:33.607677937 MUSAGraph.cpp:297] Warning: MUSA warning: unknown error (function reset)
+2026-07-29 13:40:18  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `main` with `out_idx=[]`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p7_p2_exact_single_gemm_launch_blocking/20260729T053938161898105Z/process_3/tilelang_musa_kernel_0000.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p7_p2_exact_single_gemm_launch_blocking/20260729T053938161898105Z/process_3/tilelang_musa_kernel_0000.mu.cmd
+2026-07-29 13:40:21  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `main`
+{"case_id": "p7_exact_p2_gemm_1536x1024x1536", "op": "gemm", "dtype": "float16", "status": "runtime_failed", "correctness": "pass", "error": "Traceback (most recent call last): |   File \"/root/s5000-calibration/benchmarks/p2_tilelang_compute_suite.py\", line 129, in main |     torch.musa.synchronize(); vals=graph_samples(fn,cfg[\"graph_unroll\"],cfg[\"graph_samples\"]); pus,events=profiler_us(fn,cfg[\"profiler_repeats\"]) |   File \"/root/s5000-calibration/benchmarks/p2_tilelang_compute_suite.py\", line 96, in graph_samples |     for s,e in zip(starts,ends): s.record(); graph.replay(); e.record() |   File \"/usr/local/lib/python3.10/dist-packages/torch_musa/musa_graph/graphs.py\", line 99, in replay |     super().replay() | RuntimeError: FillOp MUDNN failed in: Run | ", "dynamic_shared_bytes": 16384, "kernel_global_symbol": "main_kernel"}

@@ -1,0 +1,57 @@
+{
+  "config": {
+    "benchmark": "tilelang_global_memory",
+    "cache_flush_bytes": 268435456,
+    "cases": [
+      {
+        "N": 16777216,
+        "cache_condition": "warm_and_post_256m_flush",
+        "id": "read_sum_64m",
+        "items_per_thread": 64,
+        "op": "read_sum",
+        "threads": 256
+      },
+      {
+        "N": 67108864,
+        "cache_condition": "warm_and_post_256m_flush",
+        "id": "read_sum_256m",
+        "items_per_thread": 64,
+        "op": "read_sum",
+        "threads": 256
+      },
+      {
+        "N": 134217728,
+        "cache_condition": "warm_and_post_256m_flush",
+        "id": "read_sum_512m",
+        "items_per_thread": 64,
+        "op": "read_sum",
+        "threads": 256
+      }
+    ],
+    "dtype": "float32",
+    "graph_samples": 15,
+    "max_graph_unroll": 1000,
+    "max_profiler_repeats": 100,
+    "phase": "P3",
+    "stability": {
+      "max_graph_profiler_ratio_delta": 0.25,
+      "max_over_median": 2.0,
+      "max_relative_span": 0.15
+    },
+    "target_graph_replay_us": 8000,
+    "target_profiler_us": 12000,
+    "warmup": 20
+  },
+  "config_sha256": "1d32a367caa4f7e8addac26f1ebf8373f462f184ff8c80efd050684b3cdf1f76",
+  "harness_sha256": "dc28963c82e377d6120d6aec35c819e62de612fa83ff24bcf889611fecfe7641",
+  "kernel_dump_dir": "/root/s5000-calibration/logs/build/p3_global_memory/20260729T023554966949168Z",
+  "mcc_version": "mcc version 4.3.5",
+  "musa_capability": [
+    3,
+    1
+  ],
+  "musa_home": "/usr/local/musa-4.3.5",
+  "run_id": "p3-20260729T023559Z-d4285476",
+  "tilelang_commit": "4d666968a005846314e9a84d8ff121c5dbffa9ee",
+  "timestamp_utc": "2026-07-29T02:36:16.006884+00:00"
+}

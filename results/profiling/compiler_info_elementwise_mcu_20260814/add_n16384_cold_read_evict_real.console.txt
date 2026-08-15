@@ -1,0 +1,63 @@
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' started, pid:25036  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+==PROF== Profiling "0:0:main_kernel" - 0 (1/1): Application replay pass 0 
+{"cache_condition": "cold_explicit_l2_eviction", "correctness": "pass", "dtype": "float32", "elements_per_block": 2048, "elements_per_thread": 8, "grid_size": 8, "kernel_source_sha256": "9dc987000271bbd0f41f410f7698ef4e06438ed5863229fcf73f23c6c26d2155", "l2_eviction_bytes": 268435456, "mcu_expected_skip": 0, "mode": "profile-cold", "op": "add", "schema_version": "s5000/elementwise-runtime-runner-v1", "shape": [16384], "target_launches": 1, "threads": 256}
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' exit, exit code(0)  
+==PROF== Disconnected from process 25036 
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' started, pid:25128  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+==PROF== Profiling "0:0:main_kernel" - 0 (1/1): Application replay pass 1 
+{"cache_condition": "cold_explicit_l2_eviction", "correctness": "pass", "dtype": "float32", "elements_per_block": 2048, "elements_per_thread": 8, "grid_size": 8, "kernel_source_sha256": "9dc987000271bbd0f41f410f7698ef4e06438ed5863229fcf73f23c6c26d2155", "l2_eviction_bytes": 268435456, "mcu_expected_skip": 0, "mode": "profile-cold", "op": "add", "schema_version": "s5000/elementwise-runtime-runner-v1", "shape": [16384], "target_launches": 1, "threads": 256}
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' exit, exit code(0)  
+==PROF== Disconnected from process 25128 
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' started, pid:25226  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+==PROF== Profiling "0:0:main_kernel" - 0 (1/1): Application replay pass 2 
+{"cache_condition": "cold_explicit_l2_eviction", "correctness": "pass", "dtype": "float32", "elements_per_block": 2048, "elements_per_thread": 8, "grid_size": 8, "kernel_source_sha256": "9dc987000271bbd0f41f410f7698ef4e06438ed5863229fcf73f23c6c26d2155", "l2_eviction_bytes": 268435456, "mcu_expected_skip": 0, "mode": "profile-cold", "op": "add", "schema_version": "s5000/elementwise-runtime-runner-v1", "shape": [16384], "target_launches": 1, "threads": 256}
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' exit, exit code(0)  
+==PROF== Disconnected from process 25226 
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' started, pid:25317  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+==PROF== Profiling "0:0:main_kernel" - 0 (1/1): Application replay pass 3 
+{"cache_condition": "cold_explicit_l2_eviction", "correctness": "pass", "dtype": "float32", "elements_per_block": 2048, "elements_per_thread": 8, "grid_size": 8, "kernel_source_sha256": "9dc987000271bbd0f41f410f7698ef4e06438ed5863229fcf73f23c6c26d2155", "l2_eviction_bytes": 268435456, "mcu_expected_skip": 0, "mode": "profile-cold", "op": "add", "schema_version": "s5000/elementwise-runtime-runner-v1", "shape": [16384], "target_launches": 1, "threads": 256}
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' exit, exit code(0)  
+==PROF== Disconnected from process 25317 
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' started, pid:25411  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+==PROF== Profiling "0:0:main_kernel" - 0 (1/1): Application replay pass 4 
+{"cache_condition": "cold_explicit_l2_eviction", "correctness": "pass", "dtype": "float32", "elements_per_block": 2048, "elements_per_thread": 8, "grid_size": 8, "kernel_source_sha256": "9dc987000271bbd0f41f410f7698ef4e06438ed5863229fcf73f23c6c26d2155", "l2_eviction_bytes": 268435456, "mcu_expected_skip": 0, "mode": "profile-cold", "op": "add", "schema_version": "s5000/elementwise-runtime-runner-v1", "shape": [16384], "target_launches": 1, "threads": 256}
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' exit, exit code(0)  
+==PROF== Disconnected from process 25411 
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' started, pid:25506  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+==PROF== Profiling "0:0:main_kernel" - 0 (1/1): Application replay pass 5 
+{"cache_condition": "cold_explicit_l2_eviction", "correctness": "pass", "dtype": "float32", "elements_per_block": 2048, "elements_per_thread": 8, "grid_size": 8, "kernel_source_sha256": "9dc987000271bbd0f41f410f7698ef4e06438ed5863229fcf73f23c6c26d2155", "l2_eviction_bytes": 268435456, "mcu_expected_skip": 0, "mode": "profile-cold", "op": "add", "schema_version": "s5000/elementwise-runtime-runner-v1", "shape": [16384], "target_launches": 1, "threads": 256}
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' exit, exit code(0)  
+==PROF== Disconnected from process 25506 
+==PROF== Capture finished. Path is "/root/s5000-calibration/results/profiling/compiler_info_elementwise_mcu_20260814/add_n16384_cold_read_evict_real.mcu-rep"  
+[25036] python3.10@c82850fb110c 
+  105 - main_kernel (8, 1, 1)x(256, 1, 1), Context 0, Stream 0, Device 0 
+    Section: Command line profiler metrics 
+    -------------------------------------------------- ----------- ------------- 
+    Metric Name                                        Metric Unit  Metric Value 
+    -------------------------------------------------- ----------- ------------- 
+    gpu__time_duration.max                                      ns   7156.000000 
+    launch__grid_size                                                          8 
+    launch__block_size                                                       256 
+    launch__shared_mem_per_block_dynamic                byte/block             0 
+    launch__waves_per_multiprocessor                                    0.011111 
+    l1__load_requests.sum                                  request   4336.000000 
+    l1__store_requests.sum                                 request   2048.000000 
+    l1__downstream_read_bytes.sum                            bytes 134912.000000 
+    l1__downstream_write_bytes.sum                           bytes  65536.000000 
+    l1__sector_hit_rate.pct                                      %     71.891192 
+    l1__throughput.avg.pct_of_peak_sustained_active              %      0.717464 
+    l2pu__sector_hit_rate.pct                                    %     28.047840 
+    l2pu__throughput.avg.pct_of_peak_sustained_elapsed           %      4.850912 
+    l2pu__tme_read_l2_byte.avg                                          0.000000 
+    ddr__read_bytes.sum                                      bytes 148864.000000 
+    ddr__write_bytes.sum                                     bytes   2080.000000 
+    ddr__throughput.avg.pct_of_peak_sustained_elapsed            %      1.373265 
+    -------------------------------------------------- ----------- ------------- 
+ 
+ 

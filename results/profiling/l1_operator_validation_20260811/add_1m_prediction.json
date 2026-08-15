@@ -1,0 +1,245 @@
+{
+  "op": "add",
+  "N": 1048576,
+  "threads": 256,
+  "latency_us": 7.03,
+  "logical_traffic_bytes": 12582912,
+  "effective_bandwidth_gb_s": 1790.9,
+  "ddr_util_pct": 0.186,
+  "l2_util_pct": 24.971,
+  "smem_util_pct": 0.0,
+  "compute_util_pct": 0.0,
+  "l2_hit_rate_pct": 99.75,
+  "tiles_per_sm": 24,
+  "waves": 0.7,
+  "memory_hierarchy_prediction": {
+    "status": "available",
+    "value_kind": "model_estimate",
+    "cache_condition": "warm",
+    "minimum_useful_read_bytes": 8388608,
+    "calibration": {
+      "l1_effective_capacity_bytes_per_mp": 32768,
+      "l1_cache_line_bytes": 64,
+      "l1_sector_bytes": 32,
+      "l1_peak_bandwidth_gb_s": 7168.0,
+      "l1_max_sustained_util_pct": 73.0,
+      "tma_bypasses_ordinary_l1": true,
+      "associativity": "not_fixed; conflict onset measured but address hashing is unresolved"
+    },
+    "l1_cache": {
+      "eligible_read_bytes": 8388608,
+      "bypass_read_bytes": 0,
+      "bypass_value_kind": "logical_tile_request_bytes",
+      "predicted_hit_rate_pct": 0.0,
+      "prediction_method": "single_use_stream",
+      "downstream_read_bytes": 8388608,
+      "ordinary_write_bytes": 4194304,
+      "service_cost_us": 2.4047
+    },
+    "l2": {
+      "input_read_bytes": 8388608,
+      "input_read_value_kind": "logical_cache_request_bytes",
+      "predicted_hit_rate_pct": 99.75,
+      "write_bytes": 4194304,
+      "total_traffic_bytes": 12582912,
+      "service_cost_us": 5.1328,
+      "prediction_method": "calibrated_warm_working_set_fits_l2",
+      "calibrated_prediction_range_pct": [
+        99.0,
+        100.0
+      ]
+    },
+    "ddr": {
+      "read_bytes": 20972,
+      "write_bytes": 0,
+      "total_traffic_bytes": 20972,
+      "service_cost_us": 0.015,
+      "write_prediction_method": "warm_dirty_output_resident_in_l2_during_kernel"
+    },
+    "shared_memory": {
+      "global_to_shared_bytes": 0,
+      "global_to_shared_value_kind": "logical_tile_transfer_bytes",
+      "read_bytes": 0,
+      "write_bytes": 0,
+      "total_traffic_bytes": 0,
+      "hit_rate": "not_applicable",
+      "service_cost_us": 0.0
+    },
+    "critical_memory_path": {
+      "bottleneck": "l2",
+      "service_cost_us": 5.1328,
+      "overlap_rule": "max(L1 Cache, L2, DDR, Shared service cost)"
+    },
+    "formula": {
+      "l2_read_input": "tma_bypass + ordinary_read * (1 - l1_hit_rate)",
+      "ddr_read": "l2_read_input * (1 - l2_hit_rate)",
+      "ddr_total": "ddr_read + writeback_reaching_ddr"
+    }
+  },
+  "latency_with_memory_hierarchy_us": 7.03,
+  "memory_field_source": "S5000 memory_hierarchy_prediction; utilization uses physical peak bandwidth and latency_with_memory_hierarchy_us",
+  "transfer_anomaly_analysis": {
+    "status": "available",
+    "overall_status": "normal",
+    "analysis_scope": "tile_pipeline_and_hardware_model",
+    "input_dependency": "operator shape/tile/pipeline and S5000 profile only",
+    "summary": {
+      "anomaly_count": 0,
+      "warning_count": 0,
+      "normal_count": 8
+    },
+    "findings": [
+      {
+        "rule_id": "excess_l1_downstream_read",
+        "path": "ordinary_global->l1->l2",
+        "status": "normal",
+        "severity": "info",
+        "predicted": {
+          "downstream_over_eligible": 1.0
+        },
+        "model_reference": {
+          "maximum_ratio": 1.0
+        },
+        "threshold": {
+          "anomaly_if_ratio_gt": 1.05
+        },
+        "reason": "L1 downstream traffic is consistent with eligible ordinary-load traffic",
+        "value_kind": "model_estimate"
+      },
+      {
+        "rule_id": "cross_level_read_conservation",
+        "path": "l1/tma->l2",
+        "status": "normal",
+        "severity": "info",
+        "predicted": {
+          "l2_input_bytes": 8388608,
+          "residual_bytes": 0
+        },
+        "model_reference": {
+          "l1_downstream_plus_bypass_bytes": 8388608
+        },
+        "threshold": {
+          "absolute_or_relative_tolerance": "max(64 B, 5%)"
+        },
+        "reason": "cross-level read traffic is conserved by the model",
+        "value_kind": "model_estimate"
+      },
+      {
+        "rule_id": "excess_ddr_read",
+        "path": "l2->ddr",
+        "status": "normal",
+        "severity": "info",
+        "predicted": {
+          "ddr_read_over_l2_input": 0.0025
+        },
+        "model_reference": {
+          "maximum_ratio": 1.0
+        },
+        "threshold": {
+          "anomaly_if_ratio_gt": 1.05
+        },
+        "reason": "DDR read does not exceed predicted L2 input",
+        "value_kind": "model_estimate"
+      },
+      {
+        "rule_id": "logical_transfer_amplification",
+        "path": "global/tma->cache/shared",
+        "status": "normal",
+        "severity": "info",
+        "predicted": {
+          "logical_source_read_bytes": 8388608,
+          "minimum_useful_read_bytes": 8388608,
+          "amplification_ratio": 1.0
+        },
+        "model_reference": {
+          "ideal_amplification_ratio": 1.0
+        },
+        "threshold": {
+          "warning_if_gt": 4.0,
+          "anomaly_if_gt": 64.0
+        },
+        "reason": "logical cross-level read amplification is within the model threshold",
+        "value_kind": "model_estimate"
+      },
+      {
+        "rule_id": "transfer_service_pressure",
+        "path": "l1_cache",
+        "status": "normal",
+        "severity": "info",
+        "predicted": {
+          "service_cost_us": 2.4047,
+          "pressure_pct": 34.206
+        },
+        "model_reference": {
+          "report_latency_us": 7.03
+        },
+        "threshold": {
+          "warning_pct": 85.0,
+          "anomaly_pct": 105.0
+        },
+        "reason": "transfer service pressure is below the warning threshold",
+        "value_kind": "model_estimate"
+      },
+      {
+        "rule_id": "transfer_service_pressure",
+        "path": "l2",
+        "status": "normal",
+        "severity": "info",
+        "predicted": {
+          "service_cost_us": 5.1328,
+          "pressure_pct": 73.013
+        },
+        "model_reference": {
+          "report_latency_us": 7.03
+        },
+        "threshold": {
+          "warning_pct": 85.0,
+          "anomaly_pct": 105.0
+        },
+        "reason": "transfer service pressure is below the warning threshold",
+        "value_kind": "model_estimate"
+      },
+      {
+        "rule_id": "transfer_service_pressure",
+        "path": "ddr",
+        "status": "normal",
+        "severity": "info",
+        "predicted": {
+          "service_cost_us": 0.015,
+          "pressure_pct": 0.213
+        },
+        "model_reference": {
+          "report_latency_us": 7.03
+        },
+        "threshold": {
+          "warning_pct": 85.0,
+          "anomaly_pct": 105.0
+        },
+        "reason": "transfer service pressure is below the warning threshold",
+        "value_kind": "model_estimate"
+      },
+      {
+        "rule_id": "transfer_service_pressure",
+        "path": "shared_memory",
+        "status": "normal",
+        "severity": "info",
+        "predicted": {
+          "service_cost_us": 0.0,
+          "pressure_pct": 0.0
+        },
+        "model_reference": {
+          "report_latency_us": 7.03
+        },
+        "threshold": {
+          "warning_pct": 85.0,
+          "anomaly_pct": 105.0
+        },
+        "reason": "transfer service pressure is below the warning threshold",
+        "value_kind": "model_estimate"
+      }
+    ]
+  },
+  "arch": "S5000",
+  "core_freq_ghz": 1.5,
+  "sm_count": 60
+}

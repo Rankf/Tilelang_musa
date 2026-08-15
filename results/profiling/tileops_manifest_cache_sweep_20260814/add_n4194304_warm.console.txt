@@ -1,0 +1,3 @@
+==PROF== '/root/s5000-calibration/scripts/run_compiler_info_elementwise_mcu_app.sh' started, pid:39611  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+==PROF== Profiling "0:0:main_kernel" - 0 (1/1): Application replay pass 0 

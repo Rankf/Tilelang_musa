@@ -1,0 +1,46 @@
+==PROF== '/root/s5000-calibration/build/p9_l1/operator_path_probe' started, pid:60676  
+==PROF== Profiling "0:0:vector_relu_probe(float4 const*, float4*, unsigned long)" - 0 (1/1): Application replay pass 0 
+kernel=vector_relu_probe,op=relu,elements=1048576,grid=1024,threads=256,samples=5,latency_us=3051.359892,ordinary_read_bytes=4194304,ordinary_write_bytes=4194304,tma_read_bytes=0,shared_bytes=0,effective_gb_s=2.749138,correctness=pass
+==PROF== '/root/s5000-calibration/build/p9_l1/operator_path_probe' exit, exit code(0)  
+==PROF== Disconnected from process 60676 
+==PROF== '/root/s5000-calibration/build/p9_l1/operator_path_probe' started, pid:60687  
+==PROF== Profiling "0:0:vector_relu_probe(float4 const*, float4*, unsigned long)" - 0 (1/1): Application replay pass 1 
+kernel=vector_relu_probe,op=relu,elements=1048576,grid=1024,threads=256,samples=5,latency_us=157.560006,ordinary_read_bytes=4194304,ordinary_write_bytes=4194304,tma_read_bytes=0,shared_bytes=0,effective_gb_s=53.240719,correctness=pass
+==PROF== '/root/s5000-calibration/build/p9_l1/operator_path_probe' exit, exit code(0)  
+==PROF== Disconnected from process 60687 
+==PROF== '/root/s5000-calibration/build/p9_l1/operator_path_probe' started, pid:60698  
+==PROF== Profiling "0:0:vector_relu_probe(float4 const*, float4*, unsigned long)" - 0 (1/1): Application replay pass 2 
+kernel=vector_relu_probe,op=relu,elements=1048576,grid=1024,threads=256,samples=5,latency_us=135.959998,ordinary_read_bytes=4194304,ordinary_write_bytes=4194304,tma_read_bytes=0,shared_bytes=0,effective_gb_s=61.699089,correctness=pass
+==PROF== '/root/s5000-calibration/build/p9_l1/operator_path_probe' exit, exit code(0)  
+==PROF== Disconnected from process 60698 
+==PROF== '/root/s5000-calibration/build/p9_l1/operator_path_probe' started, pid:60709  
+==PROF== Profiling "0:0:vector_relu_probe(float4 const*, float4*, unsigned long)" - 0 (1/1): Application replay pass 3 
+kernel=vector_relu_probe,op=relu,elements=1048576,grid=1024,threads=256,samples=5,latency_us=171.959996,ordinary_read_bytes=4194304,ordinary_write_bytes=4194304,tma_read_bytes=0,shared_bytes=0,effective_gb_s=48.782323,correctness=pass
+==PROF== '/root/s5000-calibration/build/p9_l1/operator_path_probe' exit, exit code(0)  
+==PROF== Disconnected from process 60709 
+==PROF== '/root/s5000-calibration/build/p9_l1/operator_path_probe' started, pid:60720  
+==PROF== Profiling "0:0:vector_relu_probe(float4 const*, float4*, unsigned long)" - 0 (1/1): Application replay pass 4 
+kernel=vector_relu_probe,op=relu,elements=1048576,grid=1024,threads=256,samples=5,latency_us=134.120002,ordinary_read_bytes=4194304,ordinary_write_bytes=4194304,tma_read_bytes=0,shared_bytes=0,effective_gb_s=62.545540,correctness=pass
+==PROF== '/root/s5000-calibration/build/p9_l1/operator_path_probe' exit, exit code(0)  
+==PROF== Disconnected from process 60720 
+==PROF== Capture finished. Path is "/root/s5000-calibration/results/profiling/l1_operator_validation_20260811/relu_1m.mcu-rep"  
+[60676] operator_path_probe@436412c3fa89 
+  20 - vector_relu_probe(float4 const*, float4*, unsigned long) (1024, 1, 1)x(256, 1, 1), Context 0, Stream 0, Device 0 
+    Section: Command line profiler metrics 
+    ----------------------------------------------- ----------- -------------- 
+    Metric Name                                     Metric Unit   Metric Value 
+    ----------------------------------------------- ----------- -------------- 
+    gpu__time_duration.max                                   ns   11461.714286 
+    l1__load_requests.sum                               request  131312.000000 
+    l1__store_requests.sum                              request  131072.000000 
+    l1__downstream_read_bytes.sum                         bytes 4198144.000000 
+    l1__downstream_write_bytes.sum                        bytes 4197152.000000 
+    l1__sector_hit_rate.pct                                   %      49.035535 
+    l1__throughput.avg.pct_of_peak_sustained_active           %      21.910402 
+    l2pu__sector_hit_rate.pct                                 %      24.778717 
+    l2pu__tme_read_l2_byte.avg                                        0.000000 
+    ddr__read_bytes.sum                                   bytes   11264.000000 
+    ddr__write_bytes.sum                                  bytes   66464.000000 
+    ----------------------------------------------- ----------- -------------- 
+ 
+ 

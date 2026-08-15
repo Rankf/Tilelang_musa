@@ -1,0 +1,2 @@
+4406f4cb6a07f3a4e9fb016680be1931fcab71b4d408e2e9b2d400cb803cacbc  /root/s5000-calibration/musa_smoke.mu
+155f5b0d23282ba646ed451b0504c65a51463247f0ada518eec2a555d14e5b95  /root/s5000-calibration/results/derived/p0_musa_smoke

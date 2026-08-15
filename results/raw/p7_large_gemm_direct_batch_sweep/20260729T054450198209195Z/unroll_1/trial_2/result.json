@@ -1,0 +1,43 @@
+{
+  "case_id": "p7_fp16_gemm_1536x1024x1536",
+  "trial": 2,
+  "compile": "pass",
+  "correctness": "pass",
+  "status": "pass",
+  "failure_stage": "",
+  "error": "",
+  "timing_method": "graph-free MUSA event batch",
+  "dynamic_shared_bytes": 16384,
+  "kernel_global_symbol": "main_kernel",
+  "batch_unroll": 1,
+  "samples": [
+    45.40000110864639,
+    44.920001178979874,
+    45.75999826192856,
+    44.600002467632294,
+    44.79999840259552,
+    46.00000008940697,
+    45.32000049948692,
+    46.23999819159508,
+    45.40000110864639,
+    45.6400029361248
+  ],
+  "latency_us_median": 45.40000110864639,
+  "latency_us_p10": 44.7799988090992,
+  "latency_us_p90": 46.02399989962578,
+  "max_latency_us": 46.23999819159508,
+  "relative_span": 0.027400904408560946,
+  "max_over_median": 1.0185021379391268,
+  "profiler_self_device_us": 37.93127999999999,
+  "batch_profiler_ratio_delta": 0.1969013729208824,
+  "effective_tops": 106.42815176230867,
+  "source_sha256": "9ace2f6f78aed08ced8f393797da60e524f08afc89c1ca4bd5c587f9022d33ff",
+  "source_identical_expected": "9ace2f6f78aed08ced8f393797da60e524f08afc89c1ca4bd5c587f9022d33ff",
+  "profiler_events": [
+    [
+      "main_kernel",
+      50,
+      1896.5639999999994
+    ]
+  ]
+}

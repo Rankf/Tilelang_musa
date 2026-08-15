@@ -1,0 +1,62 @@
+{
+  "schema_version": "tilesight/runtime-comparison-v1",
+  "case": "S5000 FP16 GEMM 4096^3",
+  "identity": {
+    "compiler_info_compilation_id": "compilation_c8e7929ca5e150e7",
+    "same_compiler_and_runtime_kernel_source": true
+  },
+  "model": {
+    "value_kind": "model_predicted",
+    "latency_us": 994.9412371814676,
+    "throughput_tflops": 138.13775963427324,
+    "l2_util_pct": 30.582136345685406,
+    "ddr_util_pct": 9.687224755939749,
+    "l2_hit_rate_pct": 92.8189669672179,
+    "shared_bytes": 65536
+  },
+  "musa_event": {
+    "trials": 3,
+    "samples_per_trial": 40,
+    "cross_trial_median_us": 977.7199923992157,
+    "median_us": 977.7199923992157,
+    "trial_medians_us": [
+      1009.2999935150146,
+      976.7400026321411,
+      977.7199923992157
+    ],
+    "cross_trial_relative_span": 0.033301958777558545,
+    "effective_tflops": 140.5708736043539
+  },
+  "mcu": {
+    "value_kind": "runtime_measured_hardware_counter",
+    "report": "/root/s5000-calibration/results/profiling/compiler_info_tilesight_runtime_20260814/gemm_4096_fresh.mcu-rep",
+    "kernel": "gemm_4096_kernel",
+    "duration_us_displayed": 1080.0,
+    "l2_cache_throughput_pct": 29.65,
+    "ddr_throughput_pct": 7.68,
+    "l2_cache_hit_rate_pct": 90.87,
+    "grid_size": 1024,
+    "block_size": 256,
+    "dynamic_shared_memory_bytes": 65536,
+    "waves_per_mp": 1.42,
+    "note": "Compute/Shared/waves definitions are not directly comparable to TileSight fields",
+    "normalized_kernel_symbol": "main_kernel",
+    "normalized_kernel_source_sha256": "f20c6e4c77c0adfcfce0603cf405113e0b9f50ab0c12e955747c75509151fad7",
+    "normalized_kernel_source_matches_compiler_info": true
+  },
+  "comparison": {
+    "model_vs_event_latency_signed_pct": 1.7613677654266802,
+    "model_vs_event_latency_ape_pct": 1.7613677654266802,
+    "model_vs_event_throughput_signed_pct": -1.7308805926103954,
+    "model_vs_mcu_l2_throughput_percentage_points": 0.9321363456854073,
+    "model_vs_mcu_l2_hit_percentage_points": 1.948966967217899,
+    "model_vs_mcu_ddr_throughput_percentage_points": 2.007224755939749
+  },
+  "comparability": {
+    "latency": "directly_comparable_to_musa_event",
+    "l2_throughput": "approximately_comparable_same_peak_percentage_convention",
+    "l2_hit_rate": "approximately_comparable_default_MCU_section",
+    "ddr_throughput": "requires_traffic_and_denominator_audit",
+    "compute_shared_waves": "not_directly_comparable"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "phase": "P7.1",
+  "case_id": "p7_1_fp16_gemm_1536x1024x1536",
+  "variant": "C_no_warp_specialized",
+  "trial": 1,
+  "compile": "pass",
+  "correctness": "not_run",
+  "status": "source_contract_failed",
+  "failure_stage": "generated_source_contract",
+  "error": "",
+  "timing_method": "graph-free MUSA Event batch; synchronize each batch; no graph/profiler",
+  "metadata": {
+    "config_sha256": "dfac0db06627d4356408b2fd42d517d7e5bd8810cb0819f3588d022a494dc6ca",
+    "harness_sha256": "a5f9e10742f70d9938f6606611c6e654c25b6c6d1a83f339841268edd2f63b5a",
+    "tilelang_commit": "4d666968a005846314e9a84d8ff121c5dbffa9ee"
+  },
+  "source_sha256": "c608826da8e43e6abd3cb1e18ea4d50cadf6a62dbfcc00e1daf0f041a19003b5",
+  "source_features": {
+    "tma": false,
+    "descriptor_prefetch": false,
+    "warp_specialized": false,
+    "async_barrier": false,
+    "launch_threads": 128
+  },
+  "pass_configs": {
+    "tl.enable_musa_tma_prefetch": true,
+    "tl.disable_warp_specialized": true
+  },
+  "source_contract_errors": {
+    "tma": {
+      "expected": true,
+      "observed": false
+    },
+    "descriptor_prefetch": {
+      "expected": true,
+      "observed": false
+    }
+  }
+}

@@ -1,0 +1,13 @@
+case_id,block_threads,dynamic_shared_bytes,max_threads_per_block,static_shared_bytes,local_bytes_per_thread,registers_per_thread,active_cta_per_mp,status
+tl_block_64,64,0,1024,0,0,56,34,pass
+tl_block_128,128,0,1024,0,0,56,17,pass
+tl_block_256,256,0,1024,0,0,56,8,pass
+tl_block_384,384,0,1024,0,0,56,5,pass
+tl_block_512,512,0,1024,0,0,56,4,pass
+tl_wave_1,256,0,1024,0,0,39,11,pass
+tl_wave_719,256,0,1024,0,0,56,8,pass
+tl_wave_720,256,0,1024,0,0,56,8,pass
+tl_wave_721,256,0,1024,0,0,56,8,pass
+tl_wave_1439,256,0,1024,0,0,56,8,pass
+tl_wave_1440,256,0,1024,0,0,56,8,pass
+tl_wave_1441,256,0,1024,0,0,56,8,pass

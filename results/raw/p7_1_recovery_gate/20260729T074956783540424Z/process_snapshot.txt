@@ -1,0 +1,19 @@
+    PID    PPID STAT     ELAPSED CMD
+      1       0 Ss      06:32:37 /bin/bash /usr/local/bin/entrypoint.sh
+     46       1 S       06:32:36 bash /tmp/container_init_sugon.sh
+    153      46 S       06:32:16 /usr/bin/python /usr/local/bin/supervisord -n
+    355     153 S       06:32:15 /bin/bash /usr/local/bin/start_jupyter.sh
+    356     153 S       06:32:15 sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups
+    363     355 S       06:32:14 /usr/bin/python /usr/local/bin/jupyter-lab --notebook-dir=/data/ --allow-root --port 3000 --ip 0.0.0.0 --NotebookApp.base_url=/38080/vm-JSjOrGgsmQpIX5y0 --NotebookApp.allow_origin=*
+    378     356 Ss      06:32:12 sshd: root
+    490       1 Sl      06:32:06 node /usr/local/bin/codex -c features.code_mode_host=true app-server --listen unix://
+    501     490 Sl      06:32:06 /opt/node-v26.5.0-linux-x64/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex -c features.code_mode_host=true app-server --listen unix://
+    543     356 Ss      06:32:06 sshd: root@notty
+    547     543 Ss      06:32:06 /bin/sh -c printf '%b' '\205\066\072\002\145\155\230\302'; PATH="${CODEX_INSTALL_DIR:-$HOME/.local/bin}:$PATH"; export PATH; codex app-server proxy
+    558     547 Sl      06:32:06 node /usr/local/bin/codex app-server proxy
+    565     558 Sl      06:32:06 /opt/node-v26.5.0-linux-x64/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex app-server proxy
+    927     501 Sl      06:28:27 /opt/node-v26.5.0-linux-x64/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex-code-mode-host
+ 175814      46 S          00:01 sleep 1
+ 175817     501 Ss         00:01 /bin/bash -c bash scripts/p7_1_recovery_gate.sh; rc=$?; echo gate_exit=$rc; latest=$(ls -1dt results/raw/p7_1_recovery_gate/* | head -1); echo gate_raw=$latest; cat "$latest/gate_status.json"; ps -eo pid,stat,etime,cmd | rg 'validate_mp31_dense_matrix|p7_3_gemm_development' || true; mthreads-gmi -q --json -i 0 | python3 -c 'import json,sys; x=json.load(sys.stdin)["GPU"][0]; print("used",x["FB Memory Usage"]["Used"],"gpu",x["Utilization"]["Gpu"],"power",x["Power Readings"]["Power Draw "])'
+ 175818  175817 S          00:01 bash scripts/p7_1_recovery_gate.sh
+ 176109  175818 R          00:00 ps -eo pid,ppid,stat,etime,cmd

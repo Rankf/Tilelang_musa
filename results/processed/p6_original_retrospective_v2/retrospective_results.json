@@ -1,0 +1,47 @@
+{
+  "kind": "retrospective only; original P6 values were observed before P5 v2 development and are not an independent acceptance test",
+  "model_sha256": "b94296eb50b904b0e34b80d79535887ad7932b7b08f57fe736c609eb48caa9be",
+  "source_original_p6": "/root/s5000-calibration/results/processed/p6_holdout/holdout_results.json",
+  "results": [
+    {
+      "case_id": "holdout_fp16_768x1280x1024",
+      "family": "gemm",
+      "actual_latency_us": 19.74720060825348,
+      "predicted_latency_us": 21.019095792651235,
+      "signed_error_us": 1.2718951843977564,
+      "absolute_percentage_error": 6.440888557470559,
+      "prediction_status": "predicted",
+      "prediction_json": "{\"prediction\": {\"features\": {\"bias\": 1.0, \"grid_cta\": 240, \"ops_giga\": 2.01326592, \"ops_giga_per_grid_cta\": 0.008388607999999999}, \"formula\": \"bias + ops_giga + ops_giga_per_grid_cta\", \"predicted_latency_us\": 21.019095792651235}, \"status\": \"predicted\"}"
+    },
+    {
+      "case_id": "holdout_fused_exp_add_16m",
+      "family": "fused_exp_add",
+      "actual_latency_us": 143.87019634246826,
+      "predicted_latency_us": 143.0079172171798,
+      "signed_error_us": -0.8622791252884667,
+      "absolute_percentage_error": 0.5993452064497751,
+      "prediction_status": "predicted",
+      "prediction_json": "{\"prediction\": {\"features\": {\"N_million\": 16.777216, \"bias\": 1.0}, \"formula\": \"bias + N_million\", \"predicted_latency_us\": 143.0079172171798}, \"status\": \"predicted\"}"
+    },
+    {
+      "case_id": "holdout_reduce_4096x512",
+      "family": "reduce_sum",
+      "actual_latency_us": 53.28380107879639,
+      "predicted_latency_us": 49.20541751006294,
+      "signed_error_us": -4.07838356873345,
+      "absolute_percentage_error": 7.654077761273658,
+      "prediction_status": "predicted",
+      "prediction_json": "{\"prediction\": {\"features\": {\"bias\": 1.0, \"cta_million\": 1.0, \"input_million\": 2.097152}, \"formula\": \"bias + input_million + cta_million\", \"predicted_latency_us\": 49.20541751006294}, \"status\": \"predicted\"}"
+    },
+    {
+      "case_id": "holdout_stride3_16m",
+      "family": "p3_global",
+      "actual_latency_us": 26.68476838331956,
+      "predicted_latency_us": 28.55116518990443,
+      "signed_error_us": 1.86639680658487,
+      "absolute_percentage_error": 6.994240233883908,
+      "prediction_status": "predicted",
+      "prediction_json": "{\"prediction\": {\"bracket\": [2, 4], \"effective_rate_GBps\": 1175.2386207994307, \"formula\": \"linear effective-bandwidth interpolation in log2(stride), then payload/rate\", \"predicted_latency_us\": 28.55116518990443}, \"status\": \"predicted\"}"
+    }
+  ]
+}

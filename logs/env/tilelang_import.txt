@@ -1,0 +1,8 @@
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+tilelang_path=/root/s5000-calibration/tilelang-musa/tilelang/__init__.py
+tilelang_version=0.1.10+musa.1.git4d666968
+torch=2.7.1a0+gite2d141d
+torch_musa=2.7.1+5ee0a64
+musa_available=True
+musa_capability=(3, 1)

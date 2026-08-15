@@ -1,0 +1,9 @@
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+Traceback (most recent call last):
+  File "/root/s5000-calibration/benchmarks/p3_tilelang_global_memory.py", line 325, in <module>
+    main()
+  File "/root/s5000-calibration/benchmarks/p3_tilelang_global_memory.py", line 266, in main
+    row = {"run_id": run_id, "case_id": case["id"], "op": case["op"], "dtype": "float32", "case_config_json": json.dumps(case, sort_keys=True), "status": "compile_failed", "correctness": "not_run", "error": "", "logical_payload_bytes": logical_bytes(case), "timing_method": "MUSAGraph replay with profiler self-device cross-check", "allocation_mode": "preallocated"}
+  File "/root/s5000-calibration/benchmarks/p3_tilelang_global_memory.py", line 40, in logical_bytes
+    "shared_read": 4 * case["grid_blocks"] * case["threads"] * case["cols"] * case["repeats"],
+KeyError: 'grid_blocks'

@@ -1,0 +1,36 @@
+{
+  "case_id": "p7_fp16_gemm_1536x1024x1536",
+  "graph_unroll": 20,
+  "trial": 3,
+  "status": "pass",
+  "correctness": "pass",
+  "failure_stage": "",
+  "error": "",
+  "source_sha256": "9ace2f6f78aed08ced8f393797da60e524f08afc89c1ca4bd5c587f9022d33ff",
+  "compile": "pass",
+  "direct_event_us": 40.16000032424927,
+  "direct_event": "pass",
+  "graph_capture": "pass",
+  "graph_capture_synchronize": "pass",
+  "graph_replay": "pass",
+  "graph_replay_samples_us": [
+    47.530001401901245,
+    44.54599916934967,
+    45.32400071620941,
+    45.72400152683258,
+    45.00199854373932
+  ],
+  "graph_replay_us_median": 45.32400071620941,
+  "graph_replay_us_min": 44.54599916934967,
+  "graph_replay_us_max": 47.530001401901245,
+  "metadata": {
+    "config_sha256": "781e91ac05a82ce2e0a26976f8e4a7a61e54a135b2b44d8f3f9cce39733b94e6",
+    "harness_sha256": "41a667200c621ef0e76d3181c216ea9f50adc8f925b339501d13b562af310207",
+    "tilelang_commit": "4d666968a005846314e9a84d8ff121c5dbffa9ee",
+    "mcc_version": "mcc version 4.3.5",
+    "musa_capability": [
+      3,
+      1
+    ]
+  }
+}

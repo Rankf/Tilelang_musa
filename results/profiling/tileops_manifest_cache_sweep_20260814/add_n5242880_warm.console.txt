@@ -1,0 +1,7 @@
+==ERROR== No mtgpu device found under /dev/  
+==PROF== '/root/s5000-calibration/scripts/run_compiler_info_elementwise_mcu_app.sh' started, pid:36345  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+No mtgpu device found under /dev//home/jenkins/workspace/build.msight-compute@7/msight-compute/module/injection/mupti_injection_global_data.cpp:154: error: function profiler_target_->initContext(ctx_cfg) failed with error MUPTI_ERROR_INVALID_DEVICE.
+==ERROR== The application returned an error code (1).  
+==PROF== Capture finished. Path is "/root/s5000-calibration/results/profiling/tileops_manifest_cache_sweep_20260814/add_n5242880_warm.mcu-rep"  
+==WARNING== No kernels were profiled.  

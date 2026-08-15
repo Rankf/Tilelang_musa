@@ -1,0 +1,91 @@
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' started, pid:20284  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+==PROF== Profiling "0:0:gemm_4096_kernel" - 0 (1/1): Application replay pass 0 
+Compiling kernel...
+Kernel compiled
+
+实测延迟: 28570.5 us
+实测吞吐: 4.8 TFLOP/s
+
+=== DeepStack 预测 ===
+预测延迟: 967.3 us
+预测吞吐: 142.09 TFLOP/s
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' exit, exit code(0)  
+==PROF== Disconnected from process 20284 
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' started, pid:20367  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+==PROF== Profiling "0:0:gemm_4096_kernel" - 0 (1/1): Application replay pass 1 
+Compiling kernel...
+Kernel compiled
+
+实测延迟: 22223.6 us
+实测吞吐: 6.2 TFLOP/s
+
+=== DeepStack 预测 ===
+预测延迟: 967.3 us
+预测吞吐: 142.09 TFLOP/s
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' exit, exit code(0)  
+==PROF== Disconnected from process 20367 
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' started, pid:20455  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+==PROF== Profiling "0:0:gemm_4096_kernel" - 0 (1/1): Application replay pass 2 
+Compiling kernel...
+Kernel compiled
+
+实测延迟: 20563.5 us
+实测吞吐: 6.7 TFLOP/s
+
+=== DeepStack 预测 ===
+预测延迟: 967.3 us
+预测吞吐: 142.09 TFLOP/s
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' exit, exit code(0)  
+==PROF== Disconnected from process 20455 
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' started, pid:20537  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+==PROF== Profiling "0:0:gemm_4096_kernel" - 0 (1/1): Application replay pass 3 
+Compiling kernel...
+Kernel compiled
+
+实测延迟: 22029.8 us
+实测吞吐: 6.2 TFLOP/s
+
+=== DeepStack 预测 ===
+预测延迟: 967.3 us
+预测吞吐: 142.09 TFLOP/s
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' exit, exit code(0)  
+==PROF== Disconnected from process 20537 
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' started, pid:20620  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+==PROF== Profiling "0:0:gemm_4096_kernel" - 0 (1/1): Application replay pass 4 
+Compiling kernel...
+Kernel compiled
+
+实测延迟: 21602.5 us
+实测吞吐: 6.4 TFLOP/s
+
+=== DeepStack 预测 ===
+预测延迟: 967.3 us
+预测吞吐: 142.09 TFLOP/s
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' exit, exit code(0)  
+==PROF== Disconnected from process 20620 
+==PROF== Capture finished. Path is "/root/s5000-calibration/results/profiling/gemm_4096_20260811/gemm_4096_mcu_detailed.mcu-rep"  
+[20284] python3.10@436412c3fa89 
+  137 - gemm_4096_kernel (32, 32, 1)x(256, 1, 1), Context 0, Stream 0, Device 0 
+    Section: Command line profiler metrics 
+    ------------------------------------------------------------------------------- ----------- ---------------------- 
+    Metric Name                                                                     Metric Unit           Metric Value 
+    ------------------------------------------------------------------------------- ----------- ---------------------- 
+    mp__tc_fp32_throughput.avg                                                                    2081259691722.785889 
+    mp__tc_fp32_peak_throughput.avg                                                             229376000000000.000000 
+    ddr__bytes.sum.per_second                                                                      103080029055.182373 
+    ddr__read_bytes.sum                                                                   bytes        35337472.000000 
+    ddr__write_bytes.sum                                                                  bytes        74784160.000000 
+    ddr__throughput.avg.pct_of_peak_sustained_elapsed                                         %               6.710939 
+    l2pu__cache_bandwidth.avg                                                                     7168000000000.000000 
+    l2pu__sector_hit_rate.pct                                                                 %              35.885426 
+    l2pu__throughput.avg.pct_of_peak_sustained_elapsed                                        %             125.436287 
+    mp__data_pipe_lsu_wavefronts_mem_shared_op_ld.max.pct_of_peak_sustained_elapsed           %              17.186005 
+    mp__data_pipe_lsu_wavefronts_mem_shared_op_st.max.pct_of_peak_sustained_elapsed           %               8.087462 
+    ------------------------------------------------------------------------------- ----------- ---------------------- 
+ 
+ 

@@ -1,0 +1,4 @@
+torch=2.7.1a0+gite2d141d
+torch_path=/usr/local/lib/python3.10/dist-packages/torch/__init__.py
+torch_musa=2.7.1+5ee0a64
+torch_musa_path=/usr/local/lib/python3.10/dist-packages/torch_musa/__init__.py

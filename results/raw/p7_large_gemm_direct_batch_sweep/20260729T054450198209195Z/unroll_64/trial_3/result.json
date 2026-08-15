@@ -1,0 +1,14 @@
+{
+  "case_id": "p7_fp16_gemm_1536x1024x1536",
+  "trial": 3,
+  "compile": "pass",
+  "correctness": "pass",
+  "status": "runtime_failed",
+  "failure_stage": "direct_batch_timing_or_profiler",
+  "error": "Traceback (most recent call last): |   File \"/root/s5000-calibration/benchmarks/p7_large_gemm_direct_batch_diagnostic.py\", line 36, in main |     end.record(); torch.musa.synchronize(); vals.append(start.elapsed_time(end)*1000/batch_unroll) |   File \"/usr/local/lib/python3.10/dist-packages/torch_musa/core/device.py\", line 141, in synchronize |     return torch_musa._MUSAC._musa_synchronize() | RuntimeError: MUSA error: out of bound | MUSA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect. | For debugging consider passing MUSA_LAUNCH_BLOCKING=1. |  | ",
+  "timing_method": "graph-free MUSA event batch",
+  "dynamic_shared_bytes": 16384,
+  "kernel_global_symbol": "main_kernel",
+  "batch_unroll": 64,
+  "samples_completed": 2
+}

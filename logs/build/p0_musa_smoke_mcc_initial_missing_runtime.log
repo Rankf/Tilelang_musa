@@ -1,0 +1,7 @@
+/usr/bin/ld: /tmp/musa_smoke-3efe00.o: in function `main':
+musa_smoke.mu:(.text+0x13): undefined reference to `musaGetDeviceCount'
+clang-14: error: linker command failed with exit code 1 (use -v to see invocation)
+
+Captured during P0 on 2026-07-28 from the initial command without
+-L/usr/local/musa-4.3.5/lib -lmusart. The corrected command is in
+p0_musa_smoke_command.txt.

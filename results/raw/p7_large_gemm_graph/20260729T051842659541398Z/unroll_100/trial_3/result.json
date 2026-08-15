@@ -1,0 +1,15 @@
+{
+  "case_id": "p7_fp16_gemm_1536x1024x1536",
+  "graph_unroll": 100,
+  "trial": 3,
+  "status": "timeout_terminated",
+  "correctness": "not_run",
+  "failure_stage": "pre_compile_or_runtime_initialization_timeout",
+  "error": "P7 controller terminated only this child after it exceeded peer startup duration without TileLang compile output.",
+  "timeout_evidence": {
+    "pid": 106524,
+    "elapsed_seconds_before_termination": 180.0,
+    "rss_kib_before_termination": 5638504,
+    "threads_before_termination": 513
+  }
+}

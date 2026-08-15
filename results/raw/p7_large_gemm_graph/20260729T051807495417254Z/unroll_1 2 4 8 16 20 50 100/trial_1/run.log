@@ -1,0 +1,4 @@
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+usage: p7_large_gemm_graph_diagnostic.py [-h] --config CONFIG --unroll UNROLL
+                                         --trial TRIAL --output OUTPUT
+p7_large_gemm_graph_diagnostic.py: error: argument --unroll: invalid int value: '1 2 4 8 16 20 50 100'

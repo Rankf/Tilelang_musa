@@ -1,0 +1,15 @@
+{
+  "case_id": "p7_fp16_gemm_1536x1024x1536",
+  "trial": 1,
+  "controller_action": "timeout_terminated_after_runtime_failed_result",
+  "reason": "The benchmark had already written result.json with a Profiler-exit MUSA unknown-error failure, printed 'double free or corruption (!prev)', then remained CPU-active without a GPU process for 79 seconds.",
+  "process_evidence_before_termination": {
+    "python_pid": 134997,
+    "elapsed_seconds": 79,
+    "rss_kib": 3355964,
+    "threads": 322,
+    "cpu_percent": 36.3,
+    "gpu_processes": 0
+  },
+  "scope": "Only the stuck diagnostic Python child and its tee child are terminated; no calibration model or prior raw result is changed."
+}

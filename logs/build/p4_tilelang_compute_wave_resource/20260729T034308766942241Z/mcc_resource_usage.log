@@ -1,0 +1,8 @@
+[mtgpu as info] Compiling entry function 'fixed_grid_compute_kernel' for 'mp_31' 
+[mtgpu as info] Register usage(DWord = 4 Bytes): Temp 3, Attr 4, Shared 31, Coef 0, Slot 0, Internal 2
+[mtgpu as info] Shared memory: 0 Bytes
+[mtgpu as info] Local memory: 0 Bytes
+[mtgpu as info] Stack frame: 0 Bytes
+[mtgpu as info] Spill load: 0 Bytes
+[mtgpu as info] Spill store: 0 Bytes
+

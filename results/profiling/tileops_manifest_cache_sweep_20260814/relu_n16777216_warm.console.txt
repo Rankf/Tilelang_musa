@@ -1,0 +1,43 @@
+==PROF== '/root/s5000-calibration/scripts/run_compiler_info_elementwise_mcu_app.sh' started, pid:39161  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+==PROF== Profiling "0:0:main_kernel" - 0 (1/1): Application replay pass 0 
+2026-08-14 16:57:47  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `main` with `out_idx=None`
+2026-08-14 16:57:49  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `main`
+{"cache_condition": "warm_after_repeated_launches", "correctness": "pass", "dtype": "float32", "elements_per_block": 1024, "elements_per_thread": 4, "grid_size": 16384, "kernel_source_sha256": "1c2942a9a983d0707a11e11227380cf97ba72ce778933b777dba26120849e28c", "l2_eviction_bytes": null, "logical_read_bytes": 67108864, "logical_write_bytes": 67108864, "mcu_expected_skip": 5, "mode": "profile", "op": "relu", "schema_version": "s5000/elementwise-runtime-runner-v1", "shape": [16777216], "target_launches": 6, "threads": 256}
+==PROF== '/root/s5000-calibration/scripts/run_compiler_info_elementwise_mcu_app.sh' exit, exit code(0)  
+==PROF== Disconnected from process 39161 
+==PROF== '/root/s5000-calibration/scripts/run_compiler_info_elementwise_mcu_app.sh' started, pid:39298  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+==PROF== Profiling "0:0:main_kernel" - 0 (1/1): Application replay pass 1 
+{"cache_condition": "warm_after_repeated_launches", "correctness": "pass", "dtype": "float32", "elements_per_block": 1024, "elements_per_thread": 4, "grid_size": 16384, "kernel_source_sha256": "1c2942a9a983d0707a11e11227380cf97ba72ce778933b777dba26120849e28c", "l2_eviction_bytes": null, "logical_read_bytes": 67108864, "logical_write_bytes": 67108864, "mcu_expected_skip": 5, "mode": "profile", "op": "relu", "schema_version": "s5000/elementwise-runtime-runner-v1", "shape": [16777216], "target_launches": 6, "threads": 256}
+==PROF== '/root/s5000-calibration/scripts/run_compiler_info_elementwise_mcu_app.sh' exit, exit code(0)  
+==PROF== Disconnected from process 39298 
+==PROF== '/root/s5000-calibration/scripts/run_compiler_info_elementwise_mcu_app.sh' started, pid:39393  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+==PROF== Profiling "0:0:main_kernel" - 0 (1/1): Application replay pass 2 
+{"cache_condition": "warm_after_repeated_launches", "correctness": "pass", "dtype": "float32", "elements_per_block": 1024, "elements_per_thread": 4, "grid_size": 16384, "kernel_source_sha256": "1c2942a9a983d0707a11e11227380cf97ba72ce778933b777dba26120849e28c", "l2_eviction_bytes": null, "logical_read_bytes": 67108864, "logical_write_bytes": 67108864, "mcu_expected_skip": 5, "mode": "profile", "op": "relu", "schema_version": "s5000/elementwise-runtime-runner-v1", "shape": [16777216], "target_launches": 6, "threads": 256}
+==PROF== '/root/s5000-calibration/scripts/run_compiler_info_elementwise_mcu_app.sh' exit, exit code(0)  
+==PROF== Disconnected from process 39393 
+==PROF== '/root/s5000-calibration/scripts/run_compiler_info_elementwise_mcu_app.sh' started, pid:39488  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+==PROF== Profiling "0:0:main_kernel" - 0 (1/1): Application replay pass 3 
+{"cache_condition": "warm_after_repeated_launches", "correctness": "pass", "dtype": "float32", "elements_per_block": 1024, "elements_per_thread": 4, "grid_size": 16384, "kernel_source_sha256": "1c2942a9a983d0707a11e11227380cf97ba72ce778933b777dba26120849e28c", "l2_eviction_bytes": null, "logical_read_bytes": 67108864, "logical_write_bytes": 67108864, "mcu_expected_skip": 5, "mode": "profile", "op": "relu", "schema_version": "s5000/elementwise-runtime-runner-v1", "shape": [16777216], "target_launches": 6, "threads": 256}
+==PROF== '/root/s5000-calibration/scripts/run_compiler_info_elementwise_mcu_app.sh' exit, exit code(0)  
+==PROF== Disconnected from process 39488 
+==PROF== Capture finished. Path is "/root/s5000-calibration/results/profiling/tileops_manifest_cache_sweep_20260814/relu_n16777216_warm.mcu-rep"  
+[39161] python3.10@c82850fb110c 
+  86 - main_kernel (16384, 1, 1)x(256, 1, 1), Context 0, Stream 0, Device 0 
+    Section: Command line profiler metrics 
+    ------------------------------ ----------- --------------- 
+    Metric Name                    Metric Unit    Metric Value 
+    ------------------------------ ----------- --------------- 
+    gpu__time_duration.max                  ns   106353.142857 
+    l1__downstream_read_bytes.sum        bytes 67112768.000000 
+    l1__downstream_write_bytes.sum       bytes 67114496.000000 
+    l1__sector_hit_rate.pct                  %       49.997332 
+    l2pu__sector_hit_rate.pct                %       25.013007 
+    ddr__read_bytes.sum                  bytes 67131392.000000 
+    ddr__write_bytes.sum                 bytes 67427776.000000 
+    ------------------------------ ----------- --------------- 
+ 
+ 

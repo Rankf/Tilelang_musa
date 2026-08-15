@@ -1,0 +1,14 @@
+{
+  "phase": "P5.1-development",
+  "benchmark": "tilelang_compute_suite",
+  "purpose": "fused transfer refinement after development residual audit; excludes P6/P6-v2/P6-v3 conditions",
+  "warmup": 100,
+  "graph_unroll": 100,
+  "graph_samples": 30,
+  "profiler_repeats": 50,
+  "stability": {"max_relative_span": 0.15, "max_over_median": 2.0, "max_graph_profiler_ratio_delta": 0.25},
+  "cases": [
+    {"id":"refine_fused_exp_add_12m","op":"fused_exp_add","dtype":"float32","N":12582912,"threads":256,"vector":8},
+    {"id":"refine_fused_exp_add_20m","op":"fused_exp_add","dtype":"float32","N":20971520,"threads":256,"vector":8}
+  ]
+}

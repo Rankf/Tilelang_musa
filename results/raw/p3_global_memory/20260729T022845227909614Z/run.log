@@ -1,0 +1,76 @@
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+2026-07-29 10:28:49  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `shared_read` with `out_idx=[]`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p3_global_memory/20260729T022845227909614Z/tilelang_musa_kernel_0000.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p3_global_memory/20260729T022845227909614Z/tilelang_musa_kernel_0000.mu.cmd
+2026-07-29 10:28:51  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `shared_read`
+{"allocation_mode": "preallocated", "case_config_json": "{\"cache_condition\": \"warm\", \"cols\": 16, \"grid_blocks\": 4096, \"id\": \"shared_base_r0\", \"op\": \"shared_read\", \"pattern_stride\": 1, \"repeats\": 0, \"threads\": 128}", "case_id": "shared_base_r0", "cold_post_flush_latency_us_median": "", "cold_post_flush_samples": "[]", "correctness": "pass", "correctness_tolerance": "rtol=1e-4,atol=1e-5 (FP32 repeated accumulation)", "dtype": "float32", "error": "", "estimate_direct_event_us": 28.79599928855896, "generated_launch_threads": "128", "graph_profiler_ratio_delta": 0.013261986173509932, "graph_unroll": 278, "logical_effective_GBps": 0.0, "logical_payload_bytes": 0, "op": "shared_read", "profiler_repeats": 100, "profiler_self_device_us": 25.408039999999996, "run_id": "p3-20260729T022849Z-f9b6b5f7", "source_sha256": "9ea975b674d75ef3703268246f210ec90a0fe287338363e70e729cb5649cc888", "status": "measured", "timing_method": "MUSAGraph replay with profiler self-device cross-check", "warm_latency_us_median": 25.071078924824008, "warm_latency_us_p10": 25.03536759520606, "warm_latency_us_p90": 26.28351081189492, "warm_max_latency_us": 27.086043529373278, "warm_max_over_median": 1.0803700794286186, "warm_relative_span": 0.04978418441549464}
+2026-07-29 10:29:00  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `shared_read` with `out_idx=[]`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p3_global_memory/20260729T022845227909614Z/tilelang_musa_kernel_0001.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p3_global_memory/20260729T022845227909614Z/tilelang_musa_kernel_0001.mu.cmd
+2026-07-29 10:29:02  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `shared_read`
+{"allocation_mode": "preallocated", "case_config_json": "{\"cache_condition\": \"warm\", \"cols\": 16, \"grid_blocks\": 4096, \"id\": \"shared_seq_r32\", \"op\": \"shared_read\", \"pattern_stride\": 1, \"repeats\": 32, \"threads\": 128}", "case_id": "shared_seq_r32", "cold_post_flush_latency_us_median": "", "cold_post_flush_samples": "[]", "correctness": "pass", "correctness_tolerance": "rtol=1e-4,atol=1e-5 (FP32 repeated accumulation)", "dtype": "float32", "error": "", "estimate_direct_event_us": 45.99599838256836, "generated_launch_threads": "128", "graph_profiler_ratio_delta": 0.04284228315465599, "graph_unroll": 174, "logical_effective_GBps": 26407.21834923452, "logical_payload_bytes": 1073741824, "op": "shared_read", "profiler_repeats": 100, "profiler_self_device_us": 38.99048, "run_id": "p3-20260729T022849Z-f9b6b5f7", "source_sha256": "5eeee53eaff11e525d3e88a428b8c873be6a56185f2c68cff70cba371ee102fe", "status": "measured", "timing_method": "MUSAGraph replay with profiler self-device cross-check", "warm_latency_us_median": 40.66092118449595, "warm_latency_us_p10": 40.638621100063986, "warm_latency_us_p90": 44.47347103864297, "warm_max_latency_us": 45.783678690592446, "warm_max_over_median": 1.1259872466453074, "warm_relative_span": 0.09431291340347735}
+2026-07-29 10:29:03  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `shared_read` with `out_idx=[]`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p3_global_memory/20260729T022845227909614Z/tilelang_musa_kernel_0002.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p3_global_memory/20260729T022845227909614Z/tilelang_musa_kernel_0002.mu.cmd
+2026-07-29 10:29:05  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `shared_read`
+{"allocation_mode": "preallocated", "case_config_json": "{\"cache_condition\": \"warm\", \"cols\": 16, \"grid_blocks\": 4096, \"id\": \"shared_seq_r128\", \"op\": \"shared_read\", \"pattern_stride\": 1, \"repeats\": 128, \"threads\": 128}", "case_id": "shared_seq_r128", "cold_post_flush_latency_us_median": "", "cold_post_flush_samples": "[]", "correctness": "pass", "correctness_tolerance": "rtol=1e-4,atol=1e-5 (FP32 repeated accumulation)", "dtype": "float32", "error": "", "estimate_direct_event_us": 133.5960030555725, "generated_launch_threads": "128", "graph_profiler_ratio_delta": 0.026542550565291423, "graph_unroll": 60, "logical_effective_GBps": 35485.03848326185, "logical_payload_bytes": 4294967296, "op": "shared_read", "profiler_repeats": 90, "profiler_self_device_us": 117.90646666666674, "run_id": "p3-20260729T022849Z-f9b6b5f7", "source_sha256": "f73173fba776a1a37a0fd88c2c34ecd82e7df0a502f876e452b78154d05cb35d", "status": "measured", "timing_method": "MUSAGraph replay with profiler self-device cross-check", "warm_latency_us_median": 121.0360050201416, "warm_latency_us_p10": 120.89573542277019, "warm_latency_us_p90": 129.6185366312663, "warm_max_latency_us": 135.45333544413248, "warm_max_over_median": 1.119116046680421, "warm_relative_span": 0.07206782153000296}
+[10:29:05] /root/s5000-calibration/tilelang-musa/src/transform/verify_parallel_loop.cc:73: Warning: Data race detected: `acc(p,)`is written by multiple threads in loop (i, j), Example:
+  bx = 0
+  i = 1
+  i_OTHER_ = 0
+  j = 1
+  j_OTHER_ = 0
+  p = 0
+  r = 0
+  tx = 0
+If you believe this is a false positive, pass `PassKey.TL_DISABLE_DATA_RACE_CHECK` to pass key to disable this check.
+2026-07-29 10:29:05  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `shared_read_risk` with `out_idx=[]`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p3_global_memory/20260729T022845227909614Z/tilelang_musa_kernel_0003.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p3_global_memory/20260729T022845227909614Z/tilelang_musa_kernel_0003.mu.cmd
+2026-07-29 10:29:07  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `shared_read_risk`
+{"allocation_mode": "preallocated", "case_config_json": "{\"cache_condition\": \"warm\", \"cols\": 16, \"grid_blocks\": 4096, \"id\": \"shared_risk_stride2_r128\", \"op\": \"shared_read\", \"pattern_stride\": 2, \"repeats\": 128, \"threads\": 128}", "case_id": "shared_risk_stride2_r128", "cold_post_flush_latency_us_median": "", "cold_post_flush_samples": "[]", "correctness": "pass", "correctness_tolerance": "rtol=1e-4,atol=1e-5 (FP32 repeated accumulation)", "dtype": "float32", "error": "", "estimate_direct_event_us": 125.92400312423706, "generated_launch_threads": "128", "graph_profiler_ratio_delta": 0.02787569783285493, "graph_unroll": 64, "logical_effective_GBps": 37674.1200257903, "logical_payload_bytes": 4294967296, "op": "shared_read", "profiler_repeats": 95, "profiler_self_device_us": 110.91138947368424, "run_id": "p3-20260729T022849Z-f9b6b5f7", "source_sha256": "90f54f96937394f6d261dc0eb5925e0058c88ddc117d44a8d0362d5d3302856d", "status": "measured", "timing_method": "MUSAGraph replay with profiler self-device cross-check", "warm_latency_us_median": 114.00312185287476, "warm_latency_us_p10": 113.88899981975555, "warm_latency_us_p90": 122.61724770069122, "warm_max_latency_us": 127.75687873363495, "warm_max_over_median": 1.1206436863940439, "warm_relative_span": 0.07656148129171231}
+[10:29:07] /root/s5000-calibration/tilelang-musa/src/transform/verify_parallel_loop.cc:73: Warning: Data race detected: `acc(p,)`is written by multiple threads in loop (i, j), Example:
+  bx = 0
+  i = 1
+  i_OTHER_ = 0
+  j = 0
+  j_OTHER_ = 1
+  p = 0
+  r = 0
+  tx = 0
+If you believe this is a false positive, pass `PassKey.TL_DISABLE_DATA_RACE_CHECK` to pass key to disable this check.
+2026-07-29 10:29:07  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `shared_read_risk` with `out_idx=[]`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p3_global_memory/20260729T022845227909614Z/tilelang_musa_kernel_0004.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p3_global_memory/20260729T022845227909614Z/tilelang_musa_kernel_0004.mu.cmd
+2026-07-29 10:29:09  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `shared_read_risk`
+{"allocation_mode": "preallocated", "case_config_json": "{\"cache_condition\": \"warm\", \"cols\": 16, \"grid_blocks\": 4096, \"id\": \"shared_risk_stride4_r128\", \"op\": \"shared_read\", \"pattern_stride\": 4, \"repeats\": 128, \"threads\": 128}", "case_id": "shared_risk_stride4_r128", "cold_post_flush_latency_us_median": "", "cold_post_flush_samples": "[]", "correctness": "pass", "correctness_tolerance": "rtol=1e-4,atol=1e-5 (FP32 repeated accumulation)", "dtype": "float32", "error": "", "estimate_direct_event_us": 125.72799921035767, "generated_launch_threads": "128", "graph_profiler_ratio_delta": 0.026837444345302774, "graph_unroll": 64, "logical_effective_GBps": 37767.7072375207, "logical_payload_bytes": 4294967296, "op": "shared_read", "profiler_repeats": 95, "profiler_self_device_us": 110.74842105263163, "run_id": "p3-20260729T022849Z-f9b6b5f7", "source_sha256": "c127e2072aaccfac28bcd8a86e20f5cbafae58c6c0214f2d6afb6d9eeab699e4", "status": "measured", "timing_method": "MUSAGraph replay with profiler self-device cross-check", "warm_latency_us_median": 113.72062563896179, "warm_latency_us_p10": 113.63149881362915, "warm_latency_us_p90": 122.07862436771393, "warm_max_latency_us": 127.4193823337555, "warm_max_over_median": 1.120459737341617, "warm_relative_span": 0.07427962611551717}
+[10:29:09] /root/s5000-calibration/tilelang-musa/src/transform/verify_parallel_loop.cc:73: Warning: Data race detected: `acc(p,)`is written by multiple threads in loop (i, j), Example:
+  bx = 0
+  i = 0
+  i_OTHER_ = 1
+  j = 0
+  j_OTHER_ = 1
+  p = 0
+  r = 0
+  tx = 0
+If you believe this is a false positive, pass `PassKey.TL_DISABLE_DATA_RACE_CHECK` to pass key to disable this check.
+2026-07-29 10:29:09  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `shared_read_risk` with `out_idx=[]`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p3_global_memory/20260729T022845227909614Z/tilelang_musa_kernel_0005.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p3_global_memory/20260729T022845227909614Z/tilelang_musa_kernel_0005.mu.cmd
+2026-07-29 10:29:11  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `shared_read_risk`
+{"allocation_mode": "preallocated", "case_config_json": "{\"cache_condition\": \"warm\", \"cols\": 16, \"grid_blocks\": 4096, \"id\": \"shared_risk_stride8_r128\", \"op\": \"shared_read\", \"pattern_stride\": 8, \"repeats\": 128, \"threads\": 128}", "case_id": "shared_risk_stride8_r128", "cold_post_flush_latency_us_median": "", "cold_post_flush_samples": "[]", "correctness": "pass", "correctness_tolerance": "rtol=1e-4,atol=1e-5 (FP32 repeated accumulation)", "dtype": "float32", "error": "", "estimate_direct_event_us": 120.86000442504883, "generated_launch_threads": "128", "graph_profiler_ratio_delta": 0.02724214534615288, "graph_unroll": 66, "logical_effective_GBps": 39369.658520189005, "logical_payload_bytes": 4294967296, "op": "shared_read", "profiler_repeats": 99, "profiler_self_device_us": 106.20021212121218, "run_id": "p3-20260729T022849Z-f9b6b5f7", "source_sha256": "0cba4e6962c180afe05435799c35d956fa9b8d50be076aa82903b96e59ed94ea", "status": "measured", "timing_method": "MUSAGraph replay with profiler self-device cross-check", "warm_latency_us_median": 109.0933337356105, "warm_latency_us_p10": 109.02969909436776, "warm_latency_us_p90": 119.3907882228042, "warm_max_latency_us": 122.28182590369022, "warm_max_over_median": 1.120891824609946, "warm_relative_span": 0.09497453944845721}
+[10:29:11] /root/s5000-calibration/tilelang-musa/src/transform/verify_parallel_loop.cc:73: Warning: Data race detected: `acc(p,)`is written by multiple threads in loop (i, j), Example:
+  bx = 0
+  i = 0
+  i_OTHER_ = 1
+  j = 0
+  j_OTHER_ = 1
+  p = 0
+  r = 0
+  tx = 0
+If you believe this is a false positive, pass `PassKey.TL_DISABLE_DATA_RACE_CHECK` to pass key to disable this check.
+2026-07-29 10:29:11  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `shared_read_risk` with `out_idx=[]`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p3_global_memory/20260729T022845227909614Z/tilelang_musa_kernel_0006.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p3_global_memory/20260729T022845227909614Z/tilelang_musa_kernel_0006.mu.cmd
+2026-07-29 10:29:13  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `shared_read_risk`
+{"allocation_mode": "preallocated", "case_config_json": "{\"cache_condition\": \"warm\", \"cols\": 16, \"grid_blocks\": 4096, \"id\": \"shared_perm_stride15_r128\", \"op\": \"shared_read\", \"pattern_stride\": 15, \"repeats\": 128, \"threads\": 128}", "case_id": "shared_perm_stride15_r128", "cold_post_flush_latency_us_median": "", "cold_post_flush_samples": "[]", "correctness": "pass", "correctness_tolerance": "rtol=1e-4,atol=1e-5 (FP32 repeated accumulation)", "dtype": "float32", "error": "", "estimate_direct_event_us": 125.89600086212158, "generated_launch_threads": "128", "graph_profiler_ratio_delta": 0.026150184522187203, "graph_unroll": 64, "logical_effective_GBps": 37736.184853740786, "logical_payload_bytes": 4294967296, "op": "shared_read", "profiler_repeats": 95, "profiler_self_device_us": 110.91516842105258, "run_id": "p3-20260729T022849Z-f9b6b5f7", "source_sha256": "0105bcd07fbacc46aa46bee5b2f434fa6e0249bb4a44093af738b3bb98a02226", "status": "measured", "timing_method": "MUSAGraph replay with profiler self-device cross-check", "warm_latency_us_median": 113.81562054157257, "warm_latency_us_p10": 113.74737620353699, "warm_latency_us_p90": 123.86638224124908, "warm_max_latency_us": 127.66812741756439, "warm_max_over_median": 1.1217100676521992, "warm_relative_span": 0.08890700581837978}

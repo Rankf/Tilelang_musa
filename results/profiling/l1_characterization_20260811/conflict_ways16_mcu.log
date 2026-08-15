@@ -1,0 +1,36 @@
+==PROF== '/root/s5000-calibration/build/p9_l1/l1_conflict_probe' started, pid:59071  
+==PROF== Profiling "0:0:l1_conflict_probe(float const*, float*, int, int, int)" - 0 (1/1): Application replay pass 0 
+kernel=l1_conflict_probe,candidate_ways=16,set_stride_bytes=32768,active_threads_per_cta=32,grid=60,passes=4096,samples=1,latency_us=4980.039597,check=4096.0,expected=4096.0,correctness=pass
+==PROF== '/root/s5000-calibration/build/p9_l1/l1_conflict_probe' exit, exit code(0)  
+==PROF== Disconnected from process 59071 
+==PROF== '/root/s5000-calibration/build/p9_l1/l1_conflict_probe' started, pid:59082  
+==PROF== Profiling "0:0:l1_conflict_probe(float const*, float*, int, int, int)" - 0 (1/1): Application replay pass 1 
+kernel=l1_conflict_probe,candidate_ways=16,set_stride_bytes=32768,active_threads_per_cta=32,grid=60,passes=4096,samples=1,latency_us=2058.320045,check=4096.0,expected=4096.0,correctness=pass
+==PROF== '/root/s5000-calibration/build/p9_l1/l1_conflict_probe' exit, exit code(0)  
+==PROF== Disconnected from process 59082 
+==PROF== '/root/s5000-calibration/build/p9_l1/l1_conflict_probe' started, pid:59093  
+==PROF== Profiling "0:0:l1_conflict_probe(float const*, float*, int, int, int)" - 0 (1/1): Application replay pass 2 
+kernel=l1_conflict_probe,candidate_ways=16,set_stride_bytes=32768,active_threads_per_cta=32,grid=60,passes=4096,samples=1,latency_us=2037.280083,check=4096.0,expected=4096.0,correctness=pass
+==PROF== '/root/s5000-calibration/build/p9_l1/l1_conflict_probe' exit, exit code(0)  
+==PROF== Disconnected from process 59093 
+==PROF== '/root/s5000-calibration/build/p9_l1/l1_conflict_probe' started, pid:59104  
+==PROF== Profiling "0:0:l1_conflict_probe(float const*, float*, int, int, int)" - 0 (1/1): Application replay pass 3 
+kernel=l1_conflict_probe,candidate_ways=16,set_stride_bytes=32768,active_threads_per_cta=32,grid=60,passes=4096,samples=1,latency_us=2036.479950,check=4096.0,expected=4096.0,correctness=pass
+==PROF== '/root/s5000-calibration/build/p9_l1/l1_conflict_probe' exit, exit code(0)  
+==PROF== Disconnected from process 59104 
+==PROF== Capture finished. Path is "/root/s5000-calibration/results/profiling/l1_characterization_20260811/conflict_ways16.mcu-rep"  
+[59071] l1_conflict_probe@436412c3fa89 
+  14 - l1_conflict_probe(float const*, float*, int, int, int) (60, 1, 1)x(256, 1, 1), Context 0, Stream 0, Device 0 
+    Section: Command line profiler metrics 
+    ----------------------------- ----------- --------------- 
+    Metric Name                   Metric Unit    Metric Value 
+    ----------------------------- ----------- --------------- 
+    gpu__time_duration.max                 ns  1721335.428571 
+    l1__load_requests.sum             request  7864620.000000 
+    l1__downstream_read_bytes.sum       bytes 15483712.000000 
+    l1__sector_hit_rate.pct                 %       96.675993 
+    l2pu__sector_hit_rate.pct               %       82.434727 
+    ddr__read_bytes.sum                 bytes     7424.000000 
+    ----------------------------- ----------- --------------- 
+ 
+ 

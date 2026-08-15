@@ -1,0 +1,199 @@
+{
+  "scope": "P4 conditional calibration, not a universal occupancy specification",
+  "native_run": "/root/s5000-calibration/results/raw/p4_occupancy_wave/20260729T025118233217353Z",
+  "tilelang_run": "/root/s5000-calibration/results/raw/p4_tilelang_wave/20260729T025312594585659Z",
+  "parameters": [
+    {
+      "parameter": "multi_processor_count_driver_reported",
+      "value": 60,
+      "units": "MP",
+      "status": "sdk_driver_reported",
+      "applicability": "MUSA Runtime API native P4 probe",
+      "evidence": "aggregate_native.csv:device_properties"
+    },
+    {
+      "parameter": "shared_memory_per_mp_driver_reported",
+      "value": 196608,
+      "units": "bytes",
+      "status": "sdk_driver_reported",
+      "applicability": "MUSA Runtime API native P4 probe",
+      "evidence": "aggregate_native.csv:device_properties"
+    },
+    {
+      "parameter": "registers_per_mp_driver_reported",
+      "value": 131072,
+      "units": "32-bit registers",
+      "status": "sdk_driver_reported",
+      "applicability": "MUSA Runtime API native P4 probe",
+      "evidence": "aggregate_native.csv:device_properties"
+    },
+    {
+      "parameter": "max_blocks_per_mp_driver_reported",
+      "value": 256,
+      "units": "CTA",
+      "status": "sdk_driver_reported",
+      "applicability": "architectural device limit, not exact-kernel residency",
+      "evidence": "aggregate_native.csv:device_properties"
+    },
+    {
+      "parameter": "native_s0_256_active_cta_per_mp",
+      "value": 12,
+      "units": "CTA",
+      "status": "api_calculated_exact_kernel",
+      "applicability": "P4 native s0 xorshift kernel, 256 threads, 12 B static shared, 4 regs/thread as reported",
+      "evidence": "aggregate_native.csv:resource/s0/256"
+    },
+    {
+      "parameter": "native_s32k_256_active_cta_per_mp",
+      "value": 5,
+      "units": "CTA",
+      "status": "api_calculated_exact_kernel",
+      "applicability": "P4 native s32k xorshift kernel, 256 threads, 32780 B static shared, 4 regs/thread as reported",
+      "evidence": "aggregate_native.csv:resource/s32k/256"
+    },
+    {
+      "parameter": "native_s0_256_tail_720_to_721_percent",
+      "value": 2.567158897750188,
+      "units": "percent",
+      "status": "empirical_conditional",
+      "applicability": "native s0 xorshift kernel, 256 threads, 512 iterations/thread; API capacity=60 MP*12 CTA",
+      "evidence": "aggregate_native.csv:wave_sweep 720 and 721"
+    },
+    {
+      "parameter": "tilelang_fixed_grid_copy_256_logical_GBps",
+      "value": 1203.2266826213372,
+      "units": "GB/s",
+      "status": "provisional_conditional",
+      "applicability": "TileLang-MUSA FP32 fixed-grid copy, 256 threads, 2880 CTA, 94,371,840 elements, graph+profiler gated",
+      "evidence": "aggregate_tilelang.csv:tl_block_256"
+    },
+    {
+      "parameter": "tilelang_fixed_grid_copy_256_active_cta_per_mp",
+      "value": 8,
+      "units": "CTA",
+      "status": "api_calculated_recompiled_mubin",
+      "applicability": "TileLang-MUSA fixed-grid copy, 256 threads, 56 regs/thread, zero dynamic/static shared; queried MUBIN was recompiled from retained formal source/command, not the executed formal binary",
+      "evidence": "aggregate_tilelang_wave_resources.csv:tl_block_256 and p4_1_manifest.json"
+    },
+    {
+      "parameter": "tilelang_fixed_grid_copy_256_wave_capacity",
+      "value": 480,
+      "units": "CTA",
+      "status": "derived_conditional",
+      "applicability": "60 driver-reported MP * 8 API-calculated CTA/MP for the recompiled fixed-grid copy MUBIN",
+      "evidence": "aggregate_tilelang_wave_resources.csv:tl_block_256"
+    },
+    {
+      "parameter": "tilelang_fp16_gemm_1024_stage2_effective_TFLOPs",
+      "value": 99.09846546269875,
+      "units": "TFLOP/s",
+      "status": "provisional_conditional",
+      "applicability": "TileLang-MUSA FP16 GEMM 1024^3, BM=BN=BK=64, 4 warp, 2 pipeline stages, graph+profiler gated",
+      "evidence": "aggregate_tilelang_pipeline.csv:pipeline_fp16_1024_stage2"
+    },
+    {
+      "parameter": "tilelang_fp16_gemm_1024_stage1_active_cta_per_mp",
+      "value": 10,
+      "units": "CTA",
+      "status": "api_calculated_recompiled_mubin",
+      "applicability": "FP16 GEMM 1024^3 stage 1, 256 generated threads, 45 regs/thread, 16384 B TIR-declared dynamic shared; queried MUBIN recompiled from retained formal source/command",
+      "evidence": "aggregate_tilelang_pipeline_resources.csv:stage=1"
+    },
+    {
+      "parameter": "tilelang_fp16_gemm_1024_stage2_active_cta_per_mp",
+      "value": 6,
+      "units": "CTA",
+      "status": "api_calculated_recompiled_mubin",
+      "applicability": "FP16 GEMM 1024^3 stage 2, 256 generated threads, 45 regs/thread, 32768 B TIR-declared dynamic shared; queried MUBIN recompiled from retained formal source/command",
+      "evidence": "aggregate_tilelang_pipeline_resources.csv:stage=2"
+    },
+    {
+      "parameter": "tilelang_fp16_gemm_1024_stage3_active_cta_per_mp",
+      "value": 4,
+      "units": "CTA",
+      "status": "api_calculated_recompiled_mubin",
+      "applicability": "FP16 GEMM 1024^3 stage 3, 256 generated threads, 45 regs/thread, 49152 B TIR-declared dynamic shared; queried MUBIN recompiled from retained formal source/command",
+      "evidence": "aggregate_tilelang_pipeline_resources.csv:stage=3"
+    },
+    {
+      "parameter": "tilelang_fp16_gemm_1024_stage4_active_cta_per_mp",
+      "value": 3,
+      "units": "CTA",
+      "status": "api_calculated_recompiled_mubin",
+      "applicability": "FP16 GEMM 1024^3 stage 4, 256 generated threads, 45 regs/thread, 65536 B TIR-declared dynamic shared; queried MUBIN recompiled from retained formal source/command",
+      "evidence": "aggregate_tilelang_pipeline_resources.csv:stage=4"
+    },
+    {
+      "parameter": "native_register_pressure_live4_256_active_cta_per_mp",
+      "value": 12,
+      "units": "CTA",
+      "status": "api_calculated_exact_kernel",
+      "applicability": "controlled native register-pressure kernel, 6 runtime regs/thread, 256 threads, zero local/spill",
+      "evidence": "aggregate_register_pressure.csv:live_values=4,block_threads=256"
+    },
+    {
+      "parameter": "native_register_pressure_live16_256_active_cta_per_mp",
+      "value": 12,
+      "units": "CTA",
+      "status": "api_calculated_exact_kernel",
+      "applicability": "controlled native register-pressure kernel, 24 runtime regs/thread, 256 threads, zero local/spill",
+      "evidence": "aggregate_register_pressure.csv:live_values=16,block_threads=256"
+    },
+    {
+      "parameter": "native_register_pressure_live32_256_active_cta_per_mp",
+      "value": 8,
+      "units": "CTA",
+      "status": "api_calculated_exact_kernel",
+      "applicability": "controlled native register-pressure kernel, 53 runtime regs/thread, 256 threads, zero local/spill",
+      "evidence": "aggregate_register_pressure.csv:live_values=32,block_threads=256"
+    },
+    {
+      "parameter": "native_register_pressure_live64_256_active_cta_per_mp",
+      "value": 4,
+      "units": "CTA",
+      "status": "api_calculated_exact_kernel",
+      "applicability": "controlled native register-pressure kernel, 115 runtime regs/thread, 256 threads, zero local/spill",
+      "evidence": "aggregate_register_pressure.csv:live_values=64,block_threads=256"
+    },
+    {
+      "parameter": "tilelang_fixed_grid_copy_tail_480_to_481_percent",
+      "value": 0.5233593818236404,
+      "units": "percent",
+      "status": "empirical_inconclusive",
+      "applicability": "fixed-grid copy exact-capacity scan; the 480 and 960 boundaries do not show a consistent positive tail step",
+      "evidence": "aggregate_tilelang_exact_wave.csv:grid=480,481"
+    },
+    {
+      "parameter": "tilelang_fixed_grid_copy_tail_960_to_961_percent",
+      "value": -1.1180809750807152,
+      "units": "percent",
+      "status": "empirical_inconclusive",
+      "applicability": "fixed-grid copy exact-capacity scan; the 480 and 960 boundaries do not show a consistent positive tail step",
+      "evidence": "aggregate_tilelang_exact_wave.csv:grid=960,961"
+    },
+    {
+      "parameter": "tilelang_compute_wave_tail_extra_us_median",
+      "value": 1.1990738696739385,
+      "units": "us",
+      "status": "empirical_conditional_range",
+      "applicability": "TileLang dependent FP32 recurrence, 2048 iterations/thread, 256 threads, 3 regs/thread, 12 CTA/MP; median across +1 CTA at 1x/2x/3x 720-CTA capacity",
+      "evidence": "aggregate_tilelang_compute_wave.json:tail_observations"
+    },
+    {
+      "parameter": "tilelang_compute_wave_tail_extra_us_min",
+      "value": 0.3916150311311739,
+      "units": "us",
+      "status": "empirical_conditional_range",
+      "applicability": "same P4.2 compute-wave kernel; lower observed boundary increment",
+      "evidence": "aggregate_tilelang_compute_wave.json:conditional_tail_range_us"
+    },
+    {
+      "parameter": "tilelang_compute_wave_tail_extra_us_max",
+      "value": 2.7895212173461914,
+      "units": "us",
+      "status": "empirical_conditional_range",
+      "applicability": "same P4.2 compute-wave kernel; upper observed boundary increment",
+      "evidence": "aggregate_tilelang_compute_wave.json:conditional_tail_range_us"
+    }
+  ]
+}

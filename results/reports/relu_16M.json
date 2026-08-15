@@ -1,0 +1,15 @@
+{
+  "op": "relu",
+  "N": 16777216,
+  "threads": 256,
+  "latency_us": 50.13,
+  "logical_traffic_bytes": 134217728,
+  "effective_bandwidth_gb_s": 2677.6,
+  "ddr_util_pct": 0.0,
+  "compute_util_pct": 0.0,
+  "tiles_per_sm": 24,
+  "waves": 11.4,
+  "arch": "S5000",
+  "core_freq_ghz": 1.5,
+  "sm_count": 60
+}

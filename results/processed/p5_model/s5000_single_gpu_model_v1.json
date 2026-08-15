@@ -1,0 +1,123 @@
+{
+  "model_version": "s5000-single-gpu-v1",
+  "generated_at_utc": "2026-07-29T04:26:40.443097+00:00",
+  "builder_python": "3.10.12",
+  "builder_platform": "Linux-5.15.0-105-generic-x86_64-with-glibc2.35",
+  "scope": "P5 calibration/development condition lookup; not a cross-condition predictor and not hold-out validated",
+  "source_manifest": [
+    {
+      "path": "results/processed/p2_compute/aggregate.json",
+      "sha256": "515dbfc0b1b6989647bb2346f2ff28b644cf8735b18ea84b54b9e451a5e29bf3"
+    },
+    {
+      "path": "results/processed/p2_compute/formal_run_manifest.json",
+      "sha256": "e5afb8fd08c3164adb482ebb6e69367e2d4973223e6fb669f958b177e695ae1a"
+    },
+    {
+      "path": "results/processed/p3_memory/s5000_memory_parameters_provisional.json",
+      "sha256": "d299ac9ef0e6cfcfa6dbbf40c9fbcdadf9537dc55392259b0910f7ac74560c12"
+    },
+    {
+      "path": "results/processed/p3_memory/aggregate_global_initial.csv",
+      "sha256": "72635613703be2d604e80e28b2a706f1eeb96957695f0053795f9465974c0a6f"
+    },
+    {
+      "path": "results/processed/p3_memory/aggregate_global_initial.json",
+      "sha256": "b1afb6dd85e3f8be21bb496be978eba68f853abe5c9ce5003bfd88ca9cf6b991"
+    },
+    {
+      "path": "results/processed/p3_memory/aggregate_fixed_grid_cache.csv",
+      "sha256": "75fefd72004265655efdaf57dab74e661ce78132061f0c81a09bb599fb4b965b"
+    },
+    {
+      "path": "results/processed/p3_memory/aggregate_fixed_grid_cache.json",
+      "sha256": "cf4b19000aa74278837e7827da78ccbcdee78a38265d673e093859213b245cd9"
+    },
+    {
+      "path": "results/processed/p3_memory/aggregate_read_initial.csv",
+      "sha256": "a703d8dfd80cbd5d6968a7521efa1c8a1d98a5fb6a1a53a8963d80a587384c76"
+    },
+    {
+      "path": "results/processed/p3_memory/aggregate_read_initial.json",
+      "sha256": "0f4c5a121e6adb0910e77675ffcb36cd12d02893f0691922893cd69ce5907d77"
+    },
+    {
+      "path": "results/processed/p3_memory/aggregate_shared_initial.csv",
+      "sha256": "34c7a3007a7599502bebc6f893a8fd0a8a295cda60954398ac1a3c7210bc0188"
+    },
+    {
+      "path": "results/processed/p3_memory/aggregate_shared_initial.json",
+      "sha256": "fa594474f6201f0e0debb59af56cd96f0e2148a81f9c61714c6d847a7a3d5527"
+    },
+    {
+      "path": "results/processed/p3_memory/aggregate_pointer_chase.csv",
+      "sha256": "5ea42118f4e7c7fb0f7a1587c5bd3c54b57a598d32aca2bac165fa360a943807"
+    },
+    {
+      "path": "results/processed/p3_memory/aggregate_pointer_chase.json",
+      "sha256": "c711f428f93dba44e58da8fd9078a4418d2a22fafbe81b6e7f64bfe2779e87d4"
+    },
+    {
+      "path": "results/processed/p4_occupancy_wave/s5000_occupancy_wave_parameters_provisional.json",
+      "sha256": "f1d0f0597b779b943f6c9a6b28772ddb67f65d36f6e10a770e83494982d317a0"
+    },
+    {
+      "path": "results/processed/p4_occupancy_wave/aggregate_tilelang_pipeline.csv",
+      "sha256": "7332f61ebf7db4a0b317fa8998611f0d8171ff8c5fef9b61343c0300f605aa69"
+    },
+    {
+      "path": "results/processed/p4_occupancy_wave/aggregate_tilelang_pipeline.json",
+      "sha256": "d661d37499b4ca566b30049233523ab9e6b2138d33fd33aad799e7f2e3c85118"
+    },
+    {
+      "path": "results/processed/p4_occupancy_wave/aggregate_tilelang_compute_wave.json",
+      "sha256": "3a06a5004e3301a48e8cd8b3c9c843c45d41332ddab13af05eb97acad9b8ce66"
+    },
+    {
+      "path": "results/processed/p4_occupancy_wave/run_manifest.json",
+      "sha256": "b833a0856600303d56ce61320717e6dbe73caf60f4261a6b6827a412dc8661d9"
+    },
+    {
+      "path": "results/processed/p4_occupancy_wave/p4_1_manifest.json",
+      "sha256": "6dce26eb1d1e628a9f6f09caba69b28435e80bee9c78a461f24b1fe694391e13"
+    },
+    {
+      "path": "configs/p5_scope.json",
+      "sha256": "f364617cd3b8c727f72d42447b43103ed35b248f6ebca6cfebe9f431f2519d3f",
+      "role": "model_scope"
+    },
+    {
+      "path": "scripts/p5_build_model.py",
+      "sha256": "833bb22cc389981a96108ec04c5286a885b3a23fc0d06acca3b5c926cb9eddcb",
+      "role": "builder"
+    }
+  ],
+  "equations": {
+    "gemm": "effective_rate_us = 2*M*N*K / exact_condition_TFLOP_per_s / 1e6",
+    "non_gemm": "effective_rate_us = work_items / exact_condition_Gitems_per_s / 1e3",
+    "memory": "effective_rate_us = logical_payload_bytes / exact_condition_logical_GB_per_s / 1e3",
+    "total": "prologue + steady + tail + epilogue; unavailable terms are unknown, never a fitted residual"
+  },
+  "tail_policy": {
+    "compute_wave_only_range_us": [
+      0.3916150311311739,
+      2.7895212173461914
+    ],
+    "compute_wave_only_median_us": 1.1990738696739385,
+    "copy_and_gemm": "unknown / no transfer"
+  },
+  "development_prediction_summary": {
+    "exact_condition_records": 48,
+    "lookup_reconstruction_mape_percent": 0.0,
+    "lookup_reconstruction_is_validation": false,
+    "cross_condition_rate_transfer_records": 0,
+    "cross_condition_rate_transfer_status": "not implemented; requires P6 hold-out evidence"
+  },
+  "known_unknowns": [
+    "physical cache tier selection",
+    "scheduler-to-MP mapping",
+    "universal tail-wave constant",
+    "GEMM prologue/epilogue split",
+    "resource occupancy for unseen TileLang source"
+  ]
+}

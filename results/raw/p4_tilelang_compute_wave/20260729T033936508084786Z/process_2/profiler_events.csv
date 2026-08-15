@@ -1,0 +1,10 @@
+case_id,key,count,self_device_us
+tl_compute_wave_719,fixed_grid_compute_kernel,200,7265.332
+tl_compute_wave_720,fixed_grid_compute_kernel,200,6525.291000000003
+tl_compute_wave_721,fixed_grid_compute_kernel,41,1355.403
+tl_compute_wave_1439,fixed_grid_compute_kernel,200,11807.060999999985
+tl_compute_wave_1440,fixed_grid_compute_kernel,200,11801.701000000005
+tl_compute_wave_1441,fixed_grid_compute_kernel,200,12345.580999999991
+tl_compute_wave_2159,fixed_grid_compute_kernel,163,14167.706000000002
+tl_compute_wave_2160,fixed_grid_compute_kernel,163,15748.747000000005
+tl_compute_wave_2161,fixed_grid_compute_kernel,160,14089.744999999994

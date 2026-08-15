@@ -1,0 +1,4 @@
+/usr/local/musa-4.3.5/cmake/demo_project_musatoolkit/deviceQuery.cpp:31:10: fatal error: 'musa_runtime.h' file not found
+#include <musa_runtime.h>
+         ^~~~~~~~~~~~~~~~
+1 error generated.

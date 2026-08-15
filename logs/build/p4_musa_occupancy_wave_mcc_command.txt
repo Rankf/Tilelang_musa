@@ -1,0 +1,1 @@
+mcc -O2 --cuda-gpu-arch=mp_31 /root/s5000-calibration/benchmarks/p4_musa_occupancy_wave.mu -L/usr/local/musa-4.3.5/lib -lmusart -o /root/s5000-calibration/results/derived/p4_musa_occupancy_wave 

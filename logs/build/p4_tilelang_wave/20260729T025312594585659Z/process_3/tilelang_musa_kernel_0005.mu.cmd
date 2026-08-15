@@ -1,0 +1,5 @@
+# compile
+/usr/local/musa-4.3.5/bin/mcc --cuda-device-only --cuda-gpu-arch=mp_31 -std=c++17 -Wno-error=address-of-temporary -I/root/s5000-calibration/tilelang-musa/3rdparty/../src -I/root/s5000-calibration/tilelang-musa/3rdparty/mutlass/include -D__MUSA_ARCH_LIST__=310 -mllvm -mtgpu-alloc-shared-memory-from-zero=1 -o /root/s5000-calibration/logs/build/p4_tilelang_wave/20260729T025312594585659Z/process_3/tilelang_musa_kernel_0005.mubin /root/s5000-calibration/logs/build/p4_tilelang_wave/20260729T025312594585659Z/process_3/tilelang_musa_kernel_0005.mu
+
+# asm
+/usr/local/musa-4.3.5/bin/mcc --cuda-device-only --cuda-gpu-arch=mp_31 -std=c++17 -Wno-error=address-of-temporary -I/root/s5000-calibration/tilelang-musa/3rdparty/../src -I/root/s5000-calibration/tilelang-musa/3rdparty/mutlass/include -D__MUSA_ARCH_LIST__=310 -mllvm -mtgpu-alloc-shared-memory-from-zero=1 -S -o /root/s5000-calibration/logs/build/p4_tilelang_wave/20260729T025312594585659Z/process_3/tilelang_musa_kernel_0005.s /root/s5000-calibration/logs/build/p4_tilelang_wave/20260729T025312594585659Z/process_3/tilelang_musa_kernel_0005.mu

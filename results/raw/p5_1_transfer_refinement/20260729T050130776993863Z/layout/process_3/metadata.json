@@ -1,0 +1,70 @@
+{
+  "config": {
+    "benchmark": "tilelang_global_memory",
+    "cache_flush_bytes": 268435456,
+    "cases": [
+      {
+        "N": 8388608,
+        "cache_condition": "warm",
+        "id": "refine_stride2_8m",
+        "op": "strided_copy",
+        "stride": 2,
+        "threads": 256,
+        "vector": 8
+      },
+      {
+        "N": 8388608,
+        "cache_condition": "warm",
+        "id": "refine_stride3_8m",
+        "op": "strided_copy",
+        "stride": 3,
+        "threads": 256,
+        "vector": 8
+      },
+      {
+        "N": 8388608,
+        "cache_condition": "warm",
+        "id": "refine_stride5_8m",
+        "op": "strided_copy",
+        "stride": 5,
+        "threads": 256,
+        "vector": 8
+      },
+      {
+        "N": 8388608,
+        "cache_condition": "warm",
+        "id": "refine_stride7_8m",
+        "op": "strided_copy",
+        "stride": 7,
+        "threads": 256,
+        "vector": 8
+      }
+    ],
+    "dtype": "float32",
+    "graph_samples": 15,
+    "max_graph_unroll": 1000,
+    "max_profiler_repeats": 100,
+    "phase": "P5.1-development",
+    "purpose": "dense stride interpolation refinement at 8M warm selector; excludes P6-v3 stride6",
+    "stability": {
+      "max_graph_profiler_ratio_delta": 0.25,
+      "max_over_median": 2.0,
+      "max_relative_span": 0.15
+    },
+    "target_graph_replay_us": 8000,
+    "target_profiler_us": 12000,
+    "warmup": 20
+  },
+  "config_sha256": "a507afa31acc6f2a33c9ab7255e96c25349d3f1d69713d836206762943eb1589",
+  "harness_sha256": "a7feae88c3885a4e8700a6f97822464dbe75b6ee5a40eafce7d636e50d86cc66",
+  "kernel_dump_dir": "/root/s5000-calibration/logs/build/p5_1_transfer_refinement/20260729T050130776993863Z/layout/process_3",
+  "mcc_version": "mcc version 4.3.5",
+  "musa_capability": [
+    3,
+    1
+  ],
+  "musa_home": "/usr/local/musa-4.3.5",
+  "run_id": "p5.1-development-20260729T050319Z-7d32b509",
+  "tilelang_commit": "4d666968a005846314e9a84d8ff121c5dbffa9ee",
+  "timestamp_utc": "2026-07-29T05:03:36.325284+00:00"
+}

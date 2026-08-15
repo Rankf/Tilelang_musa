@@ -1,0 +1,4 @@
+case_id,key,count,self_device_us
+read_sum_64m,read_sum_kernel,100,9065.135
+read_sum_256m,read_sum_kernel,36,11601.258
+read_sum_512m,read_sum_kernel,18,11170.337999999996

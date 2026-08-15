@@ -1,0 +1,43 @@
+{
+  "config": {
+    "benchmark": "tilelang_global_memory",
+    "cache_flush_bytes": 268435456,
+    "cases": [
+      {
+        "N": 8388608,
+        "cache_condition": "warm",
+        "id": "p6v3_stride6_8m",
+        "op": "strided_copy",
+        "stride": 6,
+        "threads": 256,
+        "vector": 8
+      }
+    ],
+    "dtype": "float32",
+    "graph_samples": 15,
+    "max_graph_unroll": 1000,
+    "max_profiler_repeats": 100,
+    "phase": "P6-v3",
+    "purpose": "pre-registered before P5 v2 fitting; log2(stride) interpolation test within the 8M warm selector",
+    "stability": {
+      "max_graph_profiler_ratio_delta": 0.25,
+      "max_over_median": 2.0,
+      "max_relative_span": 0.15
+    },
+    "target_graph_replay_us": 8000,
+    "target_profiler_us": 12000,
+    "warmup": 20
+  },
+  "config_sha256": "e6ed80ecbac038f8a2d0aa2b5076e1fb62a1560f74d0b5f31e903a54b29e5d13",
+  "harness_sha256": "a7feae88c3885a4e8700a6f97822464dbe75b6ee5a40eafce7d636e50d86cc66",
+  "kernel_dump_dir": "/root/s5000-calibration/logs/build/p6_v3_holdout/20260729T050619917012177Z/layout/process_1",
+  "mcc_version": "mcc version 4.3.5",
+  "musa_capability": [
+    3,
+    1
+  ],
+  "musa_home": "/usr/local/musa-4.3.5",
+  "run_id": "p6-v3-20260729T050647Z-2130b8c5",
+  "tilelang_commit": "4d666968a005846314e9a84d8ff121c5dbffa9ee",
+  "timestamp_utc": "2026-07-29T05:06:58.147004+00:00"
+}

@@ -1,0 +1,90 @@
+{
+  "config": {
+    "phase": "P4",
+    "benchmark": "tilelang_compute_suite",
+    "compile_flags": [
+      "-resource-usage"
+    ],
+    "warmup": 100,
+    "graph_unroll": 100,
+    "graph_samples": 30,
+    "profiler_repeats": 50,
+    "stability": {
+      "max_relative_span": 0.15,
+      "max_over_median": 2.0,
+      "max_graph_profiler_ratio_delta": 0.25
+    },
+    "cases": [
+      {
+        "id": "pipeline_fp16_1024_stage1",
+        "op": "gemm",
+        "dtype": "float16",
+        "accum_dtype": "float32",
+        "M": 1024,
+        "N": 1024,
+        "K": 1024,
+        "block_M": 64,
+        "block_N": 64,
+        "block_K": 64,
+        "num_warp": 4,
+        "policy": "default",
+        "num_stages": 1
+      },
+      {
+        "id": "pipeline_fp16_1024_stage2",
+        "op": "gemm",
+        "dtype": "float16",
+        "accum_dtype": "float32",
+        "M": 1024,
+        "N": 1024,
+        "K": 1024,
+        "block_M": 64,
+        "block_N": 64,
+        "block_K": 64,
+        "num_warp": 4,
+        "policy": "default",
+        "num_stages": 2
+      },
+      {
+        "id": "pipeline_fp16_1024_stage3",
+        "op": "gemm",
+        "dtype": "float16",
+        "accum_dtype": "float32",
+        "M": 1024,
+        "N": 1024,
+        "K": 1024,
+        "block_M": 64,
+        "block_N": 64,
+        "block_K": 64,
+        "num_warp": 4,
+        "policy": "default",
+        "num_stages": 3
+      },
+      {
+        "id": "pipeline_fp16_1024_stage4",
+        "op": "gemm",
+        "dtype": "float16",
+        "accum_dtype": "float32",
+        "M": 1024,
+        "N": 1024,
+        "K": 1024,
+        "block_M": 64,
+        "block_N": 64,
+        "block_K": 64,
+        "num_warp": 4,
+        "policy": "default",
+        "num_stages": 4
+      }
+    ]
+  },
+  "config_sha256": "0b528986717bd0de36138d58612f823576ec1ff8c86987e68eb4c583593f2c8f",
+  "harness_sha256": "c923ed2108459c8407a330c4380a34deeb3103cb730a2bc68ade470d1811cb07",
+  "tilelang_commit": "4d666968a005846314e9a84d8ff121c5dbffa9ee",
+  "tilelang_local_patch_sha256": "ae626f5586ea61ab2a7e0877706bd4744e914da98a7091dedce4b653af16c9ec",
+  "musa_home": "/usr/local/musa-4.3.5",
+  "mcc_version": "mcc version 4.3.5",
+  "musa_capability": [
+    3,
+    1
+  ]
+}

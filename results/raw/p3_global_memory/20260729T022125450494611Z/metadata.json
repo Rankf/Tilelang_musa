@@ -1,0 +1,96 @@
+{
+  "config": {
+    "benchmark": "tilelang_global_memory",
+    "cache_flush_bytes": 1073741824,
+    "cases": [
+      {
+        "N": 2097152,
+        "cache_condition": "warm_and_post_256m_flush",
+        "grid_blocks": 1024,
+        "id": "fixed_grid_copy_ws_8m",
+        "op": "fixed_grid_copy",
+        "threads": 256,
+        "vector": 8
+      },
+      {
+        "N": 4194304,
+        "cache_condition": "warm_and_post_256m_flush",
+        "grid_blocks": 1024,
+        "id": "fixed_grid_copy_ws_16m",
+        "op": "fixed_grid_copy",
+        "threads": 256,
+        "vector": 8
+      },
+      {
+        "N": 8388608,
+        "cache_condition": "warm_and_post_256m_flush",
+        "grid_blocks": 1024,
+        "id": "fixed_grid_copy_ws_32m",
+        "op": "fixed_grid_copy",
+        "threads": 256,
+        "vector": 8
+      },
+      {
+        "N": 16777216,
+        "cache_condition": "warm_and_post_256m_flush",
+        "grid_blocks": 1024,
+        "id": "fixed_grid_copy_ws_64m",
+        "op": "fixed_grid_copy",
+        "threads": 256,
+        "vector": 8
+      },
+      {
+        "N": 33554432,
+        "cache_condition": "warm_and_post_256m_flush",
+        "grid_blocks": 1024,
+        "id": "fixed_grid_copy_ws_128m",
+        "op": "fixed_grid_copy",
+        "threads": 256,
+        "vector": 8
+      },
+      {
+        "N": 67108864,
+        "cache_condition": "warm_and_post_256m_flush",
+        "grid_blocks": 1024,
+        "id": "fixed_grid_copy_ws_256m",
+        "op": "fixed_grid_copy",
+        "threads": 256,
+        "vector": 8
+      },
+      {
+        "N": 134217728,
+        "cache_condition": "warm_and_post_256m_flush",
+        "grid_blocks": 1024,
+        "id": "fixed_grid_copy_ws_512m",
+        "op": "fixed_grid_copy",
+        "threads": 256,
+        "vector": 8
+      }
+    ],
+    "dtype": "float32",
+    "graph_samples": 15,
+    "max_graph_unroll": 1000,
+    "max_profiler_repeats": 100,
+    "phase": "P3",
+    "stability": {
+      "max_graph_profiler_ratio_delta": 0.25,
+      "max_over_median": 2.0,
+      "max_relative_span": 0.15
+    },
+    "target_graph_replay_us": 8000,
+    "target_profiler_us": 12000,
+    "warmup": 20
+  },
+  "config_sha256": "9842ce11e184c38fcf865235498cf00dd3c223c07aae3b1239e7d672972a4738",
+  "harness_sha256": "cfeaa5d06d23307ca96ec17404e831dc2b18a210596b7be14288a82242a6d2b6",
+  "kernel_dump_dir": "/root/s5000-calibration/logs/build/p3_global_memory/20260729T022125450494611Z",
+  "mcc_version": "mcc version 4.3.5",
+  "musa_capability": [
+    3,
+    1
+  ],
+  "musa_home": "/usr/local/musa-4.3.5",
+  "run_id": "p3-20260729T022130Z-240fe117",
+  "tilelang_commit": "4d666968a005846314e9a84d8ff121c5dbffa9ee",
+  "timestamp_utc": "2026-07-29T02:22:00.670842+00:00"
+}

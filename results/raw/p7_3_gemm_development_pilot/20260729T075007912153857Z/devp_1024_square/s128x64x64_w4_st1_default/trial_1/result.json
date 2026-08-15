@@ -1,0 +1,83 @@
+{
+  "phase": "P7.3",
+  "protocol_version": "graph_free_direct_batch32_v1",
+  "data_role": "development",
+  "case": {
+    "id": "devp_1024_square",
+    "M": 1024,
+    "N": 1024,
+    "K": 1024,
+    "shape_role": "medium_grid_square"
+  },
+  "schedule": {
+    "id": "s128x64x64_w4_st1_default",
+    "block_M": 128,
+    "block_N": 64,
+    "block_K": 64,
+    "num_warp": 4,
+    "num_stages": 1,
+    "policy": "default"
+  },
+  "trial": 1,
+  "status": "measurement_rejected",
+  "compile": "pass",
+  "correctness": "pass",
+  "failure_stage": "within_trial_stability_gate",
+  "error": "",
+  "timing_method": "graph-free MUSA Event batch-32; synchronize each batch; no MUSAGraph/Profiler",
+  "metadata": {
+    "config_sha256": "f0243a21b0616a5b9a444f51a05845ffe91b8fdd44aba51ad5b4e1495b65136e",
+    "harness_sha256": "cb5020766facc6f026d6cae35922a1053ff157261fb125945314b16cae97221e",
+    "tilelang_commit": "4d666968a005846314e9a84d8ff121c5dbffa9ee",
+    "musa_capability": [
+      3,
+      1
+    ]
+  },
+  "source_sha256": "c7eca6f190b962bae6c7384b49cc21fdd76e2b95d2407a623d38544bdda1b7e6",
+  "source_features": {
+    "tma": true,
+    "descriptor_prefetch": true,
+    "async_barrier": true,
+    "warp_specialized": true,
+    "launch_threads": 256
+  },
+  "grid_cta": 128,
+  "samples_us": [
+    50.18625035881996,
+    50.05374923348427,
+    49.995001405477524,
+    50.05750060081482,
+    50.158750265836716,
+    49.966249614953995,
+    49.99125003814697,
+    50.16374960541725,
+    47.85874858498573,
+    47.72999882698059,
+    47.78999835252762,
+    47.80625179409981,
+    47.77875170111656,
+    46.527501195669174,
+    46.28999903798103,
+    46.32499814033508,
+    46.338751912117004,
+    46.52624949812889,
+    45.92125117778778,
+    45.62249779701233,
+    45.705001801252365,
+    45.778751373291016,
+    45.579999685287476,
+    45.65750062465668,
+    45.7025021314621,
+    45.691248029470444,
+    45.59125006198883,
+    45.73500156402588,
+    45.590002089738846,
+    45.79624906182289
+  ],
+  "latency_us_median": 46.43250070512295,
+  "latency_us_p10": 45.61937302350998,
+  "latency_us_p90": 50.06762556731701,
+  "relative_p90_p10_span": 0.09580040868477818,
+  "effective_tops": 46.24957982853303
+}

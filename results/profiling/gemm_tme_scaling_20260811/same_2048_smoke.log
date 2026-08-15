@@ -1,0 +1,4 @@
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+2026-08-11 18:32:18  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `main` with `out_idx=[]`
+2026-08-11 18:32:21  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `main`
+{"K": 2048, "M": 2048, "N": 2048, "bk": 64, "bm": 128, "bn": 128, "case": "gemm_2048_2048_2048_tile_128_128_64", "correctness": "pass", "generated_launch_threads": 384, "grid_cta": 256, "grid_m": 16, "grid_n": 16, "k_iterations": 32, "kernel_symbol": "main_kernel", "latency_us_median": 173.11999946832657, "logical_tma_bytes": 268435456, "ns": 2, "nw_requested": 8, "uses_tma": true}

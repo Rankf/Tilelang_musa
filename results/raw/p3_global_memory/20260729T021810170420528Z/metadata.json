@@ -1,0 +1,184 @@
+{
+  "config": {
+    "benchmark": "tilelang_global_memory",
+    "cache_flush_bytes": 268435456,
+    "cases": [
+      {
+        "N": 65536,
+        "cache_condition": "warm_and_post_256m_flush",
+        "id": "copy_ws_256k",
+        "op": "copy",
+        "threads": 256,
+        "vector": 8
+      },
+      {
+        "N": 262144,
+        "cache_condition": "warm_and_post_256m_flush",
+        "id": "copy_ws_1m",
+        "op": "copy",
+        "threads": 256,
+        "vector": 8
+      },
+      {
+        "N": 1048576,
+        "cache_condition": "warm_and_post_256m_flush",
+        "id": "copy_ws_4m",
+        "op": "copy",
+        "threads": 256,
+        "vector": 8
+      },
+      {
+        "N": 4194304,
+        "cache_condition": "warm_and_post_256m_flush",
+        "id": "copy_ws_16m",
+        "op": "copy",
+        "threads": 256,
+        "vector": 8
+      },
+      {
+        "N": 16777216,
+        "cache_condition": "warm_and_post_256m_flush",
+        "id": "copy_ws_64m",
+        "op": "copy",
+        "threads": 256,
+        "vector": 8
+      },
+      {
+        "N": 67108864,
+        "cache_condition": "warm_and_post_256m_flush",
+        "id": "copy_ws_256m",
+        "op": "copy",
+        "threads": 256,
+        "vector": 8
+      },
+      {
+        "N": 134217728,
+        "cache_condition": "warm_and_post_256m_flush",
+        "id": "copy_ws_512m",
+        "op": "copy",
+        "threads": 256,
+        "vector": 8
+      },
+      {
+        "N": 16777216,
+        "cache_condition": "warm",
+        "id": "fill_64m",
+        "op": "fill",
+        "threads": 256,
+        "vector": 8
+      },
+      {
+        "N": 67108864,
+        "cache_condition": "warm",
+        "id": "fill_256m",
+        "op": "fill",
+        "threads": 256,
+        "vector": 8
+      },
+      {
+        "N": 16777216,
+        "cache_condition": "warm",
+        "id": "triad_64m",
+        "op": "triad",
+        "threads": 256,
+        "vector": 8
+      },
+      {
+        "N": 67108864,
+        "cache_condition": "warm",
+        "id": "triad_256m",
+        "op": "triad",
+        "threads": 256,
+        "vector": 8
+      },
+      {
+        "N": 4194304,
+        "cache_condition": "warm",
+        "id": "stride1_16m",
+        "op": "strided_copy",
+        "stride": 1,
+        "threads": 256,
+        "vector": 8
+      },
+      {
+        "N": 4194304,
+        "cache_condition": "warm",
+        "id": "stride2_16m",
+        "op": "strided_copy",
+        "stride": 2,
+        "threads": 256,
+        "vector": 8
+      },
+      {
+        "N": 4194304,
+        "cache_condition": "warm",
+        "id": "stride4_16m",
+        "op": "strided_copy",
+        "stride": 4,
+        "threads": 256,
+        "vector": 8
+      },
+      {
+        "N": 4194304,
+        "cache_condition": "warm",
+        "id": "stride8_16m",
+        "op": "strided_copy",
+        "stride": 8,
+        "threads": 256,
+        "vector": 8
+      },
+      {
+        "N": 4194304,
+        "cache_condition": "warm",
+        "id": "stride16_16m",
+        "op": "strided_copy",
+        "stride": 16,
+        "threads": 256,
+        "vector": 8
+      },
+      {
+        "N": 16777216,
+        "cache_condition": "warm",
+        "id": "copy_offset0_64m",
+        "offset_elements": 0,
+        "op": "offset_copy",
+        "threads": 256,
+        "vector": 8
+      },
+      {
+        "N": 16777216,
+        "cache_condition": "warm",
+        "id": "copy_offset1_64m",
+        "offset_elements": 1,
+        "op": "offset_copy",
+        "threads": 256,
+        "vector": 8
+      }
+    ],
+    "dtype": "float32",
+    "graph_samples": 15,
+    "max_graph_unroll": 1000,
+    "max_profiler_repeats": 100,
+    "phase": "P3",
+    "stability": {
+      "max_graph_profiler_ratio_delta": 0.25,
+      "max_over_median": 2.0,
+      "max_relative_span": 0.15
+    },
+    "target_graph_replay_us": 8000,
+    "target_profiler_us": 12000,
+    "warmup": 20
+  },
+  "config_sha256": "bd5e8796cf9e6626af303b716c9262143fefdce99922241e9e65a63ed32dbde2",
+  "harness_sha256": "a996fb1217428cff98b5d45bc34ee7925dd81047781c9c74d6784ee7789e5efc",
+  "kernel_dump_dir": "/root/s5000-calibration/logs/build/p3_global_memory/20260729T021810170420528Z",
+  "mcc_version": "mcc version 4.3.5",
+  "musa_capability": [
+    3,
+    1
+  ],
+  "musa_home": "/usr/local/musa-4.3.5",
+  "run_id": "p3-20260729T021814Z-b2637bcd",
+  "tilelang_commit": "4d666968a005846314e9a84d8ff121c5dbffa9ee",
+  "timestamp_utc": "2026-07-29T02:19:09.183451+00:00"
+}

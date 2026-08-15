@@ -1,0 +1,6 @@
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+2026-07-29 13:32:29  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `main` with `out_idx=[]`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p7_large_gemm_graph_queue/20260729T052927661930464Z/depth_8/trial_2/tilelang_musa_kernel_0000.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p7_large_gemm_graph_queue/20260729T052927661930464Z/depth_8/trial_2/tilelang_musa_kernel_0000.mu.cmd
+2026-07-29 13:32:32  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `main`
+{"case_id": "p7_fp16_gemm_1536x1024x1536", "compile": "pass", "correctness": "pass", "error": "", "failure_stage": "", "graph_capture": "pass", "graph_unroll": 100, "queue_depth": 8, "queued_replay_samples_us": [41.51360034942627, 40.03039836883545, 39.934399127960205, 38.82080078125, 38.41799974441528, 37.9259991645813, 37.71679878234863, 37.18679904937744], "queued_replay_us_max": 41.51360034942627, "queued_replay_us_median": 38.61940026283264, "queued_submission": "pass", "queued_synchronize": "pass", "source_sha256": "9ace2f6f78aed08ced8f393797da60e524f08afc89c1ca4bd5c587f9022d33ff", "status": "pass", "trial": 2}

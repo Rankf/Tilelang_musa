@@ -1,0 +1,166 @@
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' started, pid:19472  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+==PROF== Profiling "0:0:gemm_4096_kernel" - 0 (1/1): Application replay pass 0 
+Compiling kernel...
+2026-08-11 12:12:18  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `gemm_4096` with `out_idx=None`
+2026-08-11 12:12:21  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `gemm_4096`
+Kernel compiled
+
+实测延迟: 32941.6 us
+实测吞吐: 4.2 TFLOP/s
+
+=== DeepStack 预测 ===
+预测延迟: 967.3 us
+预测吞吐: 142.09 TFLOP/s
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' exit, exit code(0)  
+==PROF== Disconnected from process 19472 
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' started, pid:19605  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+==PROF== Profiling "0:0:gemm_4096_kernel" - 0 (1/1): Application replay pass 1 
+Compiling kernel...
+Kernel compiled
+
+实测延迟: 23108.4 us
+实测吞吐: 5.9 TFLOP/s
+
+=== DeepStack 预测 ===
+预测延迟: 967.3 us
+预测吞吐: 142.09 TFLOP/s
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' exit, exit code(0)  
+==PROF== Disconnected from process 19605 
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' started, pid:19692  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+==PROF== Profiling "0:0:gemm_4096_kernel" - 0 (1/1): Application replay pass 2 
+Compiling kernel...
+Kernel compiled
+
+实测延迟: 22218.8 us
+实测吞吐: 6.2 TFLOP/s
+
+=== DeepStack 预测 ===
+预测延迟: 967.3 us
+预测吞吐: 142.09 TFLOP/s
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' exit, exit code(0)  
+==PROF== Disconnected from process 19692 
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' started, pid:19776  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+==PROF== Profiling "0:0:gemm_4096_kernel" - 0 (1/1): Application replay pass 3 
+Compiling kernel...
+Kernel compiled
+
+实测延迟: 22452.9 us
+实测吞吐: 6.1 TFLOP/s
+
+=== DeepStack 预测 ===
+预测延迟: 967.3 us
+预测吞吐: 142.09 TFLOP/s
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' exit, exit code(0)  
+==PROF== Disconnected from process 19776 
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' started, pid:19862  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+==PROF== Profiling "0:0:gemm_4096_kernel" - 0 (1/1): Application replay pass 4 
+Compiling kernel...
+Kernel compiled
+
+实测延迟: 22248.2 us
+实测吞吐: 6.2 TFLOP/s
+
+=== DeepStack 预测 ===
+预测延迟: 967.3 us
+预测吞吐: 142.09 TFLOP/s
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' exit, exit code(0)  
+==PROF== Disconnected from process 19862 
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' started, pid:19945  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+==PROF== Profiling "0:0:gemm_4096_kernel" - 0 (1/1): Application replay pass 5 
+Compiling kernel...
+Kernel compiled
+
+实测延迟: 22178.9 us
+实测吞吐: 6.2 TFLOP/s
+
+=== DeepStack 预测 ===
+预测延迟: 967.3 us
+预测吞吐: 142.09 TFLOP/s
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' exit, exit code(0)  
+==PROF== Disconnected from process 19945 
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' started, pid:20030  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+==PROF== Profiling "0:0:gemm_4096_kernel" - 0 (1/1): Application replay pass 6 
+Compiling kernel...
+Kernel compiled
+
+实测延迟: 22166.6 us
+实测吞吐: 6.2 TFLOP/s
+
+=== DeepStack 预测 ===
+预测延迟: 967.3 us
+预测吞吐: 142.09 TFLOP/s
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' exit, exit code(0)  
+==PROF== Disconnected from process 20030 
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' started, pid:20113  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+==PROF== Profiling "0:0:gemm_4096_kernel" - 0 (1/1): Application replay pass 7 
+Compiling kernel...
+Kernel compiled
+
+实测延迟: 22543.6 us
+实测吞吐: 6.1 TFLOP/s
+
+=== DeepStack 预测 ===
+预测延迟: 967.3 us
+预测吞吐: 142.09 TFLOP/s
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' exit, exit code(0)  
+==PROF== Disconnected from process 20113 
+==PROF== Capture finished. Path is "/root/s5000-calibration/results/profiling/gemm_4096_20260811/gemm_4096_mcu.mcu-rep"  
+[19472] python3.10@436412c3fa89 
+  137 - gemm_4096_kernel (32, 32, 1)x(256, 1, 1), Context 0, Stream 0, Device 0 
+    Section: GPU Speed Of Light Throughput 
+    ---------------------- ----------- ------------ 
+    Metric Name            Metric Unit Metric Value 
+    ---------------------- ----------- ------------ 
+    Compute(MP) Throughput           %         3.78 
+    Memory Throughput                %        29.58 
+    L1 Cache Throughput              %         0.92 
+    L2 Cache Throughput              %        29.58 
+    DDR Throughput                   %         6.54 
+    Duration                        ms         1.08 
+    Elapsed Cycles               cycle    1,884,040 
+    MP Active Cycles             cycle    1,858,435 
+    MP Frequency                   GHz         1.75 
+    DDR Frequency                  GHz         1.20 
+    ---------------------- ----------- ------------ 
+ 
+ 
+    Section: Memory Workload Analysis 
+    ----------------- ----------- ------------ 
+    Metric Name       Metric Unit Metric Value 
+    ----------------- ----------- ------------ 
+    Memory Throughput     Gbyte/s       100.49 
+    Mem Busy                    %        29.58 
+    Max Bandwidth               %        29.58 
+    Mem Pipes Busy              %         0.50 
+    L1 Cache Hit Rate           %        75.00 
+    L2 Cache Hit Rate           %        92.21 
+    ----------------- ----------- ------------ 
+ 
+ 
+    Section: Launch Statistics 
+    ------------------------------- --------------- ------------ 
+    Metric Name                         Metric Unit Metric Value 
+    ------------------------------- --------------- ------------ 
+    Block Size                                               256 
+    Grid Size                                              1,024 
+    Registers Per Thread            register/thread            0 
+    Driver Shared Memory Per Block      Kbyte/block         0.00 
+    Dynamic Shared Memory Per Block      byte/block     65536.00 
+    Static Shared Memory Per Block       byte/block         0.00 
+    Threads                                  thread      262,144 
+    Uses Green Context                                         0 
+    Waves Per MP                                            1.42 
+    # MPs                                                     60 
+    # MPXs                                                    30 
+    Enabled MPX IDs                                          all 
+    ------------------------------- --------------- ------------ 
+ 
+ 

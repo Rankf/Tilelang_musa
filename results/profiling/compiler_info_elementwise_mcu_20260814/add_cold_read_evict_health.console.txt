@@ -1,0 +1,19 @@
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' started, pid:24887  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+==PROF== Profiling "0:0:main_kernel" - 0 (1/1): Application replay pass 0 
+{"cache_condition": "cold_explicit_l2_eviction", "correctness": "pass", "dtype": "float32", "elements_per_block": 2048, "elements_per_thread": 8, "grid_size": 8, "kernel_source_sha256": "9dc987000271bbd0f41f410f7698ef4e06438ed5863229fcf73f23c6c26d2155", "l2_eviction_bytes": 268435456, "mcu_expected_skip": 0, "mode": "profile-cold", "op": "add", "schema_version": "s5000/elementwise-runtime-runner-v1", "shape": [16384], "target_launches": 1, "threads": 256}
+==PROF== '/root/s5000-calibration/.venv-tilelang-musa/bin/python' exit, exit code(0)  
+==PROF== Disconnected from process 24887 
+==PROF== Capture finished. Path is "/root/s5000-calibration/results/profiling/compiler_info_elementwise_mcu_20260814/add_cold_read_evict_health.mcu-rep"  
+[24887] python3.10@c82850fb110c 
+  105 - main_kernel (8, 1, 1)x(256, 1, 1), Context 0, Stream 0, Device 0 
+    Section: Command line profiler metrics 
+    ---------------------- ----------- ------------- 
+    Metric Name            Metric Unit  Metric Value 
+    ---------------------- ----------- ------------- 
+    gpu__time_duration.max          ns   7325.714286 
+    ddr__read_bytes.sum          bytes 137600.000000 
+    ddr__write_bytes.sum         bytes   2080.000000 
+    ---------------------- ----------- ------------- 
+ 
+ 

@@ -1,0 +1,7 @@
+/root/s5000-calibration/.venv-tilelang-musa
+/root/s5000-calibration/logs/build/p0_tilelang_kernel
+/root/s5000-calibration/logs/build/p1_tilelang_kernel
+/root/s5000-calibration/logs/build/p2_tilelang_kernel
+/root/s5000-calibration/tilelang-musa
+/root/s5000-calibration/tilelang-musa/tilelang
+/root/.tilelang

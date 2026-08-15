@@ -1,0 +1,39 @@
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+[17:11:33] /root/s5000-calibration/tilelang-musa/src/transform/verify_parallel_loop.cc:73: Warning: Data race detected: `C(offsets + j,)`is written by multiple threads in loop (i,), Example:
+  i = 0
+  i_OTHER_ = 1
+  j = 0
+  j_OTHER_ = 0
+  offsets = 0
+  tx = 0
+If you believe this is a false positive, pass `PassKey.TL_DISABLE_DATA_RACE_CHECK` to pass key to disable this check.
+2026-07-28 17:11:33  [TileLang:tilelang.cache:INFO] (__init__.py:67): Execution backend resolved -> 'tvm_ffi' (requested='auto', target='musa', allowed: cython, tvm_ffi)
+2026-07-28 17:11:33  [TileLang:tilelang.cache.kernel_cache:INFO] (kernel_cache.py:306): Cache is disabled; compiling kernel without caching.
+2026-07-28 17:11:33  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `elementwise_add` with `out_idx=[-1]`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0022.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0022.mu.cmd
+2026-07-28 17:11:34  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `elementwise_add`
+#include <tl_templates/musa/common.h>
+#include <tl_templates/musa/cvt.h>
+#include <tl_templates/musa/fop.h>
+#include <tl_templates/musa/accelerated_ops.h>
+#include <tl_templates/musa/intrin.h>
+#include <tl_templates/musa/gemm.h>
+#include <tl_templates/musa/copy.h>
+#include <tl_templates/musa/barrier.h>
+#include <tl_templates/musa/reduce.h>
+#include <tl_templates/musa/threadblock_swizzle.h>
+#include <tl_templates/musa/debug.h>
+
+extern "C" __global__ void elementwise_add_kernel(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C);
+extern "C" __global__ void __launch_bounds__(256, 1) elementwise_add_kernel(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C) {
+  #pragma unroll
+  for (int i = 0; i < 2; ++i) {
+    if (i < 1) {
+      *(tl_f4*)(C + (((int)threadIdx.x) * 4)) = tl::add4(*(tl_f4*)(A + (((int)threadIdx.x) * 4)), *(tl_f4*)(B + (((int)threadIdx.x) * 4)));
+    }
+  }
+}
+
+
+pass!

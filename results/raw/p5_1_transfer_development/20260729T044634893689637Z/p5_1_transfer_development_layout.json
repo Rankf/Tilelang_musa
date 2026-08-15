@@ -1,0 +1,19 @@
+{
+  "phase": "P5.1-development",
+  "benchmark": "tilelang_global_memory",
+  "purpose": "stride interpolation development only; excludes P6 and P6-v2 hold-outs",
+  "dtype": "float32",
+  "warmup": 20,
+  "graph_samples": 15,
+  "target_graph_replay_us": 8000,
+  "max_graph_unroll": 1000,
+  "target_profiler_us": 12000,
+  "max_profiler_repeats": 100,
+  "stability": {"max_relative_span": 0.15, "max_over_median": 2.0, "max_graph_profiler_ratio_delta": 0.25},
+  "cache_flush_bytes": 268435456,
+  "cases": [
+    {"id":"dev_stride1_8m","op":"strided_copy","N":8388608,"stride":1,"threads":256,"vector":8,"cache_condition":"warm"},
+    {"id":"dev_stride4_8m","op":"strided_copy","N":8388608,"stride":4,"threads":256,"vector":8,"cache_condition":"warm"},
+    {"id":"dev_stride8_8m","op":"strided_copy","N":8388608,"stride":8,"threads":256,"vector":8,"cache_condition":"warm"}
+  ]
+}

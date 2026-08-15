@@ -1,0 +1,4 @@
+case_id,key,count,self_device_us
+shared_base_r0,shared_read_kernel,100,2557.2869999999994
+shared_seq_r32,shared_read_kernel,100,3900.9290000000024
+shared_seq_r128,shared_read_kernel,90,10611.226000000006

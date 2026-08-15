@@ -1,0 +1,17 @@
+live_values,block_threads,func_num_regs,func_local_bytes,func_static_shared_bytes,active_cta_per_mp,correctness
+4,64,6,0,12,48,pass
+4,128,6,0,12,24,pass
+4,256,6,0,12,12,pass
+4,512,6,0,12,6,pass
+16,64,24,0,12,48,pass
+16,128,24,0,12,24,pass
+16,256,24,0,12,12,pass
+16,512,24,0,12,6,pass
+32,64,53,0,12,34,pass
+32,128,53,0,12,17,pass
+32,256,53,0,12,8,pass
+32,512,53,0,12,4,pass
+64,64,115,0,12,16,pass
+64,128,115,0,12,8,pass
+64,256,115,0,12,4,pass
+64,512,115,0,12,2,pass

@@ -1,0 +1,13 @@
+case_id,key,count,self_device_us
+tl_block_64,fixed_grid_copy_kernel,19,11943.297999999999
+tl_block_128,fixed_grid_copy_kernel,19,11765.177999999998
+tl_block_256,fixed_grid_copy_kernel,19,11694.698
+tl_block_384,fixed_grid_copy_kernel,19,11760.779
+tl_block_512,fixed_grid_copy_kernel,19,11694.978000000001
+tl_wave_1,fixed_grid_copy_kernel,100,660.001000000001
+tl_wave_719,fixed_grid_copy_kernel,79,11865.378999999995
+tl_wave_720,fixed_grid_copy_kernel,79,11780.778999999997
+tl_wave_721,fixed_grid_copy_kernel,78,11704.219000000001
+tl_wave_1439,fixed_grid_copy_kernel,39,11779.739
+tl_wave_1440,fixed_grid_copy_kernel,39,11938.939000000002
+tl_wave_1441,fixed_grid_copy_kernel,39,11915.180000000002

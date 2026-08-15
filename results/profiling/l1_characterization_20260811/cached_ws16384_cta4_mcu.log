@@ -1,0 +1,36 @@
+==PROF== '/root/s5000-calibration/build/p9_l1/l1_cached_probe' started, pid:56504  
+==PROF== Profiling "0:0:l1_cached_probe(float const*, float*, int, int)" - 0 (1/1): Application replay pass 0 
+kernel=l1_cached_probe,working_set_bytes_per_cta=16384,cta_per_mp=4,grid=240,threads=256,passes=128,samples=1,occupancy_limit=12,latency_us=3572.479963,logical_gb_s=140.887139,check=2048.0,expected=2048.0,correctness=pass
+==PROF== '/root/s5000-calibration/build/p9_l1/l1_cached_probe' exit, exit code(0)  
+==PROF== Disconnected from process 56504 
+==PROF== '/root/s5000-calibration/build/p9_l1/l1_cached_probe' started, pid:56515  
+==PROF== Profiling "0:0:l1_cached_probe(float const*, float*, int, int)" - 0 (1/1): Application replay pass 1 
+kernel=l1_cached_probe,working_set_bytes_per_cta=16384,cta_per_mp=4,grid=240,threads=256,passes=128,samples=1,occupancy_limit=12,latency_us=714.600027,logical_gb_s=704.333139,check=2048.0,expected=2048.0,correctness=pass
+==PROF== '/root/s5000-calibration/build/p9_l1/l1_cached_probe' exit, exit code(0)  
+==PROF== Disconnected from process 56515 
+==PROF== '/root/s5000-calibration/build/p9_l1/l1_cached_probe' started, pid:56526  
+==PROF== Profiling "0:0:l1_cached_probe(float const*, float*, int, int)" - 0 (1/1): Application replay pass 2 
+kernel=l1_cached_probe,working_set_bytes_per_cta=16384,cta_per_mp=4,grid=240,threads=256,passes=128,samples=1,occupancy_limit=12,latency_us=691.439986,logical_gb_s=727.925041,check=2048.0,expected=2048.0,correctness=pass
+==PROF== '/root/s5000-calibration/build/p9_l1/l1_cached_probe' exit, exit code(0)  
+==PROF== Disconnected from process 56526 
+==PROF== '/root/s5000-calibration/build/p9_l1/l1_cached_probe' started, pid:56537  
+==PROF== Profiling "0:0:l1_cached_probe(float const*, float*, int, int)" - 0 (1/1): Application replay pass 3 
+kernel=l1_cached_probe,working_set_bytes_per_cta=16384,cta_per_mp=4,grid=240,threads=256,passes=128,samples=1,occupancy_limit=12,latency_us=693.480015,logical_gb_s=725.783684,check=2048.0,expected=2048.0,correctness=pass
+==PROF== '/root/s5000-calibration/build/p9_l1/l1_cached_probe' exit, exit code(0)  
+==PROF== Disconnected from process 56537 
+==PROF== Capture finished. Path is "/root/s5000-calibration/results/profiling/l1_characterization_20260811/cached_ws16384_cta4.mcu-rep"  
+[56504] l1_cached_probe@436412c3fa89 
+  16 - l1_cached_probe(float const*, float*, int, int) (240, 1, 1)x(256, 1, 1), Context 0, Stream 0, Device 0 
+    Section: Command line profiler metrics 
+    ----------------------------- ----------- ---------------- 
+    Metric Name                   Metric Unit     Metric Value 
+    ----------------------------- ----------- ---------------- 
+    gpu__time_duration.max                 ns    387783.428571 
+    l1__load_requests.sum             request  15728880.000000 
+    l1__downstream_read_bytes.sum       bytes 500678144.000000 
+    l1__sector_hit_rate.pct                 %        50.265258 
+    l2pu__sector_hit_rate.pct               %        99.553202 
+    ddr__read_bytes.sum                 bytes      1408.000000 
+    ----------------------------- ----------- ---------------- 
+ 
+ 

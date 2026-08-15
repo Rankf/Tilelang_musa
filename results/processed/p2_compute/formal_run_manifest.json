@@ -1,0 +1,29 @@
+{
+  "generated_at_utc": "2026-07-29T02:13:00.509810+00:00",
+  "measurement_dates_utc": [
+    "20260729T020316095211165Z",
+    "20260729T020444776690014Z",
+    "20260729T020602462471032Z"
+  ],
+  "reproduce_command": "scripts/p2_run_compute_suite.sh",
+  "config": "configs/p2_compute_suite.json",
+  "config_sha256": "548ca0e0872f3faada81a215a3af567273234a863bccec469f31710f3bfd7b4a",
+  "harness": "benchmarks/p2_tilelang_compute_suite.py",
+  "measured_run_harness_sha256": [
+    "107c5ede319630f1cab2d335efd4c3731bd03c584e55744b8b21679f37b8edfc",
+    "107c5ede319630f1cab2d335efd4c3731bd03c584e55744b8b21679f37b8edfc",
+    "107c5ede319630f1cab2d335efd4c3731bd03c584e55744b8b21679f37b8edfc"
+  ],
+  "current_reproduction_harness_sha256": "706feb0f1742062a956912089b4196264b464eb68d931812f07b03567015be0a",
+  "post_run_harness_change": "metadata-only: future runs additionally record mcc, MUSA_HOME and local patch hashes; kernel generation and timing logic unchanged",
+  "tilelang_commit": "4d666968a005846314e9a84d8ff121c5dbffa9ee",
+  "tilelang_local_patch_sha256": "ae626f5586ea61ab2a7e0877706bd4744e914da98a7091dedce4b653af16c9ec",
+  "musa_home": "/usr/local/musa-4.3.5",
+  "mcc_version": "mcc version 4.3.5",
+  "device": "MTT S5000",
+  "musa_capability": [
+    3,
+    1
+  ],
+  "timing_scope": "preallocated buffers; MUSAGraph 100-call capture/replay plus MUSA profiler self-device cross-check"
+}

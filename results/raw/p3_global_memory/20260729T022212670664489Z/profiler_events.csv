@@ -1,0 +1,8 @@
+case_id,key,count,self_device_us
+fixed_grid_copy_ws_8m,fixed_grid_copy_kernel,100,716.6
+fixed_grid_copy_ws_16m,fixed_grid_copy_kernel,100,1263.681000000001
+fixed_grid_copy_ws_32m,fixed_grid_copy_kernel,3,85.84000000000003
+fixed_grid_copy_ws_64m,fixed_grid_copy_kernel,100,9990.258
+fixed_grid_copy_ws_128m,fixed_grid_copy_kernel,58,11820.501
+fixed_grid_copy_ws_256m,fixed_grid_copy_kernel,29,11855.780000000004
+fixed_grid_copy_ws_512m,fixed_grid_copy_kernel,14,11670.099999999997

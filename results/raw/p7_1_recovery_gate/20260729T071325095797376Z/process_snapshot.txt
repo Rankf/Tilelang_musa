@@ -1,0 +1,20 @@
+    PID    PPID STAT     ELAPSED CMD
+      1       0 Ss      05:56:05 /bin/bash /usr/local/bin/entrypoint.sh
+     46       1 S       05:56:04 bash /tmp/container_init_sugon.sh
+    153      46 S       05:55:44 /usr/bin/python /usr/local/bin/supervisord -n
+    355     153 S       05:55:43 /bin/bash /usr/local/bin/start_jupyter.sh
+    356     153 S       05:55:43 sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups
+    363     355 S       05:55:42 /usr/bin/python /usr/local/bin/jupyter-lab --notebook-dir=/data/ --allow-root --port 3000 --ip 0.0.0.0 --NotebookApp.base_url=/38080/vm-JSjOrGgsmQpIX5y0 --NotebookApp.allow_origin=*
+    378     356 Ss      05:55:40 sshd: root
+    490       1 Sl      05:55:34 node /usr/local/bin/codex -c features.code_mode_host=true app-server --listen unix://
+    501     490 Sl      05:55:34 /opt/node-v26.5.0-linux-x64/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex -c features.code_mode_host=true app-server --listen unix://
+    543     356 Ss      05:55:34 sshd: root@notty
+    547     543 Ss      05:55:34 /bin/sh -c printf '%b' '\205\066\072\002\145\155\230\302'; PATH="${CODEX_INSTALL_DIR:-$HOME/.local/bin}:$PATH"; export PATH; codex app-server proxy
+    558     547 Sl      05:55:34 node /usr/local/bin/codex app-server proxy
+    565     558 Sl      05:55:34 /opt/node-v26.5.0-linux-x64/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex app-server proxy
+    927     501 Sl      05:51:55 /opt/node-v26.5.0-linux-x64/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex-code-mode-host
+ 146359      46 S          00:01 sleep 1
+ 146361     501 Ss         00:00 timeout --signal=TERM --kill-after=15s 1800s bash scripts/p7_1_run_runtime_ab.sh
+ 146362  146361 S          00:00 bash scripts/p7_1_run_runtime_ab.sh
+ 146370  146362 S          00:00 bash /root/s5000-calibration/scripts/p7_1_recovery_gate.sh
+ 146664  146370 R          00:00 ps -eo pid,ppid,stat,etime,cmd

@@ -1,0 +1,5 @@
+case_id,key,count,self_device_us
+m256_default_s1,main_kernel,100,715.3609999999989
+m512_default_s1,main_kernel,100,924.9619999999994
+m512_b128_stage3,main_kernel,100,1793.8440000000003
+m1024_default_s1,main_kernel,100,2084.5629999999996

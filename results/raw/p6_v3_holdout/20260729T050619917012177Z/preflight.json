@@ -1,0 +1,111 @@
+{
+  "scope_sha256": "e93882ad50d7f1b9d82adfc399fc9c8f64440493acf2c9ee3857b649be2d8a57",
+  "p5_model_sha256": "b94296eb50b904b0e34b80d79535887ad7932b7b08f57fe736c609eb48caa9be",
+  "preflight_before_measurement": true,
+  "records": [
+    {
+      "case_id": "p6v3_gemm_896x1152x1024",
+      "family": "gemm",
+      "condition": {
+        "id": "p6v3_gemm_896x1152x1024",
+        "op": "gemm",
+        "dtype": "float16",
+        "accum_dtype": "float32",
+        "M": 896,
+        "N": 1152,
+        "K": 1024,
+        "block_M": 64,
+        "block_N": 64,
+        "block_K": 64,
+        "num_warp": 4,
+        "policy": "default",
+        "num_stages": 1
+      },
+      "p5_v2": {
+        "status": "predicted",
+        "prediction": {
+          "predicted_latency_us": 21.34262989642632,
+          "features": {
+            "bias": 1.0,
+            "ops_giga": 2.113929216,
+            "ops_giga_per_grid_cta": 0.008388607999999999,
+            "grid_cta": 252
+          },
+          "formula": "bias + ops_giga + ops_giga_per_grid_cta"
+        }
+      }
+    },
+    {
+      "case_id": "p6v3_reduce_6144x512",
+      "family": "reduce_sum",
+      "condition": {
+        "id": "p6v3_reduce_6144x512",
+        "op": "reduce_sum",
+        "dtype": "float32",
+        "M": 6144,
+        "K": 512,
+        "threads": 128
+      },
+      "p5_v2": {
+        "status": "predicted",
+        "prediction": {
+          "predicted_latency_us": 72.64965333635848,
+          "features": {
+            "bias": 1.0,
+            "input_million": 3.145728,
+            "cta_million": 1.5
+          },
+          "formula": "bias + input_million + cta_million"
+        }
+      }
+    },
+    {
+      "case_id": "p6v3_fused_exp_add_24m",
+      "family": "fused_exp_add",
+      "condition": {
+        "id": "p6v3_fused_exp_add_24m",
+        "op": "fused_exp_add",
+        "dtype": "float32",
+        "N": 25165824,
+        "threads": 256,
+        "vector": 8
+      },
+      "p5_v2": {
+        "status": "predicted",
+        "prediction": {
+          "predicted_latency_us": 214.51187582576972,
+          "features": {
+            "bias": 1.0,
+            "N_million": 25.165824
+          },
+          "formula": "bias + N_million"
+        }
+      }
+    },
+    {
+      "case_id": "p6v3_stride6_8m",
+      "family": "p3_global",
+      "condition": {
+        "id": "p6v3_stride6_8m",
+        "op": "strided_copy",
+        "N": 8388608,
+        "stride": 6,
+        "threads": 256,
+        "vector": 8,
+        "cache_condition": "warm"
+      },
+      "p5_v2": {
+        "status": "predicted",
+        "prediction": {
+          "predicted_latency_us": 161.2583163087295,
+          "effective_rate_GBps": 416.15753863831674,
+          "bracket": [
+            5,
+            7
+          ],
+          "formula": "linear effective-bandwidth interpolation in log2(stride), then payload/rate"
+        }
+      }
+    }
+  ]
+}

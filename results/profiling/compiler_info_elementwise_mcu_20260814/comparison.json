@@ -1,0 +1,196 @@
+{
+  "schema_version": "s5000/elementwise-tilesight-mcu-comparison-v1",
+  "date": "2026-08-14",
+  "device": "MTT S5000",
+  "conditions": {
+    "tilesight": "cold/no-reuse; the unified compiler-info adapter rejects warm",
+    "mcu_cold": "256 MiB read-only sweep after operand creation, then first main_kernel (-s 0 -c 1)",
+    "mcu_warm": "six main_kernel launches, profile the sixth (-s 5 -c 1)",
+    "event": "20 warmups, 100 single-kernel MUSA Event samples",
+    "mcu_device_enumeration": "temporary /dev/mtgpu.0 -> /dev/mtgpu.4 alias; removed after each run"
+  },
+  "excluded": [
+    "add_n16384_cold_real.mcu-rep: write-based eviction contaminated target DDR writeback counters",
+    "all 49,152-byte reports produced before the logical device alias: no kernels profiled"
+  ],
+  "operators": {
+    "add": {
+      "identity": {
+        "kernel_source_sha256": "9dc987000271bbd0f41f410f7698ef4e06438ed5863229fcf73f23c6c26d2155",
+        "shape": [
+          16384
+        ],
+        "dtype": "float32",
+        "grid_size": 8,
+        "threads": 256,
+        "elements_per_thread": 8,
+        "elements_per_block": 2048,
+        "tilesight_model": "elementwise_n_n_pipeline_wave",
+        "compiler_validation": "all_consistent"
+      },
+      "tilesight_cold": {
+        "native_latency_us": 0.11635163396255874,
+        "report_latency_us": 0.12,
+        "hierarchy_latency_us": 0.14,
+        "bottleneck": "ddr",
+        "l1_downstream_read_bytes": 131072,
+        "l1_write_bytes": 65536,
+        "ddr_read_bytes": 131072,
+        "ddr_write_bytes": 65536,
+        "ddr_total_bytes": 196608,
+        "ddr_util_pct": 87.771,
+        "l2_util_pct": 19.592
+      },
+      "mcu_cold": {
+        "gpu__time_duration.max": 7156.0,
+        "launch__grid_size": 8.0,
+        "launch__block_size": 256.0,
+        "launch__shared_mem_per_block_dynamic": 0.0,
+        "launch__waves_per_multiprocessor": 0.011111,
+        "l1__load_requests.sum": 4336.0,
+        "l1__store_requests.sum": 2048.0,
+        "l1__downstream_read_bytes.sum": 134912.0,
+        "l1__downstream_write_bytes.sum": 65536.0,
+        "l1__sector_hit_rate.pct": 71.891192,
+        "l1__throughput.avg.pct_of_peak_sustained_active": 0.717464,
+        "l2pu__sector_hit_rate.pct": 28.04784,
+        "l2pu__throughput.avg.pct_of_peak_sustained_elapsed": 4.850912,
+        "l2pu__tme_read_l2_byte.avg": 0.0,
+        "ddr__read_bytes.sum": 148864.0,
+        "ddr__write_bytes.sum": 2080.0,
+        "ddr__throughput.avg.pct_of_peak_sustained_elapsed": 1.373265,
+        "duration_us": 7.156
+      },
+      "mcu_warm": {
+        "gpu__time_duration.max": 6585.714286,
+        "launch__grid_size": 8.0,
+        "launch__block_size": 256.0,
+        "launch__shared_mem_per_block_dynamic": 0.0,
+        "launch__waves_per_multiprocessor": 0.011111,
+        "l1__load_requests.sum": 4336.0,
+        "l1__store_requests.sum": 2048.0,
+        "l1__downstream_read_bytes.sum": 134912.0,
+        "l1__downstream_write_bytes.sum": 65536.0,
+        "l1__sector_hit_rate.pct": 71.891192,
+        "l1__throughput.avg.pct_of_peak_sustained_active": 0.911274,
+        "l2pu__sector_hit_rate.pct": 29.153259,
+        "l2pu__throughput.avg.pct_of_peak_sustained_elapsed": 5.084865,
+        "l2pu__tme_read_l2_byte.avg": 0.0,
+        "ddr__read_bytes.sum": 16128.0,
+        "ddr__write_bytes.sum": 14720.0,
+        "ddr__throughput.avg.pct_of_peak_sustained_elapsed": 0.304953,
+        "duration_us": 6.585714286
+      },
+      "musa_event_warm": {
+        "maximum_us": 7.4800001457333565,
+        "median_us": 7.040000054985285,
+        "minimum_us": 6.679999642074108,
+        "p10_us": 6.839999929070473,
+        "p90_us": 7.280000019818544,
+        "samples": 100
+      },
+      "comparison": {
+        "cold_native_latency_actual_over_prediction_x": 61.50321878851102,
+        "cold_native_latency_underprediction_pct_of_actual": 98.37406883786251,
+        "cold_hierarchy_latency_actual_over_prediction_x": 51.11428571428571,
+        "cold_hierarchy_latency_underprediction_pct_of_actual": 98.04359977641141,
+        "cold_l1_read_vs_logical_pct": 2.9296875,
+        "cold_l1_write_vs_logical_pct": 0.0,
+        "cold_ddr_read_vs_model_pct": 13.57421875,
+        "cold_ddr_write_vs_model_pct": -96.826171875,
+        "cold_ddr_total_vs_model_pct": -23.225911458333336,
+        "cold_vs_warm_mcu_latency_pct": 8.65943600396271,
+        "warm_mcu_vs_event_median_pct": -6.452922804504643
+      }
+    },
+    "relu": {
+      "identity": {
+        "kernel_source_sha256": "1c2942a9a983d0707a11e11227380cf97ba72ce778933b777dba26120849e28c",
+        "shape": [
+          16384
+        ],
+        "dtype": "float32",
+        "grid_size": 16,
+        "threads": 256,
+        "elements_per_thread": 4,
+        "elements_per_block": 1024,
+        "tilesight_model": "elementwise_n_0_pipeline_wave",
+        "compiler_validation": "all_consistent"
+      },
+      "tilesight_cold": {
+        "native_latency_us": 0.05809106560400092,
+        "report_latency_us": 0.06,
+        "hierarchy_latency_us": 0.09,
+        "bottleneck": "ddr",
+        "l1_downstream_read_bytes": 65536,
+        "l1_write_bytes": 65536,
+        "ddr_read_bytes": 65536,
+        "ddr_write_bytes": 65536,
+        "ddr_total_bytes": 131072,
+        "ddr_util_pct": 91.022,
+        "l2_util_pct": 20.317
+      },
+      "mcu_cold": {
+        "gpu__time_duration.max": 6801.142857,
+        "launch__grid_size": 16.0,
+        "launch__block_size": 256.0,
+        "launch__shared_mem_per_block_dynamic": 0.0,
+        "launch__waves_per_multiprocessor": 0.022222,
+        "l1__load_requests.sum": 2288.0,
+        "l1__store_requests.sum": 2048.0,
+        "l1__downstream_read_bytes.sum": 69376.0,
+        "l1__downstream_write_bytes.sum": 65536.0,
+        "l1__sector_hit_rate.pct": 68.846154,
+        "l1__throughput.avg.pct_of_peak_sustained_active": 0.847637,
+        "l2pu__sector_hit_rate.pct": 27.677177,
+        "l2pu__throughput.avg.pct_of_peak_sustained_elapsed": 4.418056,
+        "l2pu__tme_read_l2_byte.avg": 0.0,
+        "ddr__read_bytes.sum": 83328.0,
+        "ddr__write_bytes.sum": 2080.0,
+        "ddr__throughput.avg.pct_of_peak_sustained_elapsed": 0.817571,
+        "duration_us": 6.801142856999999
+      },
+      "mcu_warm": {
+        "gpu__time_duration.max": 6064.0,
+        "launch__grid_size": 16.0,
+        "launch__block_size": 256.0,
+        "launch__shared_mem_per_block_dynamic": 0.0,
+        "launch__waves_per_multiprocessor": 0.022222,
+        "l1__load_requests.sum": 2288.0,
+        "l1__store_requests.sum": 2048.0,
+        "l1__downstream_read_bytes.sum": 69376.0,
+        "l1__downstream_write_bytes.sum": 65536.0,
+        "l1__sector_hit_rate.pct": 68.846154,
+        "l1__throughput.avg.pct_of_peak_sustained_active": 1.122344,
+        "l2pu__sector_hit_rate.pct": 28.68088,
+        "l2pu__throughput.avg.pct_of_peak_sustained_elapsed": 4.847378,
+        "l2pu__tme_read_l2_byte.avg": 0.0,
+        "ddr__read_bytes.sum": 640.0,
+        "ddr__write_bytes.sum": 4160.0,
+        "ddr__throughput.avg.pct_of_peak_sustained_elapsed": 0.051534,
+        "duration_us": 6.064
+      },
+      "musa_event_warm": {
+        "maximum_us": 7.199999876320362,
+        "median_us": 6.719999946653843,
+        "minimum_us": 6.3599999994039536,
+        "p10_us": 6.520000286400318,
+        "p90_us": 6.8800002336502075,
+        "samples": 100
+      },
+      "comparison": {
+        "cold_native_latency_actual_over_prediction_x": 117.0772611293187,
+        "cold_native_latency_underprediction_pct_of_actual": 99.14586317586004,
+        "cold_hierarchy_latency_actual_over_prediction_x": 75.56825396666666,
+        "cold_hierarchy_latency_underprediction_pct_of_actual": 98.67669299274652,
+        "cold_l1_read_vs_logical_pct": 5.859375,
+        "cold_l1_write_vs_logical_pct": 0.0,
+        "cold_ddr_read_vs_model_pct": 27.1484375,
+        "cold_ddr_write_vs_model_pct": -96.826171875,
+        "cold_ddr_total_vs_model_pct": -34.8388671875,
+        "cold_vs_warm_mcu_latency_pct": 12.156049752638513,
+        "warm_mcu_vs_event_median_pct": -9.761904045557197
+      }
+    }
+  }
+}

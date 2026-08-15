@@ -1,0 +1,6 @@
+==PROF== [Passed] Application path.  
+==PROF== [Passed] Working directory.  
+==PROF== [Passed] MUSA environment.  
+kernel=vector_add_probe,op=add,elements=16384,grid=16,threads=256,samples=1,latency_us=8.000000,ordinary_read_bytes=131072,ordinary_write_bytes=65536,tma_read_bytes=0,shared_bytes=0,effective_gb_s=24.575999,correctness=pass
+==PROF== '/root/s5000-calibration/build/p9_l1/operator_path_probe' exit, exit code(0)  
+==PROF== Capture finished. Path is /root/s5000-calibration/results/profiling/compiler_info_elementwise_mcu_20260814/msys_healthcheck.msys-rep  

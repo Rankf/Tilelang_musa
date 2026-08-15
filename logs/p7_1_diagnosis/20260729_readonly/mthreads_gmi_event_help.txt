@@ -1,0 +1,14 @@
+     event -- Event information.                       
+     mthreads-gmi event [options]                      
+     Options include:                                  
+     [-h | --help]: Display help information.          
+     [-s | --search]:Display target event information. 
+                           Available event type:                                       
+                              XID = 1                                                          
+     plus any of:                                      
+     [-i | --id]: Specify one Gpu by index.            
+     [-u | --uuid]: Specify one Gpu by uuid.           
+     [-n | --number]:Set expected number. Max support 500 for each device.
+     [--json]: Display detailed info in json format.   
+     [--debug=]: Log encrypted debug information to a specified file.
+

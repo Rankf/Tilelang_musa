@@ -1,0 +1,5 @@
+case_id,key,count,self_device_us
+pipeline_fp16_1024_stage1,main_kernel,50,1143.9209999999994
+pipeline_fp16_1024_stage2,main_kernel,50,973.042
+pipeline_fp16_1024_stage3,main_kernel,50,1208.8020000000004
+pipeline_fp16_1024_stage4,main_kernel,50,1369.8819999999996

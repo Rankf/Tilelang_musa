@@ -1,0 +1,4 @@
+case_id,key,count,self_device_us
+holdout_fp16_768x1280x1024,main_kernel,50,961.401
+holdout_reduce_4096x512,main_kernel,50,2471.920999999999
+holdout_fused_exp_add_16m,fused_exp_add_kernel,50,7085.522000000003

@@ -1,0 +1,28 @@
+{
+  "phase": "P4",
+  "benchmark": "tilelang_global_memory",
+  "dtype": "float32",
+  "warmup": 20,
+  "graph_samples": 15,
+  "target_graph_replay_us": 8000,
+  "max_graph_unroll": 1000,
+  "target_profiler_us": 12000,
+  "max_profiler_repeats": 100,
+  "stability": {"max_relative_span": 0.15, "max_over_median": 2.0, "max_graph_profiler_ratio_delta": 0.25},
+  "cache_flush_bytes": 268435456,
+  "notes": "TileLang-MUSA fixed-grid FP32 copy. This measures actual generated TileLang kernel behavior. Native SDK occupancy values are not transferred to these kernels.",
+  "cases": [
+    {"id":"tl_block_64","op":"fixed_grid_copy","N":94371840,"grid_blocks":11520,"threads":64,"vector":1,"schedule_role":"saturated_block_sweep"},
+    {"id":"tl_block_128","op":"fixed_grid_copy","N":94371840,"grid_blocks":5760,"threads":128,"vector":1,"schedule_role":"saturated_block_sweep"},
+    {"id":"tl_block_256","op":"fixed_grid_copy","N":94371840,"grid_blocks":2880,"threads":256,"vector":1,"schedule_role":"saturated_block_sweep"},
+    {"id":"tl_block_384","op":"fixed_grid_copy","N":94371840,"grid_blocks":1920,"threads":384,"vector":1,"schedule_role":"saturated_block_sweep"},
+    {"id":"tl_block_512","op":"fixed_grid_copy","N":94371840,"grid_blocks":1440,"threads":512,"vector":1,"schedule_role":"saturated_block_sweep"},
+    {"id":"tl_wave_1","op":"fixed_grid_copy","N":32768,"grid_blocks":1,"threads":256,"vector":1,"schedule_role":"small_grid"},
+    {"id":"tl_wave_719","op":"fixed_grid_copy","N":23560192,"grid_blocks":719,"threads":256,"vector":1,"schedule_role":"native_api_reference_capacity_minus_1"},
+    {"id":"tl_wave_720","op":"fixed_grid_copy","N":23592960,"grid_blocks":720,"threads":256,"vector":1,"schedule_role":"native_api_reference_capacity"},
+    {"id":"tl_wave_721","op":"fixed_grid_copy","N":23625728,"grid_blocks":721,"threads":256,"vector":1,"schedule_role":"native_api_reference_capacity_plus_1"},
+    {"id":"tl_wave_1439","op":"fixed_grid_copy","N":47153152,"grid_blocks":1439,"threads":256,"vector":1,"schedule_role":"native_api_reference_two_capacity_minus_1"},
+    {"id":"tl_wave_1440","op":"fixed_grid_copy","N":47185920,"grid_blocks":1440,"threads":256,"vector":1,"schedule_role":"native_api_reference_two_capacity"},
+    {"id":"tl_wave_1441","op":"fixed_grid_copy","N":47218688,"grid_blocks":1441,"threads":256,"vector":1,"schedule_role":"native_api_reference_two_capacity_plus_1"}
+  ]
+}

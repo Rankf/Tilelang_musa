@@ -1,0 +1,4 @@
+error: shared memory (32788) exceeds limit (28672) in function '_Z7p4_s32kPji'
+warning: shared memory (32788) exceeds limit (28672) in function '_Z7p4_s32kPji' [-Wbackend-plugin]
+1 warning and 1 error generated when compiling for mp_21.
+exit_code=1

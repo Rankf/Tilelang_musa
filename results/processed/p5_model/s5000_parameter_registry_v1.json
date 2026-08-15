@@ -1,0 +1,1072 @@
+{
+  "model_version": "s5000-single-gpu-v1",
+  "source_manifest": [
+    {
+      "path": "results/processed/p2_compute/aggregate.json",
+      "sha256": "515dbfc0b1b6989647bb2346f2ff28b644cf8735b18ea84b54b9e451a5e29bf3"
+    },
+    {
+      "path": "results/processed/p2_compute/formal_run_manifest.json",
+      "sha256": "e5afb8fd08c3164adb482ebb6e69367e2d4973223e6fb669f958b177e695ae1a"
+    },
+    {
+      "path": "results/processed/p3_memory/s5000_memory_parameters_provisional.json",
+      "sha256": "d299ac9ef0e6cfcfa6dbbf40c9fbcdadf9537dc55392259b0910f7ac74560c12"
+    },
+    {
+      "path": "results/processed/p3_memory/aggregate_global_initial.csv",
+      "sha256": "72635613703be2d604e80e28b2a706f1eeb96957695f0053795f9465974c0a6f"
+    },
+    {
+      "path": "results/processed/p3_memory/aggregate_global_initial.json",
+      "sha256": "b1afb6dd85e3f8be21bb496be978eba68f853abe5c9ce5003bfd88ca9cf6b991"
+    },
+    {
+      "path": "results/processed/p3_memory/aggregate_fixed_grid_cache.csv",
+      "sha256": "75fefd72004265655efdaf57dab74e661ce78132061f0c81a09bb599fb4b965b"
+    },
+    {
+      "path": "results/processed/p3_memory/aggregate_fixed_grid_cache.json",
+      "sha256": "cf4b19000aa74278837e7827da78ccbcdee78a38265d673e093859213b245cd9"
+    },
+    {
+      "path": "results/processed/p3_memory/aggregate_read_initial.csv",
+      "sha256": "a703d8dfd80cbd5d6968a7521efa1c8a1d98a5fb6a1a53a8963d80a587384c76"
+    },
+    {
+      "path": "results/processed/p3_memory/aggregate_read_initial.json",
+      "sha256": "0f4c5a121e6adb0910e77675ffcb36cd12d02893f0691922893cd69ce5907d77"
+    },
+    {
+      "path": "results/processed/p3_memory/aggregate_shared_initial.csv",
+      "sha256": "34c7a3007a7599502bebc6f893a8fd0a8a295cda60954398ac1a3c7210bc0188"
+    },
+    {
+      "path": "results/processed/p3_memory/aggregate_shared_initial.json",
+      "sha256": "fa594474f6201f0e0debb59af56cd96f0e2148a81f9c61714c6d847a7a3d5527"
+    },
+    {
+      "path": "results/processed/p3_memory/aggregate_pointer_chase.csv",
+      "sha256": "5ea42118f4e7c7fb0f7a1587c5bd3c54b57a598d32aca2bac165fa360a943807"
+    },
+    {
+      "path": "results/processed/p3_memory/aggregate_pointer_chase.json",
+      "sha256": "c711f428f93dba44e58da8fd9078a4418d2a22fafbe81b6e7f64bfe2779e87d4"
+    },
+    {
+      "path": "results/processed/p4_occupancy_wave/s5000_occupancy_wave_parameters_provisional.json",
+      "sha256": "f1d0f0597b779b943f6c9a6b28772ddb67f65d36f6e10a770e83494982d317a0"
+    },
+    {
+      "path": "results/processed/p4_occupancy_wave/aggregate_tilelang_pipeline.csv",
+      "sha256": "7332f61ebf7db4a0b317fa8998611f0d8171ff8c5fef9b61343c0300f605aa69"
+    },
+    {
+      "path": "results/processed/p4_occupancy_wave/aggregate_tilelang_pipeline.json",
+      "sha256": "d661d37499b4ca566b30049233523ab9e6b2138d33fd33aad799e7f2e3c85118"
+    },
+    {
+      "path": "results/processed/p4_occupancy_wave/aggregate_tilelang_compute_wave.json",
+      "sha256": "3a06a5004e3301a48e8cd8b3c9c843c45d41332ddab13af05eb97acad9b8ce66"
+    },
+    {
+      "path": "results/processed/p4_occupancy_wave/run_manifest.json",
+      "sha256": "b833a0856600303d56ce61320717e6dbe73caf60f4261a6b6827a412dc8661d9"
+    },
+    {
+      "path": "results/processed/p4_occupancy_wave/p4_1_manifest.json",
+      "sha256": "6dce26eb1d1e628a9f6f09caba69b28435e80bee9c78a461f24b1fe694391e13"
+    },
+    {
+      "path": "configs/p5_scope.json",
+      "sha256": "f364617cd3b8c727f72d42447b43103ed35b248f6ebca6cfebe9f431f2519d3f",
+      "role": "model_scope"
+    },
+    {
+      "path": "scripts/p5_build_model.py",
+      "sha256": "833bb22cc389981a96108ec04c5286a885b3a23fc0d06acca3b5c926cb9eddcb",
+      "role": "builder"
+    }
+  ],
+  "parameters": [
+    {
+      "parameter_id": "p3:summary:l2_cache_size_driver_reported",
+      "phase": "P3",
+      "family": "summary",
+      "value": 62914560,
+      "units": "bytes",
+      "status": "sdk_driver_reported",
+      "applicability": "MTT S5000 device 0; MUSA Runtime API musaGetDeviceProperties; 60 MiB",
+      "evidence": "benchmarks/p3_musa_device_properties.mu; logs/run/p3_musa_device_properties_stdout.log; MUSA 4.3.5 musa_runtime_api.h",
+      "raw_runs_json": "[\"logs/run/p3_musa_device_properties_stdout.log\"]"
+    },
+    {
+      "parameter_id": "p3:summary:max_persisting_l2_cache_size_driver_reported",
+      "phase": "P3",
+      "family": "summary",
+      "value": 52428800,
+      "units": "bytes",
+      "status": "sdk_driver_reported",
+      "applicability": "MTT S5000 device 0; MUSA Runtime API persistingL2CacheMaxSize; not physical total L2",
+      "evidence": "benchmarks/p3_musa_device_properties.mu; logs/run/p3_musa_device_properties_stdout.log; MUSA 4.3.5 musa_runtime_api.h",
+      "raw_runs_json": "[\"logs/run/p3_musa_device_properties_stdout.log\"]"
+    },
+    {
+      "parameter_id": "p3:summary:global_copy_mixed_logical_GBps",
+      "phase": "P3",
+      "family": "summary",
+      "value": 1328.7699993740584,
+      "units": "GB/s",
+      "status": "provisional",
+      "applicability": "FP32 TileLang vector copy, 512 MiB payload, 256 threads, preallocated, graph replay",
+      "evidence": "aggregate_global_initial.csv:copy_ws_512m",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021651725347324Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021810170420528Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021915975807604Z\"]"
+    },
+    {
+      "parameter_id": "p3:summary:global_fill_write_logical_GBps",
+      "phase": "P3",
+      "family": "summary",
+      "value": 1403.1054341607623,
+      "units": "GB/s",
+      "status": "provisional",
+      "applicability": "FP32 TileLang fill, 256 MiB output, 256 threads",
+      "evidence": "aggregate_global_initial.csv:fill_256m",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021651725347324Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021810170420528Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021915975807604Z\"]"
+    },
+    {
+      "parameter_id": "p3:summary:global_triad_mixed_logical_GBps",
+      "phase": "P3",
+      "family": "summary",
+      "value": 1402.2887488732893,
+      "units": "GB/s",
+      "status": "provisional",
+      "applicability": "FP32 TileLang A+B->C, 256 MiB per operand, 256 threads",
+      "evidence": "aggregate_global_initial.csv:triad_256m",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021651725347324Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021810170420528Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021915975807604Z\"]"
+    },
+    {
+      "parameter_id": "p3:summary:global_read_sum_logical_GBps",
+      "phase": "P3",
+      "family": "summary",
+      "value": 910.0045026132788,
+      "units": "GB/s",
+      "status": "provisional_lower_bound",
+      "applicability": "FP32 TileLang read-dominated sum, 512 MiB input, 64 loads per output",
+      "evidence": "aggregate_read_initial.csv:read_sum_512m",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T023457896341259Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T023532576619463Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T023554966949168Z\"]"
+    },
+    {
+      "parameter_id": "p3:summary:shared_repeated_read_effective_GBps",
+      "phase": "P3",
+      "family": "summary",
+      "value": 44686.26806703795,
+      "units": "GB/s",
+      "status": "conditional_synthetic",
+      "applicability": "FP32 16-element shared tile, 4096 CTA, 128 threads, 128 repeated reads; r0 baseline subtracted",
+      "evidence": "aggregate_shared_initial.csv:shared_seq_r128",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022806623942811Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022845227909614Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022921157950472Z\"]"
+    },
+    {
+      "parameter_id": "p3:summary:candidate_effective_cache_workset_boundary",
+      "phase": "P3",
+      "family": "summary",
+      "value": "unknown",
+      "units": "bytes",
+      "status": "unknown",
+      "applicability": "fixed-grid 8-512 MiB copy plus 4 KiB-64 MiB native pointer chase",
+      "evidence": "aggregate_fixed_grid_cache.csv and aggregate_pointer_chase.csv; no repeatable isolated cliff",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022125450494611Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022212670664489Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022255030492990Z\"]"
+    },
+    {
+      "parameter_id": "p3:global:copy_ws_256k",
+      "phase": "P3",
+      "family": "global_condition_rate",
+      "value": "247.4588907859392",
+      "units": "GB/s_logical",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"N\":65536,\"cache_condition\":\"warm_and_post_256m_flush\",\"id\":\"copy_ws_256k\",\"op\":\"copy\",\"threads\":256,\"vector\":8}",
+      "evidence": "aggregate_global_initial.csv:copy_ws_256k; source_sha256=157870a0ce3714ca7c6eeff14a6dde8779c0d00e22a3367664b9fe737b9c4709",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021651725347324Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021810170420528Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021915975807604Z\"]"
+    },
+    {
+      "parameter_id": "p3:global:copy_ws_1m",
+      "phase": "P3",
+      "family": "global_condition_rate",
+      "value": "711.7482469021761",
+      "units": "GB/s_logical",
+      "status": "not_parameter_eligible",
+      "applicability": "{\"N\":262144,\"cache_condition\":\"warm_and_post_256m_flush\",\"id\":\"copy_ws_1m\",\"op\":\"copy\",\"threads\":256,\"vector\":8}",
+      "evidence": "aggregate_global_initial.csv:copy_ws_1m; source_sha256=157870a0ce3714ca7c6eeff14a6dde8779c0d00e22a3367664b9fe737b9c4709",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021651725347324Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021810170420528Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021915975807604Z\"]"
+    },
+    {
+      "parameter_id": "p3:global:copy_ws_4m",
+      "phase": "P3",
+      "family": "global_condition_rate",
+      "value": "1548.417823292258",
+      "units": "GB/s_logical",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"N\":1048576,\"cache_condition\":\"warm_and_post_256m_flush\",\"id\":\"copy_ws_4m\",\"op\":\"copy\",\"threads\":256,\"vector\":8}",
+      "evidence": "aggregate_global_initial.csv:copy_ws_4m; source_sha256=157870a0ce3714ca7c6eeff14a6dde8779c0d00e22a3367664b9fe737b9c4709",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021651725347324Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021810170420528Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021915975807604Z\"]"
+    },
+    {
+      "parameter_id": "p3:global:copy_ws_16m",
+      "phase": "P3",
+      "family": "global_condition_rate",
+      "value": "2465.0706693443794",
+      "units": "GB/s_logical",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"N\":4194304,\"cache_condition\":\"warm_and_post_256m_flush\",\"id\":\"copy_ws_16m\",\"op\":\"copy\",\"threads\":256,\"vector\":8}",
+      "evidence": "aggregate_global_initial.csv:copy_ws_16m; source_sha256=157870a0ce3714ca7c6eeff14a6dde8779c0d00e22a3367664b9fe737b9c4709",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021651725347324Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021810170420528Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021915975807604Z\"]"
+    },
+    {
+      "parameter_id": "p3:global:copy_ws_64m",
+      "phase": "P3",
+      "family": "global_condition_rate",
+      "value": "1319.7449858848192",
+      "units": "GB/s_logical",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"N\":16777216,\"cache_condition\":\"warm_and_post_256m_flush\",\"id\":\"copy_ws_64m\",\"op\":\"copy\",\"threads\":256,\"vector\":8}",
+      "evidence": "aggregate_global_initial.csv:copy_ws_64m; source_sha256=157870a0ce3714ca7c6eeff14a6dde8779c0d00e22a3367664b9fe737b9c4709",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021651725347324Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021810170420528Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021915975807604Z\"]"
+    },
+    {
+      "parameter_id": "p3:global:copy_ws_256m",
+      "phase": "P3",
+      "family": "global_condition_rate",
+      "value": "1333.3438022868809",
+      "units": "GB/s_logical",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"N\":67108864,\"cache_condition\":\"warm_and_post_256m_flush\",\"id\":\"copy_ws_256m\",\"op\":\"copy\",\"threads\":256,\"vector\":8}",
+      "evidence": "aggregate_global_initial.csv:copy_ws_256m; source_sha256=157870a0ce3714ca7c6eeff14a6dde8779c0d00e22a3367664b9fe737b9c4709",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021651725347324Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021810170420528Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021915975807604Z\"]"
+    },
+    {
+      "parameter_id": "p3:global:copy_ws_512m",
+      "phase": "P3",
+      "family": "global_condition_rate",
+      "value": "1328.7699993740584",
+      "units": "GB/s_logical",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"N\":134217728,\"cache_condition\":\"warm_and_post_256m_flush\",\"id\":\"copy_ws_512m\",\"op\":\"copy\",\"threads\":256,\"vector\":8}",
+      "evidence": "aggregate_global_initial.csv:copy_ws_512m; source_sha256=157870a0ce3714ca7c6eeff14a6dde8779c0d00e22a3367664b9fe737b9c4709",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021651725347324Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021810170420528Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021915975807604Z\"]"
+    },
+    {
+      "parameter_id": "p3:global:fill_64m",
+      "phase": "P3",
+      "family": "global_condition_rate",
+      "value": "2682.1248952404158",
+      "units": "GB/s_logical",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"N\":16777216,\"cache_condition\":\"warm\",\"id\":\"fill_64m\",\"op\":\"fill\",\"threads\":256,\"vector\":8}",
+      "evidence": "aggregate_global_initial.csv:fill_64m; source_sha256=a66551097c85d05e79bd9933bb5de2d2a77ea6e34996086c8632fa700cdc84e0",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021651725347324Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021810170420528Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021915975807604Z\"]"
+    },
+    {
+      "parameter_id": "p3:global:fill_256m",
+      "phase": "P3",
+      "family": "global_condition_rate",
+      "value": "1403.1054341607623",
+      "units": "GB/s_logical",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"N\":67108864,\"cache_condition\":\"warm\",\"id\":\"fill_256m\",\"op\":\"fill\",\"threads\":256,\"vector\":8}",
+      "evidence": "aggregate_global_initial.csv:fill_256m; source_sha256=a66551097c85d05e79bd9933bb5de2d2a77ea6e34996086c8632fa700cdc84e0",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021651725347324Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021810170420528Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021915975807604Z\"]"
+    },
+    {
+      "parameter_id": "p3:global:triad_64m",
+      "phase": "P3",
+      "family": "global_condition_rate",
+      "value": "1385.540445573998",
+      "units": "GB/s_logical",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"N\":16777216,\"cache_condition\":\"warm\",\"id\":\"triad_64m\",\"op\":\"triad\",\"threads\":256,\"vector\":8}",
+      "evidence": "aggregate_global_initial.csv:triad_64m; source_sha256=4c48cd905b7472b2c2501a4860437d4eb3a09116853fabfae77eef6bc2009556",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021651725347324Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021810170420528Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021915975807604Z\"]"
+    },
+    {
+      "parameter_id": "p3:global:triad_256m",
+      "phase": "P3",
+      "family": "global_condition_rate",
+      "value": "1402.2887488732893",
+      "units": "GB/s_logical",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"N\":67108864,\"cache_condition\":\"warm\",\"id\":\"triad_256m\",\"op\":\"triad\",\"threads\":256,\"vector\":8}",
+      "evidence": "aggregate_global_initial.csv:triad_256m; source_sha256=4c48cd905b7472b2c2501a4860437d4eb3a09116853fabfae77eef6bc2009556",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021651725347324Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021810170420528Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021915975807604Z\"]"
+    },
+    {
+      "parameter_id": "p3:global:stride1_16m",
+      "phase": "P3",
+      "family": "global_condition_rate",
+      "value": "2481.9339005815937",
+      "units": "GB/s_logical",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"N\":4194304,\"cache_condition\":\"warm\",\"id\":\"stride1_16m\",\"op\":\"strided_copy\",\"stride\":1,\"threads\":256,\"vector\":8}",
+      "evidence": "aggregate_global_initial.csv:stride1_16m; source_sha256=f29234755d28a32f77284ccc056a765bc7e61d4ab7a1615b798be5f14fb472a7",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021651725347324Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021810170420528Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021915975807604Z\"]"
+    },
+    {
+      "parameter_id": "p3:global:stride2_16m",
+      "phase": "P3",
+      "family": "global_condition_rate",
+      "value": "1608.043071740526",
+      "units": "GB/s_logical",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"N\":4194304,\"cache_condition\":\"warm\",\"id\":\"stride2_16m\",\"op\":\"strided_copy\",\"stride\":2,\"threads\":256,\"vector\":8}",
+      "evidence": "aggregate_global_initial.csv:stride2_16m; source_sha256=2db3e04013b3d6237ae30c6ea9a2a6689e883e7a70aae2bfea45a6940b188d89",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021651725347324Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021810170420528Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021915975807604Z\"]"
+    },
+    {
+      "parameter_id": "p3:global:stride4_16m",
+      "phase": "P3",
+      "family": "global_condition_rate",
+      "value": "868.1589759095566",
+      "units": "GB/s_logical",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"N\":4194304,\"cache_condition\":\"warm\",\"id\":\"stride4_16m\",\"op\":\"strided_copy\",\"stride\":4,\"threads\":256,\"vector\":8}",
+      "evidence": "aggregate_global_initial.csv:stride4_16m; source_sha256=1dc88d45d5b096814bc0298e0360b736b8c07927c1d705d385c39ce00a44c4a9",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021651725347324Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021810170420528Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021915975807604Z\"]"
+    },
+    {
+      "parameter_id": "p3:global:stride8_16m",
+      "phase": "P3",
+      "family": "global_condition_rate",
+      "value": "323.42713939790974",
+      "units": "GB/s_logical",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"N\":4194304,\"cache_condition\":\"warm\",\"id\":\"stride8_16m\",\"op\":\"strided_copy\",\"stride\":8,\"threads\":256,\"vector\":8}",
+      "evidence": "aggregate_global_initial.csv:stride8_16m; source_sha256=74e60ee62c32e6997e6a3b51410e5c63e76bfb233824ba489c75da01a0b3479a",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021651725347324Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021810170420528Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021915975807604Z\"]"
+    },
+    {
+      "parameter_id": "p3:global:stride16_16m",
+      "phase": "P3",
+      "family": "global_condition_rate",
+      "value": "170.28322226626528",
+      "units": "GB/s_logical",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"N\":4194304,\"cache_condition\":\"warm\",\"id\":\"stride16_16m\",\"op\":\"strided_copy\",\"stride\":16,\"threads\":256,\"vector\":8}",
+      "evidence": "aggregate_global_initial.csv:stride16_16m; source_sha256=54377f5eed5251c5175f8221713427b218d4233c03bfdef82b4fdfdc3a11bf12",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021651725347324Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021810170420528Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021915975807604Z\"]"
+    },
+    {
+      "parameter_id": "p3:global:copy_offset0_64m",
+      "phase": "P3",
+      "family": "global_condition_rate",
+      "value": "1314.7962515909408",
+      "units": "GB/s_logical",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"N\":16777216,\"cache_condition\":\"warm\",\"id\":\"copy_offset0_64m\",\"offset_elements\":0,\"op\":\"offset_copy\",\"threads\":256,\"vector\":8}",
+      "evidence": "aggregate_global_initial.csv:copy_offset0_64m; source_sha256=157870a0ce3714ca7c6eeff14a6dde8779c0d00e22a3367664b9fe737b9c4709",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021651725347324Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021810170420528Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021915975807604Z\"]"
+    },
+    {
+      "parameter_id": "p3:global:copy_offset1_64m",
+      "phase": "P3",
+      "family": "global_condition_rate",
+      "value": "1066.5268882378662",
+      "units": "GB/s_logical",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"N\":16777216,\"cache_condition\":\"warm\",\"id\":\"copy_offset1_64m\",\"offset_elements\":1,\"op\":\"offset_copy\",\"threads\":256,\"vector\":8}",
+      "evidence": "aggregate_global_initial.csv:copy_offset1_64m; source_sha256=157870a0ce3714ca7c6eeff14a6dde8779c0d00e22a3367664b9fe737b9c4709",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021651725347324Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021810170420528Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T021915975807604Z\"]"
+    },
+    {
+      "parameter_id": "p3:fixed_grid_cache:fixed_grid_copy_ws_8m",
+      "phase": "P3",
+      "family": "fixed_grid_cache_condition_rate",
+      "value": "2183.6289999620567",
+      "units": "GB/s_logical",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"N\":2097152,\"cache_condition\":\"warm_and_post_256m_flush\",\"grid_blocks\":1024,\"id\":\"fixed_grid_copy_ws_8m\",\"op\":\"fixed_grid_copy\",\"threads\":256,\"vector\":8}",
+      "evidence": "aggregate_fixed_grid_cache.csv:fixed_grid_copy_ws_8m; source_sha256=ada7470623ca21b854748f89e030d2684abe89b6d97d003adfe8f502ea28036c",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022125450494611Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022212670664489Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022255030492990Z\"]"
+    },
+    {
+      "parameter_id": "p3:fixed_grid_cache:fixed_grid_copy_ws_16m",
+      "phase": "P3",
+      "family": "fixed_grid_cache_condition_rate",
+      "value": "2488.3480620098712",
+      "units": "GB/s_logical",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"N\":4194304,\"cache_condition\":\"warm_and_post_256m_flush\",\"grid_blocks\":1024,\"id\":\"fixed_grid_copy_ws_16m\",\"op\":\"fixed_grid_copy\",\"threads\":256,\"vector\":8}",
+      "evidence": "aggregate_fixed_grid_cache.csv:fixed_grid_copy_ws_16m; source_sha256=13603393f0de72537f98875e9f189a0304c5f2108047eee937af98420e74a3d7",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022125450494611Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022212670664489Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022255030492990Z\"]"
+    },
+    {
+      "parameter_id": "p3:fixed_grid_cache:fixed_grid_copy_ws_32m",
+      "phase": "P3",
+      "family": "fixed_grid_cache_condition_rate",
+      "value": "0.0",
+      "units": "GB/s_logical",
+      "status": "not_parameter_eligible",
+      "applicability": "{\"N\":8388608,\"cache_condition\":\"warm_and_post_256m_flush\",\"grid_blocks\":1024,\"id\":\"fixed_grid_copy_ws_32m\",\"op\":\"fixed_grid_copy\",\"threads\":256,\"vector\":8}",
+      "evidence": "aggregate_fixed_grid_cache.csv:fixed_grid_copy_ws_32m; source_sha256=f7b0f0fc27167e67023352415c7176bbcf636402e7f1dd4762e425fad2245c9b",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022125450494611Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022212670664489Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022255030492990Z\"]"
+    },
+    {
+      "parameter_id": "p3:fixed_grid_cache:fixed_grid_copy_ws_64m",
+      "phase": "P3",
+      "family": "fixed_grid_cache_condition_rate",
+      "value": "1303.9805907432587",
+      "units": "GB/s_logical",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"N\":16777216,\"cache_condition\":\"warm_and_post_256m_flush\",\"grid_blocks\":1024,\"id\":\"fixed_grid_copy_ws_64m\",\"op\":\"fixed_grid_copy\",\"threads\":256,\"vector\":8}",
+      "evidence": "aggregate_fixed_grid_cache.csv:fixed_grid_copy_ws_64m; source_sha256=834e2e66c13bca44627a255378ad1dd9674872480007c7ead24bf42aacda3f39",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022125450494611Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022212670664489Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022255030492990Z\"]"
+    },
+    {
+      "parameter_id": "p3:fixed_grid_cache:fixed_grid_copy_ws_128m",
+      "phase": "P3",
+      "family": "fixed_grid_cache_condition_rate",
+      "value": "1283.750080014565",
+      "units": "GB/s_logical",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"N\":33554432,\"cache_condition\":\"warm_and_post_256m_flush\",\"grid_blocks\":1024,\"id\":\"fixed_grid_copy_ws_128m\",\"op\":\"fixed_grid_copy\",\"threads\":256,\"vector\":8}",
+      "evidence": "aggregate_fixed_grid_cache.csv:fixed_grid_copy_ws_128m; source_sha256=a858d2aff6cf245e7a6aa2b0b5f02bc99e2fe74a435ad0ec941c8838c13fd0b3",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022125450494611Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022212670664489Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022255030492990Z\"]"
+    },
+    {
+      "parameter_id": "p3:fixed_grid_cache:fixed_grid_copy_ws_256m",
+      "phase": "P3",
+      "family": "fixed_grid_cache_condition_rate",
+      "value": "1284.263677598098",
+      "units": "GB/s_logical",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"N\":67108864,\"cache_condition\":\"warm_and_post_256m_flush\",\"grid_blocks\":1024,\"id\":\"fixed_grid_copy_ws_256m\",\"op\":\"fixed_grid_copy\",\"threads\":256,\"vector\":8}",
+      "evidence": "aggregate_fixed_grid_cache.csv:fixed_grid_copy_ws_256m; source_sha256=64f5f9e745eea212018eb81f3d32ea72925c34b0a0c2465929b290878d2d22e9",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022125450494611Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022212670664489Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022255030492990Z\"]"
+    },
+    {
+      "parameter_id": "p3:fixed_grid_cache:fixed_grid_copy_ws_512m",
+      "phase": "P3",
+      "family": "fixed_grid_cache_condition_rate",
+      "value": "1263.8739978952538",
+      "units": "GB/s_logical",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"N\":134217728,\"cache_condition\":\"warm_and_post_256m_flush\",\"grid_blocks\":1024,\"id\":\"fixed_grid_copy_ws_512m\",\"op\":\"fixed_grid_copy\",\"threads\":256,\"vector\":8}",
+      "evidence": "aggregate_fixed_grid_cache.csv:fixed_grid_copy_ws_512m; source_sha256=606da3ea8aa4a974715addc1afabd9d6c0469c4ef68ed8c2edc50abd04f6136a",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022125450494611Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022212670664489Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022255030492990Z\"]"
+    },
+    {
+      "parameter_id": "p3:read:read_sum_64m",
+      "phase": "P3",
+      "family": "read_condition_rate",
+      "value": "817.900053318376",
+      "units": "GB/s_logical",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"N\":16777216,\"cache_condition\":\"warm_and_post_256m_flush\",\"id\":\"read_sum_64m\",\"items_per_thread\":64,\"op\":\"read_sum\",\"threads\":256}",
+      "evidence": "aggregate_read_initial.csv:read_sum_64m; source_sha256=a011dac9d9e360c96c484eb13521ec837bcf01c124199d54ce14e03ecd1a2a1b",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T023457896341259Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T023532576619463Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T023554966949168Z\"]"
+    },
+    {
+      "parameter_id": "p3:read:read_sum_256m",
+      "phase": "P3",
+      "family": "read_condition_rate",
+      "value": "891.4858944636654",
+      "units": "GB/s_logical",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"N\":67108864,\"cache_condition\":\"warm_and_post_256m_flush\",\"id\":\"read_sum_256m\",\"items_per_thread\":64,\"op\":\"read_sum\",\"threads\":256}",
+      "evidence": "aggregate_read_initial.csv:read_sum_256m; source_sha256=a011dac9d9e360c96c484eb13521ec837bcf01c124199d54ce14e03ecd1a2a1b",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T023457896341259Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T023532576619463Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T023554966949168Z\"]"
+    },
+    {
+      "parameter_id": "p3:read:read_sum_512m",
+      "phase": "P3",
+      "family": "read_condition_rate",
+      "value": "910.0045026132788",
+      "units": "GB/s_logical",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"N\":134217728,\"cache_condition\":\"warm_and_post_256m_flush\",\"id\":\"read_sum_512m\",\"items_per_thread\":64,\"op\":\"read_sum\",\"threads\":256}",
+      "evidence": "aggregate_read_initial.csv:read_sum_512m; source_sha256=a011dac9d9e360c96c484eb13521ec837bcf01c124199d54ce14e03ecd1a2a1b",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T023457896341259Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T023532576619463Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T023554966949168Z\"]"
+    },
+    {
+      "parameter_id": "p3:shared:shared_base_r0",
+      "phase": "P3",
+      "family": "shared_condition_rate",
+      "value": "0.0",
+      "units": "GB/s_logical",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"cache_condition\":\"warm\",\"cols\":16,\"grid_blocks\":4096,\"id\":\"shared_base_r0\",\"op\":\"shared_read\",\"pattern_stride\":1,\"repeats\":0,\"threads\":128}",
+      "evidence": "aggregate_shared_initial.csv:shared_base_r0; source_sha256=9ea975b674d75ef3703268246f210ec90a0fe287338363e70e729cb5649cc888",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022806623942811Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022845227909614Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022921157950472Z\"]"
+    },
+    {
+      "parameter_id": "p3:shared:shared_seq_r32",
+      "phase": "P3",
+      "family": "shared_condition_rate",
+      "value": "68402.959849708",
+      "units": "GB/s_incremental_shared",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"cache_condition\":\"warm\",\"cols\":16,\"grid_blocks\":4096,\"id\":\"shared_seq_r32\",\"op\":\"shared_read\",\"pattern_stride\":1,\"repeats\":32,\"threads\":128}",
+      "evidence": "aggregate_shared_initial.csv:shared_seq_r32; source_sha256=5eeee53eaff11e525d3e88a428b8c873be6a56185f2c68cff70cba371ee102fe",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022806623942811Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022845227909614Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022921157950472Z\"]"
+    },
+    {
+      "parameter_id": "p3:shared:shared_seq_r128",
+      "phase": "P3",
+      "family": "shared_condition_rate",
+      "value": "44686.26806703795",
+      "units": "GB/s_incremental_shared",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"cache_condition\":\"warm\",\"cols\":16,\"grid_blocks\":4096,\"id\":\"shared_seq_r128\",\"op\":\"shared_read\",\"pattern_stride\":1,\"repeats\":128,\"threads\":128}",
+      "evidence": "aggregate_shared_initial.csv:shared_seq_r128; source_sha256=f73173fba776a1a37a0fd88c2c34ecd82e7df0a502f876e452b78154d05cb35d",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022806623942811Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022845227909614Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022921157950472Z\"]"
+    },
+    {
+      "parameter_id": "p3:shared:shared_risk_stride2_r128",
+      "phase": "P3",
+      "family": "shared_condition_rate",
+      "value": "48231.724384451125",
+      "units": "GB/s_incremental_shared",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"cache_condition\":\"warm\",\"cols\":16,\"grid_blocks\":4096,\"id\":\"shared_risk_stride2_r128\",\"op\":\"shared_read\",\"pattern_stride\":2,\"repeats\":128,\"threads\":128}",
+      "evidence": "aggregate_shared_initial.csv:shared_risk_stride2_r128; source_sha256=90f54f96937394f6d261dc0eb5925e0058c88ddc117d44a8d0362d5d3302856d",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022806623942811Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022845227909614Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022921157950472Z\"]"
+    },
+    {
+      "parameter_id": "p3:shared:shared_risk_stride4_r128",
+      "phase": "P3",
+      "family": "shared_condition_rate",
+      "value": "48448.83538829241",
+      "units": "GB/s_incremental_shared",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"cache_condition\":\"warm\",\"cols\":16,\"grid_blocks\":4096,\"id\":\"shared_risk_stride4_r128\",\"op\":\"shared_read\",\"pattern_stride\":4,\"repeats\":128,\"threads\":128}",
+      "evidence": "aggregate_shared_initial.csv:shared_risk_stride4_r128; source_sha256=c127e2072aaccfac28bcd8a86e20f5cbafae58c6c0214f2d6afb6d9eeab699e4",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022806623942811Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022845227909614Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022921157950472Z\"]"
+    },
+    {
+      "parameter_id": "p3:shared:shared_risk_stride8_r128",
+      "phase": "P3",
+      "family": "shared_condition_rate",
+      "value": "51024.06180509665",
+      "units": "GB/s_incremental_shared",
+      "status": "conditional_calibration_eligible",
+      "applicability": "{\"cache_condition\":\"warm\",\"cols\":16,\"grid_blocks\":4096,\"id\":\"shared_risk_stride8_r128\",\"op\":\"shared_read\",\"pattern_stride\":8,\"repeats\":128,\"threads\":128}",
+      "evidence": "aggregate_shared_initial.csv:shared_risk_stride8_r128; source_sha256=0cba4e6962c180afe05435799c35d956fa9b8d50be076aa82903b96e59ed94ea",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022806623942811Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022845227909614Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022921157950472Z\"]"
+    },
+    {
+      "parameter_id": "p3:shared:shared_perm_stride15_r128",
+      "phase": "P3",
+      "family": "shared_condition_rate",
+      "value": "48277.35224337946",
+      "units": "GB/s_incremental_shared",
+      "status": "not_parameter_eligible",
+      "applicability": "{\"cache_condition\":\"warm\",\"cols\":16,\"grid_blocks\":4096,\"id\":\"shared_perm_stride15_r128\",\"op\":\"shared_read\",\"pattern_stride\":15,\"repeats\":128,\"threads\":128}",
+      "evidence": "aggregate_shared_initial.csv:shared_perm_stride15_r128; source_sha256=0105bcd07fbacc46aa46bee5b2f434fa6e0249bb4a44093af738b3bb98a02226",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022806623942811Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022845227909614Z\",\"/root/s5000-calibration/results/raw/p3_global_memory/20260729T022921157950472Z\"]"
+    },
+    {
+      "parameter_id": "p3:pointer_chase:4096",
+      "phase": "P3",
+      "family": "pointer_chase_latency",
+      "value": "237.878875732",
+      "units": "ns/dependent-load",
+      "status": "conditional",
+      "applicability": "{\"workset_bytes\":4096}",
+      "evidence": "aggregate_pointer_chase.csv:workset=4096",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_pointer_chase/20260729T023118543312294Z\",\"/root/s5000-calibration/results/raw/p3_pointer_chase/20260729T023143298767945Z\",\"/root/s5000-calibration/results/raw/p3_pointer_chase/20260729T023150716396955Z\"]"
+    },
+    {
+      "parameter_id": "p3:pointer_chase:16384",
+      "phase": "P3",
+      "family": "pointer_chase_latency",
+      "value": "252.299789429",
+      "units": "ns/dependent-load",
+      "status": "conditional",
+      "applicability": "{\"workset_bytes\":16384}",
+      "evidence": "aggregate_pointer_chase.csv:workset=16384",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_pointer_chase/20260729T023118543312294Z\",\"/root/s5000-calibration/results/raw/p3_pointer_chase/20260729T023143298767945Z\",\"/root/s5000-calibration/results/raw/p3_pointer_chase/20260729T023150716396955Z\"]"
+    },
+    {
+      "parameter_id": "p3:pointer_chase:65536",
+      "phase": "P3",
+      "family": "pointer_chase_latency",
+      "value": "246.428970337",
+      "units": "ns/dependent-load",
+      "status": "conditional",
+      "applicability": "{\"workset_bytes\":65536}",
+      "evidence": "aggregate_pointer_chase.csv:workset=65536",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_pointer_chase/20260729T023118543312294Z\",\"/root/s5000-calibration/results/raw/p3_pointer_chase/20260729T023143298767945Z\",\"/root/s5000-calibration/results/raw/p3_pointer_chase/20260729T023150716396955Z\"]"
+    },
+    {
+      "parameter_id": "p3:pointer_chase:262144",
+      "phase": "P3",
+      "family": "pointer_chase_latency",
+      "value": "254.54574585",
+      "units": "ns/dependent-load",
+      "status": "conditional",
+      "applicability": "{\"workset_bytes\":262144}",
+      "evidence": "aggregate_pointer_chase.csv:workset=262144",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_pointer_chase/20260729T023118543312294Z\",\"/root/s5000-calibration/results/raw/p3_pointer_chase/20260729T023143298767945Z\",\"/root/s5000-calibration/results/raw/p3_pointer_chase/20260729T023150716396955Z\"]"
+    },
+    {
+      "parameter_id": "p3:pointer_chase:1048576",
+      "phase": "P3",
+      "family": "pointer_chase_latency",
+      "value": "254.560699463",
+      "units": "ns/dependent-load",
+      "status": "conditional",
+      "applicability": "{\"workset_bytes\":1048576}",
+      "evidence": "aggregate_pointer_chase.csv:workset=1048576",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_pointer_chase/20260729T023118543312294Z\",\"/root/s5000-calibration/results/raw/p3_pointer_chase/20260729T023143298767945Z\",\"/root/s5000-calibration/results/raw/p3_pointer_chase/20260729T023150716396955Z\"]"
+    },
+    {
+      "parameter_id": "p3:pointer_chase:4194304",
+      "phase": "P3",
+      "family": "pointer_chase_latency",
+      "value": "253.131881714",
+      "units": "ns/dependent-load",
+      "status": "conditional",
+      "applicability": "{\"workset_bytes\":4194304}",
+      "evidence": "aggregate_pointer_chase.csv:workset=4194304",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_pointer_chase/20260729T023118543312294Z\",\"/root/s5000-calibration/results/raw/p3_pointer_chase/20260729T023143298767945Z\",\"/root/s5000-calibration/results/raw/p3_pointer_chase/20260729T023150716396955Z\"]"
+    },
+    {
+      "parameter_id": "p3:pointer_chase:16777216",
+      "phase": "P3",
+      "family": "pointer_chase_latency",
+      "value": "252.540283203",
+      "units": "ns/dependent-load",
+      "status": "conditional",
+      "applicability": "{\"workset_bytes\":16777216}",
+      "evidence": "aggregate_pointer_chase.csv:workset=16777216",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_pointer_chase/20260729T023118543312294Z\",\"/root/s5000-calibration/results/raw/p3_pointer_chase/20260729T023143298767945Z\",\"/root/s5000-calibration/results/raw/p3_pointer_chase/20260729T023150716396955Z\"]"
+    },
+    {
+      "parameter_id": "p3:pointer_chase:67108864",
+      "phase": "P3",
+      "family": "pointer_chase_latency",
+      "value": "252.38772583",
+      "units": "ns/dependent-load",
+      "status": "conditional",
+      "applicability": "{\"workset_bytes\":67108864}",
+      "evidence": "aggregate_pointer_chase.csv:workset=67108864",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p3_pointer_chase/20260729T023118543312294Z\",\"/root/s5000-calibration/results/raw/p3_pointer_chase/20260729T023143298767945Z\",\"/root/s5000-calibration/results/raw/p3_pointer_chase/20260729T023150716396955Z\"]"
+    },
+    {
+      "parameter_id": "p2:gemm:fp16_square_1024",
+      "phase": "P2",
+      "family": "gemm_effective_rate",
+      "value": 91.68034076545835,
+      "units": "TFLOP/s",
+      "status": "calibration_eligible",
+      "applicability": "{\"K\":1024,\"M\":1024,\"N\":1024,\"accum_dtype\":\"float32\",\"block_K\":64,\"block_M\":64,\"block_N\":64,\"dtype\":\"float16\",\"num_stages\":1,\"num_warp\":4,\"policy\":\"default\"}",
+      "evidence": "aggregate.json:fp16_square_1024; source_sha256=83863ac033d66e13721a9bb826e46e1959efc8618f553480d137b4040c4fe1a6",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p2_compute/20260729T020316095211165Z\",\"/root/s5000-calibration/results/raw/p2_compute/20260729T020444776690014Z\",\"/root/s5000-calibration/results/raw/p2_compute/20260729T020602462471032Z\"]"
+    },
+    {
+      "parameter_id": "p2:gemm:fp16_large_k",
+      "phase": "P2",
+      "family": "gemm_effective_rate",
+      "value": 48.85974528151255,
+      "units": "TFLOP/s",
+      "status": "calibration_eligible",
+      "applicability": "{\"K\":4096,\"M\":512,\"N\":512,\"accum_dtype\":\"float32\",\"block_K\":64,\"block_M\":64,\"block_N\":64,\"dtype\":\"float16\",\"num_stages\":1,\"num_warp\":4,\"policy\":\"default\"}",
+      "evidence": "aggregate.json:fp16_large_k; source_sha256=4a556bfcf248da89b7e1ce5c5e97060c262ed8d550a5c1d2ff95b2d2af9af59f",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p2_compute/20260729T020316095211165Z\",\"/root/s5000-calibration/results/raw/p2_compute/20260729T020444776690014Z\",\"/root/s5000-calibration/results/raw/p2_compute/20260729T020602462471032Z\"]"
+    },
+    {
+      "parameter_id": "p2:gemm:fp16_skinny",
+      "phase": "P2",
+      "family": "gemm_effective_rate",
+      "value": 60.18799632358837,
+      "units": "TFLOP/s",
+      "status": "calibration_eligible",
+      "applicability": "{\"K\":1024,\"M\":128,\"N\":4096,\"accum_dtype\":\"float32\",\"block_K\":64,\"block_M\":64,\"block_N\":64,\"dtype\":\"float16\",\"num_stages\":1,\"num_warp\":4,\"policy\":\"default\"}",
+      "evidence": "aggregate.json:fp16_skinny; source_sha256=1c1c6d2d95ce847ac62919f56899dbce2185b2f23ad47e434eaef14c3b2a73e5",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p2_compute/20260729T020316095211165Z\",\"/root/s5000-calibration/results/raw/p2_compute/20260729T020444776690014Z\",\"/root/s5000-calibration/results/raw/p2_compute/20260729T020602462471032Z\"]"
+    },
+    {
+      "parameter_id": "p2:gemm:fp16_tall",
+      "phase": "P2",
+      "family": "gemm_effective_rate",
+      "value": 62.83380946946712,
+      "units": "TFLOP/s",
+      "status": "calibration_eligible",
+      "applicability": "{\"K\":1024,\"M\":4096,\"N\":128,\"accum_dtype\":\"float32\",\"block_K\":64,\"block_M\":64,\"block_N\":64,\"dtype\":\"float16\",\"num_stages\":1,\"num_warp\":4,\"policy\":\"default\"}",
+      "evidence": "aggregate.json:fp16_tall; source_sha256=d9c6ed11d065937deb1840dd179d0905fa9807382cb04e474928abed15eef4b9",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p2_compute/20260729T020316095211165Z\",\"/root/s5000-calibration/results/raw/p2_compute/20260729T020444776690014Z\",\"/root/s5000-calibration/results/raw/p2_compute/20260729T020602462471032Z\"]"
+    },
+    {
+      "parameter_id": "p2:gemm:fp16_stage3",
+      "phase": "P2",
+      "family": "gemm_effective_rate",
+      "value": 65.68513970028266,
+      "units": "TFLOP/s",
+      "status": "calibration_eligible",
+      "applicability": "{\"K\":1024,\"M\":1024,\"N\":1024,\"accum_dtype\":\"float32\",\"block_K\":64,\"block_M\":128,\"block_N\":128,\"dtype\":\"float16\",\"num_stages\":3,\"num_warp\":4,\"policy\":\"default\"}",
+      "evidence": "aggregate.json:fp16_stage3; source_sha256=0d12e685fa069ad1eca57be3c1246edf580f6a740b201bdad8391c209d743813",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p2_compute/20260729T020316095211165Z\",\"/root/s5000-calibration/results/raw/p2_compute/20260729T020444776690014Z\",\"/root/s5000-calibration/results/raw/p2_compute/20260729T020602462471032Z\"]"
+    },
+    {
+      "parameter_id": "p2:gemm:bf16_square_1024",
+      "phase": "P2",
+      "family": "gemm_effective_rate",
+      "value": 92.35853117542618,
+      "units": "TFLOP/s",
+      "status": "calibration_eligible",
+      "applicability": "{\"K\":1024,\"M\":1024,\"N\":1024,\"accum_dtype\":\"float32\",\"block_K\":64,\"block_M\":64,\"block_N\":64,\"dtype\":\"bfloat16\",\"num_stages\":1,\"num_warp\":4,\"policy\":\"default\"}",
+      "evidence": "aggregate.json:bf16_square_1024; source_sha256=1c4dbe853ac611351955ac72324f7bd0f028b2f5bc25069643cd513af0931f84",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p2_compute/20260729T020316095211165Z\",\"/root/s5000-calibration/results/raw/p2_compute/20260729T020444776690014Z\",\"/root/s5000-calibration/results/raw/p2_compute/20260729T020602462471032Z\"]"
+    },
+    {
+      "parameter_id": "p2:gemm:bf16_large_k",
+      "phase": "P2",
+      "family": "gemm_effective_rate",
+      "value": 48.9327829068863,
+      "units": "TFLOP/s",
+      "status": "calibration_eligible",
+      "applicability": "{\"K\":4096,\"M\":512,\"N\":512,\"accum_dtype\":\"float32\",\"block_K\":64,\"block_M\":64,\"block_N\":64,\"dtype\":\"bfloat16\",\"num_stages\":1,\"num_warp\":4,\"policy\":\"default\"}",
+      "evidence": "aggregate.json:bf16_large_k; source_sha256=821d2751166061071792c12f65d4f06a27ada21613c3d20301868a46e2de4584",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p2_compute/20260729T020316095211165Z\",\"/root/s5000-calibration/results/raw/p2_compute/20260729T020444776690014Z\",\"/root/s5000-calibration/results/raw/p2_compute/20260729T020602462471032Z\"]"
+    },
+    {
+      "parameter_id": "p2:gemm:int8_square_512",
+      "phase": "P2",
+      "family": "gemm_effective_rate",
+      "value": 14.260125557162446,
+      "units": "TFLOP/s",
+      "status": "calibration_eligible",
+      "applicability": "{\"K\":512,\"M\":512,\"N\":512,\"accum_dtype\":\"int32\",\"block_K\":64,\"block_M\":128,\"block_N\":128,\"dtype\":\"int8\",\"num_stages\":1,\"num_warp\":4,\"policy\":\"default\"}",
+      "evidence": "aggregate.json:int8_square_512; source_sha256=728c713626128d445668b9a1a2949d90d6ec209804b6ec66f8170542b123b086",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p2_compute/20260729T020316095211165Z\",\"/root/s5000-calibration/results/raw/p2_compute/20260729T020444776690014Z\",\"/root/s5000-calibration/results/raw/p2_compute/20260729T020602462471032Z\"]"
+    },
+    {
+      "parameter_id": "p2:gemm:int8_square_1024",
+      "phase": "P2",
+      "family": "gemm_effective_rate",
+      "value": 69.95242885537147,
+      "units": "TFLOP/s",
+      "status": "calibration_eligible",
+      "applicability": "{\"K\":1024,\"M\":1024,\"N\":1024,\"accum_dtype\":\"int32\",\"block_K\":64,\"block_M\":128,\"block_N\":128,\"dtype\":\"int8\",\"num_stages\":1,\"num_warp\":4,\"policy\":\"default\"}",
+      "evidence": "aggregate.json:int8_square_1024; source_sha256=746f0093a347e75970e6cc72934963e010fe45ce0375ad99c48b8a4834990494",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p2_compute/20260729T020316095211165Z\",\"/root/s5000-calibration/results/raw/p2_compute/20260729T020444776690014Z\",\"/root/s5000-calibration/results/raw/p2_compute/20260729T020602462471032Z\"]"
+    },
+    {
+      "parameter_id": "p2:vector_add:vector_add_16m",
+      "phase": "P2",
+      "family": "vector_add_effective_rate",
+      "value": 116.32636370698154,
+      "units": "Gitems/s",
+      "status": "calibration_eligible",
+      "applicability": "{\"N\":16777216,\"dtype\":\"float32\",\"id\":\"vector_add_16m\",\"op\":\"vector_add\",\"threads\":256,\"vector\":8}",
+      "evidence": "aggregate.json:vector_add_16m; source_sha256=d01e25f53b46cf2743541dc051e39c413020f18c4f2f2c70564c5a3be226d4e8",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p2_compute/20260729T020316095211165Z\",\"/root/s5000-calibration/results/raw/p2_compute/20260729T020444776690014Z\",\"/root/s5000-calibration/results/raw/p2_compute/20260729T020602462471032Z\"]"
+    },
+    {
+      "parameter_id": "p2:exp:exp_16m",
+      "phase": "P2",
+      "family": "exp_effective_rate",
+      "value": 166.41586977259672,
+      "units": "Gitems/s",
+      "status": "calibration_eligible",
+      "applicability": "{\"N\":16777216,\"dtype\":\"float32\",\"id\":\"exp_16m\",\"op\":\"exp\",\"threads\":256,\"vector\":8}",
+      "evidence": "aggregate.json:exp_16m; source_sha256=cc2186594a6c1068a3120a08ea775cc6c1c3b647e6f9bf9454211f3854d07359",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p2_compute/20260729T020316095211165Z\",\"/root/s5000-calibration/results/raw/p2_compute/20260729T020444776690014Z\",\"/root/s5000-calibration/results/raw/p2_compute/20260729T020602462471032Z\"]"
+    },
+    {
+      "parameter_id": "p2:rsqrt:rsqrt_16m",
+      "phase": "P2",
+      "family": "rsqrt_effective_rate",
+      "value": 147.20264624262148,
+      "units": "Gitems/s",
+      "status": "calibration_eligible",
+      "applicability": "{\"N\":16777216,\"dtype\":\"float32\",\"id\":\"rsqrt_16m\",\"op\":\"rsqrt\",\"threads\":256,\"vector\":8}",
+      "evidence": "aggregate.json:rsqrt_16m; source_sha256=ca81b1a0c38931e3bd788cbc3f88d4fb3b60b47661e0980399e28d4b403f546d",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p2_compute/20260729T020316095211165Z\",\"/root/s5000-calibration/results/raw/p2_compute/20260729T020444776690014Z\",\"/root/s5000-calibration/results/raw/p2_compute/20260729T020602462471032Z\"]"
+    },
+    {
+      "parameter_id": "p2:reduce_sum:reduce_sum_4096x256",
+      "phase": "P2",
+      "family": "reduce_sum_effective_rate",
+      "value": 22.98954196568437,
+      "units": "Gitems/s",
+      "status": "calibration_eligible",
+      "applicability": "{\"K\":256,\"M\":4096,\"dtype\":\"float32\",\"id\":\"reduce_sum_4096x256\",\"op\":\"reduce_sum\",\"threads\":128}",
+      "evidence": "aggregate.json:reduce_sum_4096x256; source_sha256=b905af0a9de7505763651c6838ffa79c7f0cc2b7fd2f5a8949371c4c36f50c73",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p2_compute/20260729T020316095211165Z\",\"/root/s5000-calibration/results/raw/p2_compute/20260729T020444776690014Z\",\"/root/s5000-calibration/results/raw/p2_compute/20260729T020602462471032Z\"]"
+    },
+    {
+      "parameter_id": "p2:reduce_sum:reduce_sum_4096x1024",
+      "phase": "P2",
+      "family": "reduce_sum_effective_rate",
+      "value": 65.24829545421282,
+      "units": "Gitems/s",
+      "status": "calibration_eligible",
+      "applicability": "{\"K\":1024,\"M\":4096,\"dtype\":\"float32\",\"id\":\"reduce_sum_4096x1024\",\"op\":\"reduce_sum\",\"threads\":128}",
+      "evidence": "aggregate.json:reduce_sum_4096x1024; source_sha256=621225f7ad9136eedc834ff09d1012e0c95fda63808f43d11f1e09f73521e945",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p2_compute/20260729T020316095211165Z\",\"/root/s5000-calibration/results/raw/p2_compute/20260729T020444776690014Z\",\"/root/s5000-calibration/results/raw/p2_compute/20260729T020602462471032Z\"]"
+    },
+    {
+      "parameter_id": "p4:multi_processor_count_driver_reported",
+      "phase": "P4",
+      "family": "resource_or_wave",
+      "value": 60,
+      "units": "MP",
+      "status": "sdk_driver_reported",
+      "applicability": "MUSA Runtime API native P4 probe",
+      "evidence": "aggregate_native.csv:device_properties",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p4_occupancy_wave/20260729T025118233217353Z\"]"
+    },
+    {
+      "parameter_id": "p4:shared_memory_per_mp_driver_reported",
+      "phase": "P4",
+      "family": "resource_or_wave",
+      "value": 196608,
+      "units": "bytes",
+      "status": "sdk_driver_reported",
+      "applicability": "MUSA Runtime API native P4 probe",
+      "evidence": "aggregate_native.csv:device_properties",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p4_occupancy_wave/20260729T025118233217353Z\"]"
+    },
+    {
+      "parameter_id": "p4:registers_per_mp_driver_reported",
+      "phase": "P4",
+      "family": "resource_or_wave",
+      "value": 131072,
+      "units": "32-bit registers",
+      "status": "sdk_driver_reported",
+      "applicability": "MUSA Runtime API native P4 probe",
+      "evidence": "aggregate_native.csv:device_properties",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p4_occupancy_wave/20260729T025118233217353Z\"]"
+    },
+    {
+      "parameter_id": "p4:max_blocks_per_mp_driver_reported",
+      "phase": "P4",
+      "family": "resource_or_wave",
+      "value": 256,
+      "units": "CTA",
+      "status": "sdk_driver_reported",
+      "applicability": "architectural device limit, not exact-kernel residency",
+      "evidence": "aggregate_native.csv:device_properties",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p4_occupancy_wave/20260729T025118233217353Z\"]"
+    },
+    {
+      "parameter_id": "p4:native_s0_256_active_cta_per_mp",
+      "phase": "P4",
+      "family": "resource_or_wave",
+      "value": 12,
+      "units": "CTA",
+      "status": "api_calculated_exact_kernel",
+      "applicability": "P4 native s0 xorshift kernel, 256 threads, 12 B static shared, 4 regs/thread as reported",
+      "evidence": "aggregate_native.csv:resource/s0/256",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p4_occupancy_wave/20260729T025118233217353Z\"]"
+    },
+    {
+      "parameter_id": "p4:native_s32k_256_active_cta_per_mp",
+      "phase": "P4",
+      "family": "resource_or_wave",
+      "value": 5,
+      "units": "CTA",
+      "status": "api_calculated_exact_kernel",
+      "applicability": "P4 native s32k xorshift kernel, 256 threads, 32780 B static shared, 4 regs/thread as reported",
+      "evidence": "aggregate_native.csv:resource/s32k/256",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p4_occupancy_wave/20260729T025118233217353Z\"]"
+    },
+    {
+      "parameter_id": "p4:native_s0_256_tail_720_to_721_percent",
+      "phase": "P4",
+      "family": "resource_or_wave",
+      "value": 2.567158897750188,
+      "units": "percent",
+      "status": "empirical_conditional",
+      "applicability": "native s0 xorshift kernel, 256 threads, 512 iterations/thread; API capacity=60 MP*12 CTA",
+      "evidence": "aggregate_native.csv:wave_sweep 720 and 721",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p4_occupancy_wave/20260729T025118233217353Z\"]"
+    },
+    {
+      "parameter_id": "p4:tilelang_fixed_grid_copy_256_logical_GBps",
+      "phase": "P4",
+      "family": "resource_or_wave",
+      "value": 1203.2266826213372,
+      "units": "GB/s",
+      "status": "provisional_conditional",
+      "applicability": "TileLang-MUSA FP32 fixed-grid copy, 256 threads, 2880 CTA, 94,371,840 elements, graph+profiler gated",
+      "evidence": "aggregate_tilelang.csv:tl_block_256",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p4_tilelang_wave/20260729T025312594585659Z\"]"
+    },
+    {
+      "parameter_id": "p4:tilelang_fixed_grid_copy_256_active_cta_per_mp",
+      "phase": "P4",
+      "family": "resource_or_wave",
+      "value": 8,
+      "units": "CTA",
+      "status": "api_calculated_recompiled_mubin",
+      "applicability": "TileLang-MUSA fixed-grid copy, 256 threads, 56 regs/thread, zero dynamic/static shared; queried MUBIN was recompiled from retained formal source/command, not the executed formal binary",
+      "evidence": "aggregate_tilelang_wave_resources.csv:tl_block_256 and p4_1_manifest.json",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p4_tilelang_wave_resource/20260729T031420321143780Z\"]"
+    },
+    {
+      "parameter_id": "p4:tilelang_fixed_grid_copy_256_wave_capacity",
+      "phase": "P4",
+      "family": "resource_or_wave",
+      "value": 480,
+      "units": "CTA",
+      "status": "derived_conditional",
+      "applicability": "60 driver-reported MP * 8 API-calculated CTA/MP for the recompiled fixed-grid copy MUBIN",
+      "evidence": "aggregate_tilelang_wave_resources.csv:tl_block_256",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p4_tilelang_wave_resource/20260729T031420321143780Z\"]"
+    },
+    {
+      "parameter_id": "p4:tilelang_fp16_gemm_1024_stage2_effective_TFLOPs",
+      "phase": "P4",
+      "family": "resource_or_wave",
+      "value": 99.09846546269875,
+      "units": "TFLOP/s",
+      "status": "provisional_conditional",
+      "applicability": "TileLang-MUSA FP16 GEMM 1024^3, BM=BN=BK=64, 4 warp, 2 pipeline stages, graph+profiler gated",
+      "evidence": "aggregate_tilelang_pipeline.csv:pipeline_fp16_1024_stage2",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p4_tilelang_pipeline/20260729T031107714503832Z\"]"
+    },
+    {
+      "parameter_id": "p4:tilelang_fp16_gemm_1024_stage1_active_cta_per_mp",
+      "phase": "P4",
+      "family": "resource_or_wave",
+      "value": 10,
+      "units": "CTA",
+      "status": "api_calculated_recompiled_mubin",
+      "applicability": "FP16 GEMM 1024^3 stage 1, 256 generated threads, 45 regs/thread, 16384 B TIR-declared dynamic shared; queried MUBIN recompiled from retained formal source/command",
+      "evidence": "aggregate_tilelang_pipeline_resources.csv:stage=1",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p4_tilelang_pipeline/20260729T031107714503832Z\"]"
+    },
+    {
+      "parameter_id": "p4:tilelang_fp16_gemm_1024_stage2_active_cta_per_mp",
+      "phase": "P4",
+      "family": "resource_or_wave",
+      "value": 6,
+      "units": "CTA",
+      "status": "api_calculated_recompiled_mubin",
+      "applicability": "FP16 GEMM 1024^3 stage 2, 256 generated threads, 45 regs/thread, 32768 B TIR-declared dynamic shared; queried MUBIN recompiled from retained formal source/command",
+      "evidence": "aggregate_tilelang_pipeline_resources.csv:stage=2",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p4_tilelang_pipeline/20260729T031107714503832Z\"]"
+    },
+    {
+      "parameter_id": "p4:tilelang_fp16_gemm_1024_stage3_active_cta_per_mp",
+      "phase": "P4",
+      "family": "resource_or_wave",
+      "value": 4,
+      "units": "CTA",
+      "status": "api_calculated_recompiled_mubin",
+      "applicability": "FP16 GEMM 1024^3 stage 3, 256 generated threads, 45 regs/thread, 49152 B TIR-declared dynamic shared; queried MUBIN recompiled from retained formal source/command",
+      "evidence": "aggregate_tilelang_pipeline_resources.csv:stage=3",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p4_tilelang_pipeline/20260729T031107714503832Z\"]"
+    },
+    {
+      "parameter_id": "p4:tilelang_fp16_gemm_1024_stage4_active_cta_per_mp",
+      "phase": "P4",
+      "family": "resource_or_wave",
+      "value": 3,
+      "units": "CTA",
+      "status": "api_calculated_recompiled_mubin",
+      "applicability": "FP16 GEMM 1024^3 stage 4, 256 generated threads, 45 regs/thread, 65536 B TIR-declared dynamic shared; queried MUBIN recompiled from retained formal source/command",
+      "evidence": "aggregate_tilelang_pipeline_resources.csv:stage=4",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p4_tilelang_pipeline/20260729T031107714503832Z\"]"
+    },
+    {
+      "parameter_id": "p4:native_register_pressure_live4_256_active_cta_per_mp",
+      "phase": "P4",
+      "family": "resource_or_wave",
+      "value": 12,
+      "units": "CTA",
+      "status": "api_calculated_exact_kernel",
+      "applicability": "controlled native register-pressure kernel, 6 runtime regs/thread, 256 threads, zero local/spill",
+      "evidence": "aggregate_register_pressure.csv:live_values=4,block_threads=256",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p4_register_pressure/20260729T031331670363696Z\"]"
+    },
+    {
+      "parameter_id": "p4:native_register_pressure_live16_256_active_cta_per_mp",
+      "phase": "P4",
+      "family": "resource_or_wave",
+      "value": 12,
+      "units": "CTA",
+      "status": "api_calculated_exact_kernel",
+      "applicability": "controlled native register-pressure kernel, 24 runtime regs/thread, 256 threads, zero local/spill",
+      "evidence": "aggregate_register_pressure.csv:live_values=16,block_threads=256",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p4_register_pressure/20260729T031331670363696Z\"]"
+    },
+    {
+      "parameter_id": "p4:native_register_pressure_live32_256_active_cta_per_mp",
+      "phase": "P4",
+      "family": "resource_or_wave",
+      "value": 8,
+      "units": "CTA",
+      "status": "api_calculated_exact_kernel",
+      "applicability": "controlled native register-pressure kernel, 53 runtime regs/thread, 256 threads, zero local/spill",
+      "evidence": "aggregate_register_pressure.csv:live_values=32,block_threads=256",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p4_register_pressure/20260729T031331670363696Z\"]"
+    },
+    {
+      "parameter_id": "p4:native_register_pressure_live64_256_active_cta_per_mp",
+      "phase": "P4",
+      "family": "resource_or_wave",
+      "value": 4,
+      "units": "CTA",
+      "status": "api_calculated_exact_kernel",
+      "applicability": "controlled native register-pressure kernel, 115 runtime regs/thread, 256 threads, zero local/spill",
+      "evidence": "aggregate_register_pressure.csv:live_values=64,block_threads=256",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p4_register_pressure/20260729T031331670363696Z\"]"
+    },
+    {
+      "parameter_id": "p4:tilelang_fixed_grid_copy_tail_480_to_481_percent",
+      "phase": "P4",
+      "family": "resource_or_wave",
+      "value": 0.5233593818236404,
+      "units": "percent",
+      "status": "empirical_inconclusive",
+      "applicability": "fixed-grid copy exact-capacity scan; the 480 and 960 boundaries do not show a consistent positive tail step",
+      "evidence": "aggregate_tilelang_exact_wave.csv:grid=480,481",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p4_tilelang_exact_wave/20260729T031530667152794Z\"]"
+    },
+    {
+      "parameter_id": "p4:tilelang_fixed_grid_copy_tail_960_to_961_percent",
+      "phase": "P4",
+      "family": "resource_or_wave",
+      "value": -1.1180809750807152,
+      "units": "percent",
+      "status": "empirical_inconclusive",
+      "applicability": "fixed-grid copy exact-capacity scan; the 480 and 960 boundaries do not show a consistent positive tail step",
+      "evidence": "aggregate_tilelang_exact_wave.csv:grid=960,961",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p4_tilelang_exact_wave/20260729T031530667152794Z\"]"
+    },
+    {
+      "parameter_id": "p4:tilelang_compute_wave_tail_extra_us_median",
+      "phase": "P4",
+      "family": "resource_or_wave",
+      "value": 1.1990738696739385,
+      "units": "us",
+      "status": "empirical_conditional_range",
+      "applicability": "TileLang dependent FP32 recurrence, 2048 iterations/thread, 256 threads, 3 regs/thread, 12 CTA/MP; median across +1 CTA at 1x/2x/3x 720-CTA capacity",
+      "evidence": "aggregate_tilelang_compute_wave.json:tail_observations",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p4_tilelang_compute_wave/20260729T033936508084786Z\",\"/root/s5000-calibration/results/raw/p4_tilelang_compute_wave_resource/20260729T034308766942241Z\"]"
+    },
+    {
+      "parameter_id": "p4:tilelang_compute_wave_tail_extra_us_min",
+      "phase": "P4",
+      "family": "resource_or_wave",
+      "value": 0.3916150311311739,
+      "units": "us",
+      "status": "empirical_conditional_range",
+      "applicability": "same P4.2 compute-wave kernel; lower observed boundary increment",
+      "evidence": "aggregate_tilelang_compute_wave.json:conditional_tail_range_us",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p4_tilelang_compute_wave/20260729T033936508084786Z\",\"/root/s5000-calibration/results/raw/p4_tilelang_compute_wave_resource/20260729T034308766942241Z\"]"
+    },
+    {
+      "parameter_id": "p4:tilelang_compute_wave_tail_extra_us_max",
+      "phase": "P4",
+      "family": "resource_or_wave",
+      "value": 2.7895212173461914,
+      "units": "us",
+      "status": "empirical_conditional_range",
+      "applicability": "same P4.2 compute-wave kernel; upper observed boundary increment",
+      "evidence": "aggregate_tilelang_compute_wave.json:conditional_tail_range_us",
+      "raw_runs_json": "[\"/root/s5000-calibration/results/raw/p4_tilelang_compute_wave/20260729T033936508084786Z\",\"/root/s5000-calibration/results/raw/p4_tilelang_compute_wave_resource/20260729T034308766942241Z\"]"
+    }
+  ]
+}

@@ -1,0 +1,396 @@
+{
+  "model_version": "s5000-single-gpu-v2-transfer",
+  "generated_at_utc": "2026-07-29T05:05:36.119381+00:00",
+  "scope": "bounded P5.1 development transfer model; P6/P6-v2 data excluded",
+  "source_manifest": [
+    {
+      "path": "results/processed/p2_compute/aggregate.json",
+      "sha256": "515dbfc0b1b6989647bb2346f2ff28b644cf8735b18ea84b54b9e451a5e29bf3"
+    },
+    {
+      "path": "results/processed/p3_memory/aggregate_global_initial.csv",
+      "sha256": "72635613703be2d604e80e28b2a706f1eeb96957695f0053795f9465974c0a6f"
+    },
+    {
+      "path": "configs/p5_1_transfer_development_compute.json",
+      "sha256": "a16a5ad2e5e55d7021d2e755b6a3deab5f9a19919c5474874cda1f4efdbdb466"
+    },
+    {
+      "path": "configs/p5_1_transfer_development_layout.json",
+      "sha256": "3ff40726b229c0d067cb38972213b1d830f956d725ce2b146f47f343cd4590db"
+    },
+    {
+      "path": "configs/p5_1_transfer_refinement_compute.json",
+      "sha256": "bf23c52f57a1c42589d21b3967bbfccb0da566d5f213e370ae47ed157ecb7274"
+    },
+    {
+      "path": "configs/p5_1_transfer_refinement_layout.json",
+      "sha256": "a507afa31acc6f2a33c9ab7255e96c25349d3f1d69713d836206762943eb1589"
+    },
+    {
+      "path": "scripts/p5_1_build_transfer_model.py",
+      "sha256": "f31b4ad633c33e7dd438f9590d8c060a8df12a9647574631f9107777ed94093f"
+    },
+    {
+      "path": "results/raw/p5_1_transfer_development/20260729T044634893689637Z/p5_1_transfer_development_compute.json",
+      "sha256": "a16a5ad2e5e55d7021d2e755b6a3deab5f9a19919c5474874cda1f4efdbdb466"
+    },
+    {
+      "path": "results/raw/p5_1_transfer_development/20260729T044634893689637Z/compute/process_1/summary.csv",
+      "sha256": "9b514362a50522cf75ebe24916f6ac42cbc7dbb8547fad83a5425c2275e7447b"
+    },
+    {
+      "path": "results/raw/p5_1_transfer_development/20260729T044634893689637Z/compute/process_2/summary.csv",
+      "sha256": "4b5112d97fb3480fb01654ed88387f2cf1546a6473aace7ead48dbcc268f800d"
+    },
+    {
+      "path": "results/raw/p5_1_transfer_development/20260729T044634893689637Z/compute/process_3/summary.csv",
+      "sha256": "d3a658c80482bc8c6e2ca810d7836815385068756614b10c54d841293e755e71"
+    },
+    {
+      "path": "results/raw/p5_1_transfer_development/20260729T044634893689637Z/p5_1_transfer_development_layout.json",
+      "sha256": "3ff40726b229c0d067cb38972213b1d830f956d725ce2b146f47f343cd4590db"
+    },
+    {
+      "path": "results/raw/p5_1_transfer_development/20260729T044634893689637Z/layout/process_1/summary.csv",
+      "sha256": "d98818dbe26cda355f67dd021e826a9f7f15318817cc076a9b5227647fabd5ac"
+    },
+    {
+      "path": "results/raw/p5_1_transfer_development/20260729T044634893689637Z/layout/process_2/summary.csv",
+      "sha256": "e57ae973bdefd3cff02695d3cbe6f88150859f5cca2178207ee01cb6696eb95f"
+    },
+    {
+      "path": "results/raw/p5_1_transfer_development/20260729T044634893689637Z/layout/process_3/summary.csv",
+      "sha256": "a44b024b8afb1274bba553d1953fdbb52bf3d9de623e701a6d53c2c56d9ec0d3"
+    },
+    {
+      "path": "results/raw/p5_1_transfer_refinement/20260729T050130776993863Z/p5_1_transfer_refinement_compute.json",
+      "sha256": "bf23c52f57a1c42589d21b3967bbfccb0da566d5f213e370ae47ed157ecb7274"
+    },
+    {
+      "path": "results/raw/p5_1_transfer_refinement/20260729T050130776993863Z/compute/process_1/summary.csv",
+      "sha256": "d2fc8d314ef283ebbfefc0e1d2fa523f52dfe29fbcc25f31d8a84838f9942646"
+    },
+    {
+      "path": "results/raw/p5_1_transfer_refinement/20260729T050130776993863Z/compute/process_2/summary.csv",
+      "sha256": "2fa330786b05ce324fb54e1d09c2e9a3809f1993ebe1879134480e26ccde850b"
+    },
+    {
+      "path": "results/raw/p5_1_transfer_refinement/20260729T050130776993863Z/compute/process_3/summary.csv",
+      "sha256": "dcb851dcd5c8487660f2b554bc6d9aa807b9ceaf14d95174e0e650d6e7e37b16"
+    },
+    {
+      "path": "results/raw/p5_1_transfer_refinement/20260729T050130776993863Z/p5_1_transfer_refinement_layout.json",
+      "sha256": "a507afa31acc6f2a33c9ab7255e96c25349d3f1d69713d836206762943eb1589"
+    },
+    {
+      "path": "results/raw/p5_1_transfer_refinement/20260729T050130776993863Z/layout/process_1/summary.csv",
+      "sha256": "f120e00f827fe0c450d87684d4be12eefd587f391a341210e285c364bd3cd6b2"
+    },
+    {
+      "path": "results/raw/p5_1_transfer_refinement/20260729T050130776993863Z/layout/process_2/summary.csv",
+      "sha256": "18427ab8e7d2061d9973f7499d6007cdf74d65b22354084ae5f94d00134291d3"
+    },
+    {
+      "path": "results/raw/p5_1_transfer_refinement/20260729T050130776993863Z/layout/process_3/summary.csv",
+      "sha256": "b925e91901478abd6c1fce73ec021d9ad8e5d41d8313ce92fc029dbf71cefcbe"
+    }
+  ],
+  "development_runs": {
+    "base": "/root/s5000-calibration/results/raw/p5_1_transfer_development/20260729T044634893689637Z",
+    "refinement": "/root/s5000-calibration/results/raw/p5_1_transfer_refinement/20260729T050130776993863Z",
+    "extension": "excluded: Graph-replay runtime failures"
+  },
+  "models": {
+    "gemm": {
+      "feature_names": [
+        "bias",
+        "ops_giga",
+        "ops_giga_per_grid_cta"
+      ],
+      "coefficients": {
+        "bias": 7.100882978893824,
+        "ops_giga": 3.214022554706366,
+        "ops_giga_per_grid_cta": 887.8148482150737
+      },
+      "fit_sse": 9.250517482100813,
+      "predictions": [
+        21.450474597684686,
+        43.79306681245195,
+        17.99944415741713,
+        17.99944415741713,
+        23.17598981781846,
+        27.978202199529946,
+        22.313232207751568,
+        19.724959377550906,
+        14.05998938577253
+      ],
+      "formula": "bias + ops_giga + ops_giga_per_grid_cta",
+      "domains": {
+        "dtype": "float16",
+        "accum_dtype": "float32",
+        "block_M": 64,
+        "block_N": 64,
+        "block_K": 64,
+        "num_warp": 4,
+        "policy": "default",
+        "num_stages": 1,
+        "divisibility": 64,
+        "ops_giga": {
+          "min": 1.00663296,
+          "max": 3.01989888
+        },
+        "grid_cta": {
+          "min": 64,
+          "max": 320
+        },
+        "ops_giga_per_grid_cta": {
+          "min": 0.004194303999999999,
+          "max": 0.033554432
+        }
+      }
+    },
+    "reduce_sum": {
+      "feature_names": [
+        "bias",
+        "input_million",
+        "cta_million"
+      ],
+      "coefficients": {
+        "bias": 2.316945857471851,
+        "input_million": 6.118413896021806,
+        "cta_million": 34.05722771372116
+      },
+      "fit_sse": 80.05041642225227,
+      "predictions": [
+        42.78979554062798,
+        62.03666144893286,
+        45.00804759207227,
+        25.761181683767393,
+        76.84702325434914,
+        96.09388916265402
+      ],
+      "formula": "bias + input_million + cta_million",
+      "domains": {
+        "dtype": "float32",
+        "threads": 128,
+        "M": {
+          "min": 2048,
+          "max": 8192
+        },
+        "K": {
+          "min": 128,
+          "max": 2048
+        },
+        "input_million": {
+          "min": 1.048576,
+          "max": 4.194304
+        },
+        "cta_million": {
+          "min": 0.5,
+          "max": 2.0
+        }
+      }
+    },
+    "fused_exp_add": {
+      "feature_names": [
+        "bias",
+        "N_million"
+      ],
+      "coefficients": {
+        "bias": 0.0,
+        "N_million": 8.523936105798471
+      },
+      "fit_sse": 1.4846988895155715,
+      "predictions": [
+        286.0158344343596,
+        71.5039586085899,
+        107.25593791288486,
+        178.75989652147476
+      ],
+      "formula": "bias + N_million",
+      "domains": {
+        "dtype": "float32",
+        "threads": 256,
+        "vector": 8,
+        "N": {
+          "min": 8388608,
+          "max": 33554432
+        },
+        "N_million": {
+          "min": 8.388608,
+          "max": 33.554432
+        }
+      }
+    },
+    "p3_global": {
+      "formula": "linear effective-bandwidth interpolation in log2(stride), then payload/rate",
+      "groups": [
+        {
+          "selector": {
+            "N": 4194304,
+            "cache_condition": "warm",
+            "threads": 256,
+            "vector": 8
+          },
+          "points": [
+            {
+              "stride": 1,
+              "rate_GBps": 2481.9339005815937,
+              "case_id": "stride1_16m",
+              "split": "P3_calibration",
+              "raw_runs": [
+                "/root/s5000-calibration/results/raw/p3_global_memory/20260729T021651725347324Z",
+                "/root/s5000-calibration/results/raw/p3_global_memory/20260729T021810170420528Z",
+                "/root/s5000-calibration/results/raw/p3_global_memory/20260729T021915975807604Z"
+              ]
+            },
+            {
+              "stride": 2,
+              "rate_GBps": 1608.043071740526,
+              "case_id": "stride2_16m",
+              "split": "P3_calibration",
+              "raw_runs": [
+                "/root/s5000-calibration/results/raw/p3_global_memory/20260729T021651725347324Z",
+                "/root/s5000-calibration/results/raw/p3_global_memory/20260729T021810170420528Z",
+                "/root/s5000-calibration/results/raw/p3_global_memory/20260729T021915975807604Z"
+              ]
+            },
+            {
+              "stride": 4,
+              "rate_GBps": 868.1589759095566,
+              "case_id": "stride4_16m",
+              "split": "P3_calibration",
+              "raw_runs": [
+                "/root/s5000-calibration/results/raw/p3_global_memory/20260729T021651725347324Z",
+                "/root/s5000-calibration/results/raw/p3_global_memory/20260729T021810170420528Z",
+                "/root/s5000-calibration/results/raw/p3_global_memory/20260729T021915975807604Z"
+              ]
+            },
+            {
+              "stride": 8,
+              "rate_GBps": 323.42713939790974,
+              "case_id": "stride8_16m",
+              "split": "P3_calibration",
+              "raw_runs": [
+                "/root/s5000-calibration/results/raw/p3_global_memory/20260729T021651725347324Z",
+                "/root/s5000-calibration/results/raw/p3_global_memory/20260729T021810170420528Z",
+                "/root/s5000-calibration/results/raw/p3_global_memory/20260729T021915975807604Z"
+              ]
+            },
+            {
+              "stride": 16,
+              "rate_GBps": 170.28322226626528,
+              "case_id": "stride16_16m",
+              "split": "P3_calibration",
+              "raw_runs": [
+                "/root/s5000-calibration/results/raw/p3_global_memory/20260729T021651725347324Z",
+                "/root/s5000-calibration/results/raw/p3_global_memory/20260729T021810170420528Z",
+                "/root/s5000-calibration/results/raw/p3_global_memory/20260729T021915975807604Z"
+              ]
+            }
+          ]
+        },
+        {
+          "selector": {
+            "N": 8388608,
+            "cache_condition": "warm",
+            "threads": 256,
+            "vector": 8
+          },
+          "points": [
+            {
+              "stride": 1,
+              "rate_GBps": 2902.632476665083,
+              "case_id": "dev_stride1_8m",
+              "split": "P5_1_development",
+              "raw_runs": [
+                "/root/s5000-calibration/results/raw/p5_1_transfer_development/20260729T044634893689637Z/layout/process_1",
+                "/root/s5000-calibration/results/raw/p5_1_transfer_development/20260729T044634893689637Z/layout/process_2",
+                "/root/s5000-calibration/results/raw/p5_1_transfer_development/20260729T044634893689637Z/layout/process_3"
+              ]
+            },
+            {
+              "stride": 2,
+              "rate_GBps": 960.9281642120343,
+              "case_id": "refine_stride2_8m",
+              "split": "P5_1_development",
+              "raw_runs": [
+                "/root/s5000-calibration/results/raw/p5_1_transfer_refinement/20260729T050130776993863Z/layout/process_1",
+                "/root/s5000-calibration/results/raw/p5_1_transfer_refinement/20260729T050130776993863Z/layout/process_2",
+                "/root/s5000-calibration/results/raw/p5_1_transfer_refinement/20260729T050130776993863Z/layout/process_3"
+              ]
+            },
+            {
+              "stride": 3,
+              "rate_GBps": 699.7518375133685,
+              "case_id": "refine_stride3_8m",
+              "split": "P5_1_development",
+              "raw_runs": [
+                "/root/s5000-calibration/results/raw/p5_1_transfer_refinement/20260729T050130776993863Z/layout/process_1",
+                "/root/s5000-calibration/results/raw/p5_1_transfer_refinement/20260729T050130776993863Z/layout/process_2",
+                "/root/s5000-calibration/results/raw/p5_1_transfer_refinement/20260729T050130776993863Z/layout/process_3"
+              ]
+            },
+            {
+              "stride": 4,
+              "rate_GBps": 571.4510610947675,
+              "case_id": "dev_stride4_8m",
+              "split": "P5_1_development",
+              "raw_runs": [
+                "/root/s5000-calibration/results/raw/p5_1_transfer_development/20260729T044634893689637Z/layout/process_1",
+                "/root/s5000-calibration/results/raw/p5_1_transfer_development/20260729T044634893689637Z/layout/process_2",
+                "/root/s5000-calibration/results/raw/p5_1_transfer_development/20260729T044634893689637Z/layout/process_3"
+              ]
+            },
+            {
+              "stride": 5,
+              "rate_GBps": 473.5641683144934,
+              "case_id": "refine_stride5_8m",
+              "split": "P5_1_development",
+              "raw_runs": [
+                "/root/s5000-calibration/results/raw/p5_1_transfer_refinement/20260729T050130776993863Z/layout/process_1",
+                "/root/s5000-calibration/results/raw/p5_1_transfer_refinement/20260729T050130776993863Z/layout/process_2",
+                "/root/s5000-calibration/results/raw/p5_1_transfer_refinement/20260729T050130776993863Z/layout/process_3"
+              ]
+            },
+            {
+              "stride": 7,
+              "rate_GBps": 367.62092482925937,
+              "case_id": "refine_stride7_8m",
+              "split": "P5_1_development",
+              "raw_runs": [
+                "/root/s5000-calibration/results/raw/p5_1_transfer_refinement/20260729T050130776993863Z/layout/process_1",
+                "/root/s5000-calibration/results/raw/p5_1_transfer_refinement/20260729T050130776993863Z/layout/process_2",
+                "/root/s5000-calibration/results/raw/p5_1_transfer_refinement/20260729T050130776993863Z/layout/process_3"
+              ]
+            },
+            {
+              "stride": 8,
+              "rate_GBps": 326.90264288646665,
+              "case_id": "dev_stride8_8m",
+              "split": "P5_1_development",
+              "raw_runs": [
+                "/root/s5000-calibration/results/raw/p5_1_transfer_development/20260729T044634893689637Z/layout/process_1",
+                "/root/s5000-calibration/results/raw/p5_1_transfer_development/20260729T044634893689637Z/layout/process_2",
+                "/root/s5000-calibration/results/raw/p5_1_transfer_development/20260729T044634893689637Z/layout/process_3"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "development_fit_summary": {
+    "records": 27,
+    "median_ape_percent": 3.6792830513702413,
+    "maximum_ape_percent": 37.70916860542501,
+    "is_holdout_validation": false
+  },
+  "known_unknowns": [
+    "resource occupancy/wave mapping for unseen TileLang source",
+    "cache-tier capacity",
+    "extrapolation outside declared feature ranges",
+    "other dtype/tile/pipeline/layout families"
+  ]
+}

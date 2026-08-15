@@ -1,0 +1,13 @@
+{
+  "phase": "P6-v3",
+  "status": "frozen_before_p6_v3_measurement",
+  "p5_model_path": "results/processed/p5_1_transfer_model/s5000_single_gpu_model_v2.json",
+  "p5_model_sha256": "b94296eb50b904b0e34b80d79535887ad7932b7b08f57fe736c609eb48caa9be",
+  "holdout_configs": ["configs/p6_v3_compute_holdout.json", "configs/p6_v3_layout_holdout.json"],
+  "rules": [
+    "P5 v2 parameters, formulae, and declared domains are immutable after preflight.",
+    "Preflight must record a numerical prediction for every case before compilation or execution.",
+    "Three independent processes per category must pass compilation, correctness, and stability before error calculation.",
+    "P6-v3 results may classify model error but may not fit or modify P5 v2."
+  ]
+}

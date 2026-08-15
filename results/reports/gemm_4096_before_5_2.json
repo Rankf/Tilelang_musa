@@ -1,0 +1,38 @@
+{
+  "op": "gemm",
+  "shape": [
+    4096,
+    4096,
+    4096
+  ],
+  "tile": [
+    128,
+    128,
+    64
+  ],
+  "warps_per_block": 4,
+  "warp_tile": [
+    64,
+    64,
+    64
+  ],
+  "stage": 2,
+  "latency_us": 958.93,
+  "flop_count": 137438953472,
+  "compute_throughput_tflops": 143.33,
+  "ddr_util_pct": 5.7,
+  "l2_util_pct": 15.6,
+  "smem_util_pct": 48.6,
+  "compute_util_pct": 77.8,
+  "l2_hit_rate_pct": 91.8,
+  "tiles_per_sm": 3,
+  "waves": 5.7,
+  "pipeline": {
+    "prologue_us": 2.25,
+    "steady_per_iter_us": 0.82,
+    "epilogue_us": 4.1
+  },
+  "arch": "S5000",
+  "core_freq_ghz": 1.5,
+  "sm_count": 60
+}

@@ -1,0 +1,5 @@
+{
+  "status": "invalid_no_device",
+  "reason": "MCU reported No mtgpu device found and no kernels were profiled",
+  "case_count": 10
+}

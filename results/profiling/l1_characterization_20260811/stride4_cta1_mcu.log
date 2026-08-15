@@ -1,0 +1,36 @@
+==PROF== '/root/s5000-calibration/build/p9_l1/l1_stride_probe' started, pid:56796  
+==PROF== Profiling "0:0:l1_stride_probe(float const*, float*, int, int, int)" - 0 (1/1): Application replay pass 0 
+kernel=l1_stride_probe,stride_bytes=4,footprint_span_bytes_per_cta=1024,cta_per_mp=1,grid=60,threads=256,passes=128,samples=1,latency_us=3299.240112,requested_gb_s=2.383676,check=128.0,expected=128.0,correctness=pass
+==PROF== '/root/s5000-calibration/build/p9_l1/l1_stride_probe' exit, exit code(0)  
+==PROF== Disconnected from process 56796 
+==PROF== '/root/s5000-calibration/build/p9_l1/l1_stride_probe' started, pid:56807  
+==PROF== Profiling "0:0:l1_stride_probe(float const*, float*, int, int, int)" - 0 (1/1): Application replay pass 1 
+kernel=l1_stride_probe,stride_bytes=4,footprint_span_bytes_per_cta=1024,cta_per_mp=1,grid=60,threads=256,passes=128,samples=1,latency_us=339.280009,requested_gb_s=23.179438,check=128.0,expected=128.0,correctness=pass
+==PROF== '/root/s5000-calibration/build/p9_l1/l1_stride_probe' exit, exit code(0)  
+==PROF== Disconnected from process 56807 
+==PROF== '/root/s5000-calibration/build/p9_l1/l1_stride_probe' started, pid:56818  
+==PROF== Profiling "0:0:l1_stride_probe(float const*, float*, int, int, int)" - 0 (1/1): Application replay pass 2 
+kernel=l1_stride_probe,stride_bytes=4,footprint_span_bytes_per_cta=1024,cta_per_mp=1,grid=60,threads=256,passes=128,samples=1,latency_us=309.399992,requested_gb_s=25.417971,check=128.0,expected=128.0,correctness=pass
+==PROF== '/root/s5000-calibration/build/p9_l1/l1_stride_probe' exit, exit code(0)  
+==PROF== Disconnected from process 56818 
+==PROF== '/root/s5000-calibration/build/p9_l1/l1_stride_probe' started, pid:56829  
+==PROF== Profiling "0:0:l1_stride_probe(float const*, float*, int, int, int)" - 0 (1/1): Application replay pass 3 
+kernel=l1_stride_probe,stride_bytes=4,footprint_span_bytes_per_cta=1024,cta_per_mp=1,grid=60,threads=256,passes=128,samples=1,latency_us=325.639993,requested_gb_s=24.150351,check=128.0,expected=128.0,correctness=pass
+==PROF== '/root/s5000-calibration/build/p9_l1/l1_stride_probe' exit, exit code(0)  
+==PROF== Disconnected from process 56829 
+==PROF== Capture finished. Path is "/root/s5000-calibration/results/profiling/l1_characterization_20260811/stride4_cta1.mcu-rep"  
+[56796] l1_stride_probe@436412c3fa89 
+  15 - l1_stride_probe(float const*, float*, int, int, int) (60, 1, 1)x(256, 1, 1), Context 0, Stream 0, Device 0 
+    Section: Command line profiler metrics 
+    ----------------------------- ----------- ------------ 
+    Metric Name                   Metric Unit Metric Value 
+    ----------------------------- ----------- ------------ 
+    gpu__time_duration.max                 ns  9969.142857 
+    l1__load_requests.sum             request  2160.000000 
+    l1__downstream_read_bytes.sum       bytes 65280.000000 
+    l1__sector_hit_rate.pct                 %    51.470588 
+    l2pu__sector_hit_rate.pct               %    37.435377 
+    ddr__read_bytes.sum                 bytes     0.000000 
+    ----------------------------- ----------- ------------ 
+ 
+ 

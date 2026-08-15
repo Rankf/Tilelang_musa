@@ -1,0 +1,26 @@
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+2026-07-29 09:56:41  [TileLang:tilelang.cache:INFO] (__init__.py:67): Execution backend resolved -> 'tvm_ffi' (requested='auto', target='musa', allowed: cython, tvm_ffi)
+2026-07-29 09:56:41  [TileLang:tilelang.cache.kernel_cache:INFO] (kernel_cache.py:306): Cache is disabled; compiling kernel without caching.
+2026-07-29 09:56:41  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `main` with `out_idx=[]`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p2_tilelang_kernel/20260729T015619945229063Z/tilelang_musa_kernel_0000.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p2_tilelang_kernel/20260729T015619945229063Z/tilelang_musa_kernel_0000.mu.cmd
+2026-07-29 09:56:44  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `main`
+2026-07-29 09:56:51  [TileLang:tilelang.cache:INFO] (__init__.py:67): Execution backend resolved -> 'tvm_ffi' (requested='auto', target='musa', allowed: cython, tvm_ffi)
+2026-07-29 09:56:51  [TileLang:tilelang.cache.kernel_cache:INFO] (kernel_cache.py:306): Cache is disabled; compiling kernel without caching.
+2026-07-29 09:56:51  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `main` with `out_idx=[]`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p2_tilelang_kernel/20260729T015619945229063Z/tilelang_musa_kernel_0001.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p2_tilelang_kernel/20260729T015619945229063Z/tilelang_musa_kernel_0001.mu.cmd
+2026-07-29 09:56:53  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `main`
+2026-07-29 09:56:53  [TileLang:tilelang.cache:INFO] (__init__.py:67): Execution backend resolved -> 'tvm_ffi' (requested='auto', target='musa', allowed: cython, tvm_ffi)
+2026-07-29 09:56:53  [TileLang:tilelang.cache.kernel_cache:INFO] (kernel_cache.py:306): Cache is disabled; compiling kernel without caching.
+2026-07-29 09:56:53  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `main` with `out_idx=[]`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p2_tilelang_kernel/20260729T015619945229063Z/tilelang_musa_kernel_0002.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p2_tilelang_kernel/20260729T015619945229063Z/tilelang_musa_kernel_0002.mu.cmd
+2026-07-29 09:56:56  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `main`
+2026-07-29 09:56:56  [TileLang:tilelang.cache:INFO] (__init__.py:67): Execution backend resolved -> 'tvm_ffi' (requested='auto', target='musa', allowed: cython, tvm_ffi)
+2026-07-29 09:56:56  [TileLang:tilelang.cache.kernel_cache:INFO] (kernel_cache.py:306): Cache is disabled; compiling kernel without caching.
+2026-07-29 09:56:56  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `main` with `out_idx=[]`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p2_tilelang_kernel/20260729T015619945229063Z/tilelang_musa_kernel_0003.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p2_tilelang_kernel/20260729T015619945229063Z/tilelang_musa_kernel_0003.mu.cmd
+2026-07-29 09:56:59  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `main`
+{"run_id": "p2-20260729T015641Z-4e265e03", "statuses": {"m1024_n1024_k1024_b64x64x64_w4_default_s1": "measured", "m128_n128_k128_b64x64x64_w4_default_s1": "runtime_failed", "m256_n256_k256_b64x64x64_w4_default_s1": "runtime_failed", "m512_n512_k512_b64x64x64_w4_default_s1": "runtime_failed"}}

@@ -1,0 +1,330 @@
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+2026-07-29 10:25:06  [TileLang:tilelang.language.eager.builder:CRITICAL] (builder.py:1279): Failed to build prim_func from shared_read
+args={'A': A, 'C': C}
+source=def make_closure(cols, grid, repeats, stride, threads):
+
+    def shared_read(__tb):
+        __tb_fl = 'p3_tilelang_global_memory.py'
+        __tb_fn = 'shared_read'
+        range = __tb.override('range')
+        __tb.set_fileline(__tb_fl, 49, __tb_fn)
+
+        def shared_read(A, C, **__kwargs):
+            __tb.set_fileline(__tb_fl, 49, __tb_fn)
+            A = __tb.arg('A', A)
+            __tb.set_fileline(__tb_fl, 49, __tb_fn)
+            C = __tb.arg('C', C)
+            __tb.set_fileline(__tb_fl, 1, __tb_fn)
+            if __tb.skip_kernel_ctx():
+                __tb.set_fileline(__tb_fl, 1, __tb_fn)
+                return
+            __tb.set_fileline(__tb_fl, 50, __tb_fn)
+            with __tb.ctx_with(__tb.rval('T', T).Kernel(__tb.rval('grid', grid), threads=__tb.rval('threads', threads))) as bx:
+                __tb.set_fileline(__tb_fl, 51, __tb_fn)
+                tile = __tb.bind('tile', __tb.rval('T', T).alloc_shared((__tb.rval('threads', threads), __tb.rval('cols', cols)), 'float32'))
+                __tb.set_fileline(__tb_fl, 52, __tb_fn)
+                acc = __tb.bind('acc', __tb.rval('T', T).alloc_fragment((__tb.rval('threads', threads), __tb.rval('cols', cols)), 'float32'))
+                __tb.set_fileline(__tb_fl, 53, __tb_fn)
+                __tb.eval(__tb.rval('T', T).copy(__tb.rval('A', A)[__tb.rval('bx', bx) * __tb.rval('threads', threads) * __tb.rval('cols', cols)], __tb.rval('tile', tile)))
+                __tb.set_fileline(__tb_fl, 54, __tb_fn)
+                __tb.eval(__tb.rval('T', T).copy(__tb.rval('tile', tile), __tb.rval('acc', acc)))
+                __tb.set_fileline(__tb_fl, 55, __tb_fn)
+                for __3 in __tb.ctx_for(__tb.rval('T', T).Serial(__tb.rval('repeats', repeats))):
+                    __tb.set_fileline(__tb_fl, 55, __tb_fn)
+                    r = __tb.bind('r', __3)
+                    __tb.set_fileline(__tb_fl, 56, __tb_fn)
+                    for __0 in __tb.ctx_for(__tb.rval('T', T).Parallel(__tb.rval('threads', threads), __tb.rval('cols', cols))):
+                        (__1, __2) = __tb.unwrap_value(__0)
+                        __tb.set_fileline(__tb_fl, 56, __tb_fn)
+                        (__1, __2) = (__tb.bind('_', __1), __tb.bind('_', __2))
+                        __tb.set_fileline(__tb_fl, 56, __tb_fn)
+                        (i, j) = (__tb.bind('i', __1), __tb.bind('j', __2))
+                        __tb.set_fileline(__tb_fl, 57, __tb_fn)
+                        __tb.aug_assign_slice('Add', __tb.rval('acc', acc), (__tb.rval('i', i), __tb.rval('j', j)), __tb.rval('tile', tile)[__tb.rval('i', i), __tb.rval('j', j) * __tb.rval('stride', stride) % __tb.rval('cols', cols)])
+                __tb.set_fileline(__tb_fl, 58, __tb_fn)
+                __tb.eval(__tb.rval('T', T).copy(__tb.rval('acc', acc), __tb.rval('C', C)[__tb.rval('bx', bx) * __tb.rval('threads', threads) * __tb.rval('cols', cols)]))
+        return shared_read
+    return shared_read
+{"allocation_mode": "preallocated", "case_config_json": "{\"cache_condition\": \"warm\", \"cols\": 16, \"grid_blocks\": 4096, \"id\": \"shared_base_r0\", \"op\": \"shared_read\", \"pattern_stride\": 1, \"repeats\": 0, \"threads\": 128}", "case_id": "shared_base_r0", "correctness": "not_run", "dtype": "float32", "error": "Traceback (most recent call last): |   File \"/root/s5000-calibration/benchmarks/p3_tilelang_global_memory.py\", line 231, in main |     kernel = tilelang.compile(make_program(case), out_idx=[], target=\"musa\", pass_configs=PASS_CONFIGS) |   File \"/root/s5000-calibration/benchmarks/p3_tilelang_global_memory.py\", line 49, in make_program |     def shared_read(A: T.Tensor((n,), \"float32\"), C: T.Tensor((n,), \"float32\")): |   File \"/root/s5000-calibration/tilelang-musa/tilelang/language/eager/builder.py\", line 1282, in prim_func |     return impl(func) if func is not None else impl |   File \"/root/s5000-calibration/tilelang-musa/tilelang/language/eager/builder.py\", line 1280, in impl |     raise e |   File \"/root/s5000-calibration/tilelang-musa/tilelang/language/eager/builder.py\", line 1273, in impl |     ir_gen.gen(builder)(**annot) | AssertionError | ", "logical_payload_bytes": 0, "op": "shared_read", "run_id": "p3-20260729T022506Z-61b9a9d7", "status": "compile_failed", "timing_method": "MUSAGraph replay with profiler self-device cross-check"}
+2026-07-29 10:25:06  [TileLang:tilelang.language.eager.builder:CRITICAL] (builder.py:1279): Failed to build prim_func from shared_read
+args={'A': A, 'C': C}
+source=def make_closure(cols, grid, repeats, stride, threads):
+
+    def shared_read(__tb):
+        __tb_fl = 'p3_tilelang_global_memory.py'
+        __tb_fn = 'shared_read'
+        range = __tb.override('range')
+        __tb.set_fileline(__tb_fl, 49, __tb_fn)
+
+        def shared_read(A, C, **__kwargs):
+            __tb.set_fileline(__tb_fl, 49, __tb_fn)
+            A = __tb.arg('A', A)
+            __tb.set_fileline(__tb_fl, 49, __tb_fn)
+            C = __tb.arg('C', C)
+            __tb.set_fileline(__tb_fl, 1, __tb_fn)
+            if __tb.skip_kernel_ctx():
+                __tb.set_fileline(__tb_fl, 1, __tb_fn)
+                return
+            __tb.set_fileline(__tb_fl, 50, __tb_fn)
+            with __tb.ctx_with(__tb.rval('T', T).Kernel(__tb.rval('grid', grid), threads=__tb.rval('threads', threads))) as bx:
+                __tb.set_fileline(__tb_fl, 51, __tb_fn)
+                tile = __tb.bind('tile', __tb.rval('T', T).alloc_shared((__tb.rval('threads', threads), __tb.rval('cols', cols)), 'float32'))
+                __tb.set_fileline(__tb_fl, 52, __tb_fn)
+                acc = __tb.bind('acc', __tb.rval('T', T).alloc_fragment((__tb.rval('threads', threads), __tb.rval('cols', cols)), 'float32'))
+                __tb.set_fileline(__tb_fl, 53, __tb_fn)
+                __tb.eval(__tb.rval('T', T).copy(__tb.rval('A', A)[__tb.rval('bx', bx) * __tb.rval('threads', threads) * __tb.rval('cols', cols)], __tb.rval('tile', tile)))
+                __tb.set_fileline(__tb_fl, 54, __tb_fn)
+                __tb.eval(__tb.rval('T', T).copy(__tb.rval('tile', tile), __tb.rval('acc', acc)))
+                __tb.set_fileline(__tb_fl, 55, __tb_fn)
+                for __3 in __tb.ctx_for(__tb.rval('T', T).Serial(__tb.rval('repeats', repeats))):
+                    __tb.set_fileline(__tb_fl, 55, __tb_fn)
+                    r = __tb.bind('r', __3)
+                    __tb.set_fileline(__tb_fl, 56, __tb_fn)
+                    for __0 in __tb.ctx_for(__tb.rval('T', T).Parallel(__tb.rval('threads', threads), __tb.rval('cols', cols))):
+                        (__1, __2) = __tb.unwrap_value(__0)
+                        __tb.set_fileline(__tb_fl, 56, __tb_fn)
+                        (__1, __2) = (__tb.bind('_', __1), __tb.bind('_', __2))
+                        __tb.set_fileline(__tb_fl, 56, __tb_fn)
+                        (i, j) = (__tb.bind('i', __1), __tb.bind('j', __2))
+                        __tb.set_fileline(__tb_fl, 57, __tb_fn)
+                        __tb.aug_assign_slice('Add', __tb.rval('acc', acc), (__tb.rval('i', i), __tb.rval('j', j)), __tb.rval('tile', tile)[__tb.rval('i', i), __tb.rval('j', j) * __tb.rval('stride', stride) % __tb.rval('cols', cols)])
+                __tb.set_fileline(__tb_fl, 58, __tb_fn)
+                __tb.eval(__tb.rval('T', T).copy(__tb.rval('acc', acc), __tb.rval('C', C)[__tb.rval('bx', bx) * __tb.rval('threads', threads) * __tb.rval('cols', cols)]))
+        return shared_read
+    return shared_read
+{"allocation_mode": "preallocated", "case_config_json": "{\"cache_condition\": \"warm\", \"cols\": 16, \"grid_blocks\": 4096, \"id\": \"shared_seq_r32\", \"op\": \"shared_read\", \"pattern_stride\": 1, \"repeats\": 32, \"threads\": 128}", "case_id": "shared_seq_r32", "correctness": "not_run", "dtype": "float32", "error": "Traceback (most recent call last): |   File \"/root/s5000-calibration/benchmarks/p3_tilelang_global_memory.py\", line 231, in main |     kernel = tilelang.compile(make_program(case), out_idx=[], target=\"musa\", pass_configs=PASS_CONFIGS) |   File \"/root/s5000-calibration/benchmarks/p3_tilelang_global_memory.py\", line 49, in make_program |     def shared_read(A: T.Tensor((n,), \"float32\"), C: T.Tensor((n,), \"float32\")): |   File \"/root/s5000-calibration/tilelang-musa/tilelang/language/eager/builder.py\", line 1282, in prim_func |     return impl(func) if func is not None else impl |   File \"/root/s5000-calibration/tilelang-musa/tilelang/language/eager/builder.py\", line 1280, in impl |     raise e |   File \"/root/s5000-calibration/tilelang-musa/tilelang/language/eager/builder.py\", line 1273, in impl |     ir_gen.gen(builder)(**annot) | AssertionError | ", "logical_payload_bytes": 1073741824, "op": "shared_read", "run_id": "p3-20260729T022506Z-61b9a9d7", "status": "compile_failed", "timing_method": "MUSAGraph replay with profiler self-device cross-check"}
+2026-07-29 10:25:06  [TileLang:tilelang.language.eager.builder:CRITICAL] (builder.py:1279): Failed to build prim_func from shared_read
+args={'A': A, 'C': C}
+source=def make_closure(cols, grid, repeats, stride, threads):
+
+    def shared_read(__tb):
+        __tb_fl = 'p3_tilelang_global_memory.py'
+        __tb_fn = 'shared_read'
+        range = __tb.override('range')
+        __tb.set_fileline(__tb_fl, 49, __tb_fn)
+
+        def shared_read(A, C, **__kwargs):
+            __tb.set_fileline(__tb_fl, 49, __tb_fn)
+            A = __tb.arg('A', A)
+            __tb.set_fileline(__tb_fl, 49, __tb_fn)
+            C = __tb.arg('C', C)
+            __tb.set_fileline(__tb_fl, 1, __tb_fn)
+            if __tb.skip_kernel_ctx():
+                __tb.set_fileline(__tb_fl, 1, __tb_fn)
+                return
+            __tb.set_fileline(__tb_fl, 50, __tb_fn)
+            with __tb.ctx_with(__tb.rval('T', T).Kernel(__tb.rval('grid', grid), threads=__tb.rval('threads', threads))) as bx:
+                __tb.set_fileline(__tb_fl, 51, __tb_fn)
+                tile = __tb.bind('tile', __tb.rval('T', T).alloc_shared((__tb.rval('threads', threads), __tb.rval('cols', cols)), 'float32'))
+                __tb.set_fileline(__tb_fl, 52, __tb_fn)
+                acc = __tb.bind('acc', __tb.rval('T', T).alloc_fragment((__tb.rval('threads', threads), __tb.rval('cols', cols)), 'float32'))
+                __tb.set_fileline(__tb_fl, 53, __tb_fn)
+                __tb.eval(__tb.rval('T', T).copy(__tb.rval('A', A)[__tb.rval('bx', bx) * __tb.rval('threads', threads) * __tb.rval('cols', cols)], __tb.rval('tile', tile)))
+                __tb.set_fileline(__tb_fl, 54, __tb_fn)
+                __tb.eval(__tb.rval('T', T).copy(__tb.rval('tile', tile), __tb.rval('acc', acc)))
+                __tb.set_fileline(__tb_fl, 55, __tb_fn)
+                for __3 in __tb.ctx_for(__tb.rval('T', T).Serial(__tb.rval('repeats', repeats))):
+                    __tb.set_fileline(__tb_fl, 55, __tb_fn)
+                    r = __tb.bind('r', __3)
+                    __tb.set_fileline(__tb_fl, 56, __tb_fn)
+                    for __0 in __tb.ctx_for(__tb.rval('T', T).Parallel(__tb.rval('threads', threads), __tb.rval('cols', cols))):
+                        (__1, __2) = __tb.unwrap_value(__0)
+                        __tb.set_fileline(__tb_fl, 56, __tb_fn)
+                        (__1, __2) = (__tb.bind('_', __1), __tb.bind('_', __2))
+                        __tb.set_fileline(__tb_fl, 56, __tb_fn)
+                        (i, j) = (__tb.bind('i', __1), __tb.bind('j', __2))
+                        __tb.set_fileline(__tb_fl, 57, __tb_fn)
+                        __tb.aug_assign_slice('Add', __tb.rval('acc', acc), (__tb.rval('i', i), __tb.rval('j', j)), __tb.rval('tile', tile)[__tb.rval('i', i), __tb.rval('j', j) * __tb.rval('stride', stride) % __tb.rval('cols', cols)])
+                __tb.set_fileline(__tb_fl, 58, __tb_fn)
+                __tb.eval(__tb.rval('T', T).copy(__tb.rval('acc', acc), __tb.rval('C', C)[__tb.rval('bx', bx) * __tb.rval('threads', threads) * __tb.rval('cols', cols)]))
+        return shared_read
+    return shared_read
+{"allocation_mode": "preallocated", "case_config_json": "{\"cache_condition\": \"warm\", \"cols\": 16, \"grid_blocks\": 4096, \"id\": \"shared_seq_r128\", \"op\": \"shared_read\", \"pattern_stride\": 1, \"repeats\": 128, \"threads\": 128}", "case_id": "shared_seq_r128", "correctness": "not_run", "dtype": "float32", "error": "Traceback (most recent call last): |   File \"/root/s5000-calibration/benchmarks/p3_tilelang_global_memory.py\", line 231, in main |     kernel = tilelang.compile(make_program(case), out_idx=[], target=\"musa\", pass_configs=PASS_CONFIGS) |   File \"/root/s5000-calibration/benchmarks/p3_tilelang_global_memory.py\", line 49, in make_program |     def shared_read(A: T.Tensor((n,), \"float32\"), C: T.Tensor((n,), \"float32\")): |   File \"/root/s5000-calibration/tilelang-musa/tilelang/language/eager/builder.py\", line 1282, in prim_func |     return impl(func) if func is not None else impl |   File \"/root/s5000-calibration/tilelang-musa/tilelang/language/eager/builder.py\", line 1280, in impl |     raise e |   File \"/root/s5000-calibration/tilelang-musa/tilelang/language/eager/builder.py\", line 1273, in impl |     ir_gen.gen(builder)(**annot) | AssertionError | ", "logical_payload_bytes": 4294967296, "op": "shared_read", "run_id": "p3-20260729T022506Z-61b9a9d7", "status": "compile_failed", "timing_method": "MUSAGraph replay with profiler self-device cross-check"}
+2026-07-29 10:25:06  [TileLang:tilelang.language.eager.builder:CRITICAL] (builder.py:1279): Failed to build prim_func from shared_read
+args={'A': A, 'C': C}
+source=def make_closure(cols, grid, repeats, stride, threads):
+
+    def shared_read(__tb):
+        __tb_fl = 'p3_tilelang_global_memory.py'
+        __tb_fn = 'shared_read'
+        range = __tb.override('range')
+        __tb.set_fileline(__tb_fl, 49, __tb_fn)
+
+        def shared_read(A, C, **__kwargs):
+            __tb.set_fileline(__tb_fl, 49, __tb_fn)
+            A = __tb.arg('A', A)
+            __tb.set_fileline(__tb_fl, 49, __tb_fn)
+            C = __tb.arg('C', C)
+            __tb.set_fileline(__tb_fl, 1, __tb_fn)
+            if __tb.skip_kernel_ctx():
+                __tb.set_fileline(__tb_fl, 1, __tb_fn)
+                return
+            __tb.set_fileline(__tb_fl, 50, __tb_fn)
+            with __tb.ctx_with(__tb.rval('T', T).Kernel(__tb.rval('grid', grid), threads=__tb.rval('threads', threads))) as bx:
+                __tb.set_fileline(__tb_fl, 51, __tb_fn)
+                tile = __tb.bind('tile', __tb.rval('T', T).alloc_shared((__tb.rval('threads', threads), __tb.rval('cols', cols)), 'float32'))
+                __tb.set_fileline(__tb_fl, 52, __tb_fn)
+                acc = __tb.bind('acc', __tb.rval('T', T).alloc_fragment((__tb.rval('threads', threads), __tb.rval('cols', cols)), 'float32'))
+                __tb.set_fileline(__tb_fl, 53, __tb_fn)
+                __tb.eval(__tb.rval('T', T).copy(__tb.rval('A', A)[__tb.rval('bx', bx) * __tb.rval('threads', threads) * __tb.rval('cols', cols)], __tb.rval('tile', tile)))
+                __tb.set_fileline(__tb_fl, 54, __tb_fn)
+                __tb.eval(__tb.rval('T', T).copy(__tb.rval('tile', tile), __tb.rval('acc', acc)))
+                __tb.set_fileline(__tb_fl, 55, __tb_fn)
+                for __3 in __tb.ctx_for(__tb.rval('T', T).Serial(__tb.rval('repeats', repeats))):
+                    __tb.set_fileline(__tb_fl, 55, __tb_fn)
+                    r = __tb.bind('r', __3)
+                    __tb.set_fileline(__tb_fl, 56, __tb_fn)
+                    for __0 in __tb.ctx_for(__tb.rval('T', T).Parallel(__tb.rval('threads', threads), __tb.rval('cols', cols))):
+                        (__1, __2) = __tb.unwrap_value(__0)
+                        __tb.set_fileline(__tb_fl, 56, __tb_fn)
+                        (__1, __2) = (__tb.bind('_', __1), __tb.bind('_', __2))
+                        __tb.set_fileline(__tb_fl, 56, __tb_fn)
+                        (i, j) = (__tb.bind('i', __1), __tb.bind('j', __2))
+                        __tb.set_fileline(__tb_fl, 57, __tb_fn)
+                        __tb.aug_assign_slice('Add', __tb.rval('acc', acc), (__tb.rval('i', i), __tb.rval('j', j)), __tb.rval('tile', tile)[__tb.rval('i', i), __tb.rval('j', j) * __tb.rval('stride', stride) % __tb.rval('cols', cols)])
+                __tb.set_fileline(__tb_fl, 58, __tb_fn)
+                __tb.eval(__tb.rval('T', T).copy(__tb.rval('acc', acc), __tb.rval('C', C)[__tb.rval('bx', bx) * __tb.rval('threads', threads) * __tb.rval('cols', cols)]))
+        return shared_read
+    return shared_read
+{"allocation_mode": "preallocated", "case_config_json": "{\"cache_condition\": \"warm\", \"cols\": 16, \"grid_blocks\": 4096, \"id\": \"shared_risk_stride2_r128\", \"op\": \"shared_read\", \"pattern_stride\": 2, \"repeats\": 128, \"threads\": 128}", "case_id": "shared_risk_stride2_r128", "correctness": "not_run", "dtype": "float32", "error": "Traceback (most recent call last): |   File \"/root/s5000-calibration/benchmarks/p3_tilelang_global_memory.py\", line 231, in main |     kernel = tilelang.compile(make_program(case), out_idx=[], target=\"musa\", pass_configs=PASS_CONFIGS) |   File \"/root/s5000-calibration/benchmarks/p3_tilelang_global_memory.py\", line 49, in make_program |     def shared_read(A: T.Tensor((n,), \"float32\"), C: T.Tensor((n,), \"float32\")): |   File \"/root/s5000-calibration/tilelang-musa/tilelang/language/eager/builder.py\", line 1282, in prim_func |     return impl(func) if func is not None else impl |   File \"/root/s5000-calibration/tilelang-musa/tilelang/language/eager/builder.py\", line 1280, in impl |     raise e |   File \"/root/s5000-calibration/tilelang-musa/tilelang/language/eager/builder.py\", line 1273, in impl |     ir_gen.gen(builder)(**annot) | AssertionError | ", "logical_payload_bytes": 4294967296, "op": "shared_read", "run_id": "p3-20260729T022506Z-61b9a9d7", "status": "compile_failed", "timing_method": "MUSAGraph replay with profiler self-device cross-check"}
+2026-07-29 10:25:06  [TileLang:tilelang.language.eager.builder:CRITICAL] (builder.py:1279): Failed to build prim_func from shared_read
+args={'A': A, 'C': C}
+source=def make_closure(cols, grid, repeats, stride, threads):
+
+    def shared_read(__tb):
+        __tb_fl = 'p3_tilelang_global_memory.py'
+        __tb_fn = 'shared_read'
+        range = __tb.override('range')
+        __tb.set_fileline(__tb_fl, 49, __tb_fn)
+
+        def shared_read(A, C, **__kwargs):
+            __tb.set_fileline(__tb_fl, 49, __tb_fn)
+            A = __tb.arg('A', A)
+            __tb.set_fileline(__tb_fl, 49, __tb_fn)
+            C = __tb.arg('C', C)
+            __tb.set_fileline(__tb_fl, 1, __tb_fn)
+            if __tb.skip_kernel_ctx():
+                __tb.set_fileline(__tb_fl, 1, __tb_fn)
+                return
+            __tb.set_fileline(__tb_fl, 50, __tb_fn)
+            with __tb.ctx_with(__tb.rval('T', T).Kernel(__tb.rval('grid', grid), threads=__tb.rval('threads', threads))) as bx:
+                __tb.set_fileline(__tb_fl, 51, __tb_fn)
+                tile = __tb.bind('tile', __tb.rval('T', T).alloc_shared((__tb.rval('threads', threads), __tb.rval('cols', cols)), 'float32'))
+                __tb.set_fileline(__tb_fl, 52, __tb_fn)
+                acc = __tb.bind('acc', __tb.rval('T', T).alloc_fragment((__tb.rval('threads', threads), __tb.rval('cols', cols)), 'float32'))
+                __tb.set_fileline(__tb_fl, 53, __tb_fn)
+                __tb.eval(__tb.rval('T', T).copy(__tb.rval('A', A)[__tb.rval('bx', bx) * __tb.rval('threads', threads) * __tb.rval('cols', cols)], __tb.rval('tile', tile)))
+                __tb.set_fileline(__tb_fl, 54, __tb_fn)
+                __tb.eval(__tb.rval('T', T).copy(__tb.rval('tile', tile), __tb.rval('acc', acc)))
+                __tb.set_fileline(__tb_fl, 55, __tb_fn)
+                for __3 in __tb.ctx_for(__tb.rval('T', T).Serial(__tb.rval('repeats', repeats))):
+                    __tb.set_fileline(__tb_fl, 55, __tb_fn)
+                    r = __tb.bind('r', __3)
+                    __tb.set_fileline(__tb_fl, 56, __tb_fn)
+                    for __0 in __tb.ctx_for(__tb.rval('T', T).Parallel(__tb.rval('threads', threads), __tb.rval('cols', cols))):
+                        (__1, __2) = __tb.unwrap_value(__0)
+                        __tb.set_fileline(__tb_fl, 56, __tb_fn)
+                        (__1, __2) = (__tb.bind('_', __1), __tb.bind('_', __2))
+                        __tb.set_fileline(__tb_fl, 56, __tb_fn)
+                        (i, j) = (__tb.bind('i', __1), __tb.bind('j', __2))
+                        __tb.set_fileline(__tb_fl, 57, __tb_fn)
+                        __tb.aug_assign_slice('Add', __tb.rval('acc', acc), (__tb.rval('i', i), __tb.rval('j', j)), __tb.rval('tile', tile)[__tb.rval('i', i), __tb.rval('j', j) * __tb.rval('stride', stride) % __tb.rval('cols', cols)])
+                __tb.set_fileline(__tb_fl, 58, __tb_fn)
+                __tb.eval(__tb.rval('T', T).copy(__tb.rval('acc', acc), __tb.rval('C', C)[__tb.rval('bx', bx) * __tb.rval('threads', threads) * __tb.rval('cols', cols)]))
+        return shared_read
+    return shared_read
+{"allocation_mode": "preallocated", "case_config_json": "{\"cache_condition\": \"warm\", \"cols\": 16, \"grid_blocks\": 4096, \"id\": \"shared_risk_stride4_r128\", \"op\": \"shared_read\", \"pattern_stride\": 4, \"repeats\": 128, \"threads\": 128}", "case_id": "shared_risk_stride4_r128", "correctness": "not_run", "dtype": "float32", "error": "Traceback (most recent call last): |   File \"/root/s5000-calibration/benchmarks/p3_tilelang_global_memory.py\", line 231, in main |     kernel = tilelang.compile(make_program(case), out_idx=[], target=\"musa\", pass_configs=PASS_CONFIGS) |   File \"/root/s5000-calibration/benchmarks/p3_tilelang_global_memory.py\", line 49, in make_program |     def shared_read(A: T.Tensor((n,), \"float32\"), C: T.Tensor((n,), \"float32\")): |   File \"/root/s5000-calibration/tilelang-musa/tilelang/language/eager/builder.py\", line 1282, in prim_func |     return impl(func) if func is not None else impl |   File \"/root/s5000-calibration/tilelang-musa/tilelang/language/eager/builder.py\", line 1280, in impl |     raise e |   File \"/root/s5000-calibration/tilelang-musa/tilelang/language/eager/builder.py\", line 1273, in impl |     ir_gen.gen(builder)(**annot) | AssertionError | ", "logical_payload_bytes": 4294967296, "op": "shared_read", "run_id": "p3-20260729T022506Z-61b9a9d7", "status": "compile_failed", "timing_method": "MUSAGraph replay with profiler self-device cross-check"}
+2026-07-29 10:25:06  [TileLang:tilelang.language.eager.builder:CRITICAL] (builder.py:1279): Failed to build prim_func from shared_read
+args={'A': A, 'C': C}
+source=def make_closure(cols, grid, repeats, stride, threads):
+
+    def shared_read(__tb):
+        __tb_fl = 'p3_tilelang_global_memory.py'
+        __tb_fn = 'shared_read'
+        range = __tb.override('range')
+        __tb.set_fileline(__tb_fl, 49, __tb_fn)
+
+        def shared_read(A, C, **__kwargs):
+            __tb.set_fileline(__tb_fl, 49, __tb_fn)
+            A = __tb.arg('A', A)
+            __tb.set_fileline(__tb_fl, 49, __tb_fn)
+            C = __tb.arg('C', C)
+            __tb.set_fileline(__tb_fl, 1, __tb_fn)
+            if __tb.skip_kernel_ctx():
+                __tb.set_fileline(__tb_fl, 1, __tb_fn)
+                return
+            __tb.set_fileline(__tb_fl, 50, __tb_fn)
+            with __tb.ctx_with(__tb.rval('T', T).Kernel(__tb.rval('grid', grid), threads=__tb.rval('threads', threads))) as bx:
+                __tb.set_fileline(__tb_fl, 51, __tb_fn)
+                tile = __tb.bind('tile', __tb.rval('T', T).alloc_shared((__tb.rval('threads', threads), __tb.rval('cols', cols)), 'float32'))
+                __tb.set_fileline(__tb_fl, 52, __tb_fn)
+                acc = __tb.bind('acc', __tb.rval('T', T).alloc_fragment((__tb.rval('threads', threads), __tb.rval('cols', cols)), 'float32'))
+                __tb.set_fileline(__tb_fl, 53, __tb_fn)
+                __tb.eval(__tb.rval('T', T).copy(__tb.rval('A', A)[__tb.rval('bx', bx) * __tb.rval('threads', threads) * __tb.rval('cols', cols)], __tb.rval('tile', tile)))
+                __tb.set_fileline(__tb_fl, 54, __tb_fn)
+                __tb.eval(__tb.rval('T', T).copy(__tb.rval('tile', tile), __tb.rval('acc', acc)))
+                __tb.set_fileline(__tb_fl, 55, __tb_fn)
+                for __3 in __tb.ctx_for(__tb.rval('T', T).Serial(__tb.rval('repeats', repeats))):
+                    __tb.set_fileline(__tb_fl, 55, __tb_fn)
+                    r = __tb.bind('r', __3)
+                    __tb.set_fileline(__tb_fl, 56, __tb_fn)
+                    for __0 in __tb.ctx_for(__tb.rval('T', T).Parallel(__tb.rval('threads', threads), __tb.rval('cols', cols))):
+                        (__1, __2) = __tb.unwrap_value(__0)
+                        __tb.set_fileline(__tb_fl, 56, __tb_fn)
+                        (__1, __2) = (__tb.bind('_', __1), __tb.bind('_', __2))
+                        __tb.set_fileline(__tb_fl, 56, __tb_fn)
+                        (i, j) = (__tb.bind('i', __1), __tb.bind('j', __2))
+                        __tb.set_fileline(__tb_fl, 57, __tb_fn)
+                        __tb.aug_assign_slice('Add', __tb.rval('acc', acc), (__tb.rval('i', i), __tb.rval('j', j)), __tb.rval('tile', tile)[__tb.rval('i', i), __tb.rval('j', j) * __tb.rval('stride', stride) % __tb.rval('cols', cols)])
+                __tb.set_fileline(__tb_fl, 58, __tb_fn)
+                __tb.eval(__tb.rval('T', T).copy(__tb.rval('acc', acc), __tb.rval('C', C)[__tb.rval('bx', bx) * __tb.rval('threads', threads) * __tb.rval('cols', cols)]))
+        return shared_read
+    return shared_read
+{"allocation_mode": "preallocated", "case_config_json": "{\"cache_condition\": \"warm\", \"cols\": 16, \"grid_blocks\": 4096, \"id\": \"shared_risk_stride8_r128\", \"op\": \"shared_read\", \"pattern_stride\": 8, \"repeats\": 128, \"threads\": 128}", "case_id": "shared_risk_stride8_r128", "correctness": "not_run", "dtype": "float32", "error": "Traceback (most recent call last): |   File \"/root/s5000-calibration/benchmarks/p3_tilelang_global_memory.py\", line 231, in main |     kernel = tilelang.compile(make_program(case), out_idx=[], target=\"musa\", pass_configs=PASS_CONFIGS) |   File \"/root/s5000-calibration/benchmarks/p3_tilelang_global_memory.py\", line 49, in make_program |     def shared_read(A: T.Tensor((n,), \"float32\"), C: T.Tensor((n,), \"float32\")): |   File \"/root/s5000-calibration/tilelang-musa/tilelang/language/eager/builder.py\", line 1282, in prim_func |     return impl(func) if func is not None else impl |   File \"/root/s5000-calibration/tilelang-musa/tilelang/language/eager/builder.py\", line 1280, in impl |     raise e |   File \"/root/s5000-calibration/tilelang-musa/tilelang/language/eager/builder.py\", line 1273, in impl |     ir_gen.gen(builder)(**annot) | AssertionError | ", "logical_payload_bytes": 4294967296, "op": "shared_read", "run_id": "p3-20260729T022506Z-61b9a9d7", "status": "compile_failed", "timing_method": "MUSAGraph replay with profiler self-device cross-check"}
+2026-07-29 10:25:06  [TileLang:tilelang.language.eager.builder:CRITICAL] (builder.py:1279): Failed to build prim_func from shared_read
+args={'A': A, 'C': C}
+source=def make_closure(cols, grid, repeats, stride, threads):
+
+    def shared_read(__tb):
+        __tb_fl = 'p3_tilelang_global_memory.py'
+        __tb_fn = 'shared_read'
+        range = __tb.override('range')
+        __tb.set_fileline(__tb_fl, 49, __tb_fn)
+
+        def shared_read(A, C, **__kwargs):
+            __tb.set_fileline(__tb_fl, 49, __tb_fn)
+            A = __tb.arg('A', A)
+            __tb.set_fileline(__tb_fl, 49, __tb_fn)
+            C = __tb.arg('C', C)
+            __tb.set_fileline(__tb_fl, 1, __tb_fn)
+            if __tb.skip_kernel_ctx():
+                __tb.set_fileline(__tb_fl, 1, __tb_fn)
+                return
+            __tb.set_fileline(__tb_fl, 50, __tb_fn)
+            with __tb.ctx_with(__tb.rval('T', T).Kernel(__tb.rval('grid', grid), threads=__tb.rval('threads', threads))) as bx:
+                __tb.set_fileline(__tb_fl, 51, __tb_fn)
+                tile = __tb.bind('tile', __tb.rval('T', T).alloc_shared((__tb.rval('threads', threads), __tb.rval('cols', cols)), 'float32'))
+                __tb.set_fileline(__tb_fl, 52, __tb_fn)
+                acc = __tb.bind('acc', __tb.rval('T', T).alloc_fragment((__tb.rval('threads', threads), __tb.rval('cols', cols)), 'float32'))
+                __tb.set_fileline(__tb_fl, 53, __tb_fn)
+                __tb.eval(__tb.rval('T', T).copy(__tb.rval('A', A)[__tb.rval('bx', bx) * __tb.rval('threads', threads) * __tb.rval('cols', cols)], __tb.rval('tile', tile)))
+                __tb.set_fileline(__tb_fl, 54, __tb_fn)
+                __tb.eval(__tb.rval('T', T).copy(__tb.rval('tile', tile), __tb.rval('acc', acc)))
+                __tb.set_fileline(__tb_fl, 55, __tb_fn)
+                for __3 in __tb.ctx_for(__tb.rval('T', T).Serial(__tb.rval('repeats', repeats))):
+                    __tb.set_fileline(__tb_fl, 55, __tb_fn)
+                    r = __tb.bind('r', __3)
+                    __tb.set_fileline(__tb_fl, 56, __tb_fn)
+                    for __0 in __tb.ctx_for(__tb.rval('T', T).Parallel(__tb.rval('threads', threads), __tb.rval('cols', cols))):
+                        (__1, __2) = __tb.unwrap_value(__0)
+                        __tb.set_fileline(__tb_fl, 56, __tb_fn)
+                        (__1, __2) = (__tb.bind('_', __1), __tb.bind('_', __2))
+                        __tb.set_fileline(__tb_fl, 56, __tb_fn)
+                        (i, j) = (__tb.bind('i', __1), __tb.bind('j', __2))
+                        __tb.set_fileline(__tb_fl, 57, __tb_fn)
+                        __tb.aug_assign_slice('Add', __tb.rval('acc', acc), (__tb.rval('i', i), __tb.rval('j', j)), __tb.rval('tile', tile)[__tb.rval('i', i), __tb.rval('j', j) * __tb.rval('stride', stride) % __tb.rval('cols', cols)])
+                __tb.set_fileline(__tb_fl, 58, __tb_fn)
+                __tb.eval(__tb.rval('T', T).copy(__tb.rval('acc', acc), __tb.rval('C', C)[__tb.rval('bx', bx) * __tb.rval('threads', threads) * __tb.rval('cols', cols)]))
+        return shared_read
+    return shared_read
+{"allocation_mode": "preallocated", "case_config_json": "{\"cache_condition\": \"warm\", \"cols\": 16, \"grid_blocks\": 4096, \"id\": \"shared_perm_stride15_r128\", \"op\": \"shared_read\", \"pattern_stride\": 15, \"repeats\": 128, \"threads\": 128}", "case_id": "shared_perm_stride15_r128", "correctness": "not_run", "dtype": "float32", "error": "Traceback (most recent call last): |   File \"/root/s5000-calibration/benchmarks/p3_tilelang_global_memory.py\", line 231, in main |     kernel = tilelang.compile(make_program(case), out_idx=[], target=\"musa\", pass_configs=PASS_CONFIGS) |   File \"/root/s5000-calibration/benchmarks/p3_tilelang_global_memory.py\", line 49, in make_program |     def shared_read(A: T.Tensor((n,), \"float32\"), C: T.Tensor((n,), \"float32\")): |   File \"/root/s5000-calibration/tilelang-musa/tilelang/language/eager/builder.py\", line 1282, in prim_func |     return impl(func) if func is not None else impl |   File \"/root/s5000-calibration/tilelang-musa/tilelang/language/eager/builder.py\", line 1280, in impl |     raise e |   File \"/root/s5000-calibration/tilelang-musa/tilelang/language/eager/builder.py\", line 1273, in impl |     ir_gen.gen(builder)(**annot) | AssertionError | ", "logical_payload_bytes": 4294967296, "op": "shared_read", "run_id": "p3-20260729T022506Z-61b9a9d7", "status": "compile_failed", "timing_method": "MUSAGraph replay with profiler self-device cross-check"}

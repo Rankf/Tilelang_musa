@@ -1,0 +1,7 @@
+case_id,key,count,self_device_us
+tl_exact_wave_479,fixed_grid_copy_kernel,100,9735.097000000003
+tl_exact_wave_480,fixed_grid_copy_kernel,100,9692.296999999997
+tl_exact_wave_481,fixed_grid_copy_kernel,100,9757.858
+tl_exact_wave_959,fixed_grid_copy_kernel,59,11708.541999999996
+tl_exact_wave_960,fixed_grid_copy_kernel,59,11868.423000000004
+tl_exact_wave_961,fixed_grid_copy_kernel,59,11784.701999999996

@@ -1,0 +1,239 @@
+2026-07-28 17:08:48  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `kernel` with `out_idx=-1`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0006.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0006.mu.cmd
+2026-07-28 17:08:50  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `kernel`
+2026-07-28 17:08:50  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `kernel` with `out_idx=-1`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0007.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0007.mu.cmd
+2026-07-28 17:08:51  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `kernel`
+2026-07-28 17:08:53  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `kernel` with `out_idx=-1`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0008.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0008.mu.cmd
+2026-07-28 17:08:54  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `kernel`
+2026-07-28 17:08:54  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `kernel` with `out_idx=-1`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0009.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0009.mu.cmd
+F2026-07-28 17:09:00  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `kernel` with `out_idx=-1`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0010.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0010.mu.cmd
+2026-07-28 17:09:01  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `kernel`
+2026-07-28 17:09:01  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `kernel` with `out_idx=-1`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0011.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0011.mu.cmd
+2026-07-28 17:09:03  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `kernel`
+2026-07-28 17:09:03  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `kernel` with `out_idx=-1`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0012.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0012.mu.cmd
+2026-07-28 17:09:05  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `kernel`
+2026-07-28 17:09:05  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `kernel` with `out_idx=-1`
+compile_musa dumped kernel source to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0013.mu
+compile_musa dumped kernel compile command to: /root/s5000-calibration/logs/build/p0_tilelang_kernel/tilelang_musa_kernel_0013.mu.cmd
+F
+=================================== FAILURES ===================================
+_____________________ test_reduce_max_runtime_nan_behavior _____________________
+
+    @tilelang.testing.requires_musa
+    def test_reduce_max_runtime_nan_behavior():
+        for _, tl_dtype, torch_dtype in _DTYPES:
+            length = 64
+            a = torch.arange(length, dtype=torch.float32).to(torch_dtype).to("musa")
+            a[7] = float("nan")
+    
+            k_default = _compile(_make_reduce_kernel(T.reduce_max, length, tl_dtype, nan_propagate=False))
+>           k_nan = _compile(_make_reduce_kernel(T.reduce_max, length, tl_dtype, nan_propagate=True))
+
+testing/python/language/test_tilelang_language_reduce_maxmin_nan.py:83: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+testing/python/language/test_tilelang_language_reduce_maxmin_nan.py:16: in _compile
+    return tilelang.compile(prim_func, out_idx=-1, target="musa")
+tilelang/jit/__init__.py:112: in compile
+    return cached(
+tilelang/cache/__init__.py:87: in cached
+    return _dispatch_map[execution_backend].cached(
+tilelang/cache/kernel_cache.py:307: in cached
+    return JITKernel(
+tilelang/jit/kernel.py:133: in __init__
+    adapter = self._compile_and_create_adapter(func, out_idx)
+tilelang/jit/kernel.py:244: in _compile_and_create_adapter
+    artifact = tilelang.lower(
+tilelang/engine/lower.py:393: in lower
+    codegen_mod = device_codegen(device_mod, target) if enable_device_compile else device_codegen_without_compile(device_mod, target)
+tilelang/engine/lower.py:289: in device_codegen
+    device_mod = tvm.ffi.get_global_func("target.build.tilelang_musa")(device_mod, target)
+python/tvm_ffi/cython/function.pxi:968: in tvm_ffi.core.Function.__call__
+    ???
+<unknown>:0: in tvm::codegen::BuildTileLangMUSA(tvm::IRModule, tvm::Target)
+    ???
+<unknown>:0: in TVMFFIPyCallback(void*, TVMFFIAny const*, int, TVMFFIAny*)
+    ???
+<unknown>:0: in TVMFFIPyCallManager::ForwardPyErrorToFFI()
+    ???
+<unknown>:0: in TVMFFICyErrorSetRaisedFromPyError(_object*)
+    ???
+tilelang/engine/lower.py:199: in tilelang_callback_musa_compile
+    return mcc.compile_musa(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+>   raise RuntimeError(msg)
+E   RuntimeError: #include <tl_templates/musa/common.h>
+E   #include <tl_templates/musa/cvt.h>
+E   #include <tl_templates/musa/fop.h>
+E   #include <tl_templates/musa/accelerated_ops.h>
+E   #include <tl_templates/musa/intrin.h>
+E   #include <tl_templates/musa/gemm.h>
+E   #include <tl_templates/musa/copy.h>
+E   #include <tl_templates/musa/barrier.h>
+E   #include <tl_templates/musa/reduce.h>
+E   #include <tl_templates/musa/threadblock_swizzle.h>
+E   #include <tl_templates/musa/debug.h>
+E   
+E   extern "C" __global__ void kernel_kernel(const bfloat16_t* __restrict__ a, bfloat16_t* __restrict__ out);
+E   extern "C" __global__ void __launch_bounds__(32, 1) kernel_kernel(const bfloat16_t* __restrict__ a, bfloat16_t* __restrict__ out) {
+E     bfloat16_t frag[2];
+E     tl_bf2 out_frag_pack[1];
+E     bfloat16_t out_frag[1];
+E     *(tl_bf2*)(frag + 0) = *(tl_bf2*)(a + (((int)threadIdx.x) * 2));
+E     bfloat16_t broadcast_var = -std::numeric_limits<bfloat16_t>::infinity();
+E     out_frag_pack[0] = (tl_bf2{make_tl_bf_elem(bfloat16_t(static_cast<float>(broadcast_var))), make_tl_bf_elem(bfloat16_t(static_cast<float>(broadcast_var)))});
+E     out_frag_pack[0] = tl::max2_nan(out_frag_pack[0], *(tl_bf2*)(frag + 0));
+E     out_frag[0] = bfloat16_t(__hmax_nan(__mt_bfloat16(tl_bf_elem_to_bfloat16((out_frag_pack[0])[0])), __mt_bfloat16(tl_bf_elem_to_bfloat16((out_frag_pack[0])[1]))));
+E     out_frag[0] = tl::AllReduce<tl::MaxOpNan, 32, 1, 0>::run(out_frag[0]);
+E     if (((int)threadIdx.x) == 0) {
+E       out[0] = out_frag[0];
+E     }
+E   }
+E   
+E   
+E   Compilation error:
+E   In file included from /tmp/tmpgkg6ucrd/tvm_kernels.mu:1:
+E   In file included from /root/s5000-calibration/tilelang-musa/3rdparty/../src/tl_templates/musa/common.h:3:
+E   In file included from /root/s5000-calibration/tilelang-musa/3rdparty/../src/tl_templates/musa/atomic.h:5:
+E   In file included from /root/s5000-calibration/tilelang-musa/3rdparty/mutlass/include/mutlass/numeric_types.h:81:
+E   In file included from /root/s5000-calibration/tilelang-musa/3rdparty/mutlass/include/mutlass/half.h:63:
+E   In file included from /root/s5000-calibration/tilelang-musa/3rdparty/mutlass/include/mutlass/float8.h:65:
+E   In file included from /usr/local/musa/include/musa_fp8.h:27:
+E   In file included from /usr/local/musa/include/musa_bf16.h:3607:
+E   /usr/local/musa/include/musa_bf16.hpp:2587:7: error: couldn't allocate output register for constraint 'h'
+E     asm("{ max.NaN.bf16 %0,%1,%2;\n}"
+E         ^
+E   /usr/local/musa/include/musa_bf16.hpp:2587:7: error: couldn't allocate output register for constraint 'h'
+E   /usr/local/musa/include/musa_bf16.hpp:2587:7: error: couldn't allocate output register for constraint 'h'
+E   /usr/local/musa/include/musa_bf16.hpp:2587:7: error: couldn't allocate output register for constraint 'h'
+E   /usr/local/musa/include/musa_bf16.hpp:2587:7: error: couldn't allocate output register for constraint 'h'
+E   /usr/local/musa/include/musa_bf16.hpp:2587:7: error: couldn't allocate output register for constraint 'h'
+E   /usr/local/musa/include/musa_bf16.hpp:2587:7: error: couldn't allocate output register for constraint 'h'
+E   /usr/local/musa/include/musa_bf16.hpp:2587:7: error: couldn't allocate output register for constraint 'h'
+E   8 errors generated when compiling for mp_31.
+E   
+E   Command: /usr/local/musa-4.3.5/bin/mcc --cuda-device-only --cuda-gpu-arch=mp_31 -std=c++17 -Wno-error=address-of-temporary -I/root/s5000-calibration/tilelang-musa/3rdparty/../src -I/root/s5000-calibration/tilelang-musa/3rdparty/mutlass/include -D__MUSA_ARCH_LIST__=310 -mllvm -mtgpu-alloc-shared-memory-from-zero=1 -o /tmp/tmpgkg6ucrd/tvm_kernels.mubin /tmp/tmpgkg6ucrd/tvm_kernels.mu
+
+tilelang/contrib/mcc.py:289: RuntimeError
+_____________________ test_reduce_min_runtime_nan_behavior _____________________
+
+    @tilelang.testing.requires_musa
+    def test_reduce_min_runtime_nan_behavior():
+        for _, tl_dtype, torch_dtype in _DTYPES:
+            length = 64
+            a = torch.arange(length, dtype=torch.float32).to(torch_dtype).to("musa")
+            a[13] = float("nan")
+    
+            k_default = _compile(_make_reduce_kernel(T.reduce_min, length, tl_dtype, nan_propagate=False))
+>           k_nan = _compile(_make_reduce_kernel(T.reduce_min, length, tl_dtype, nan_propagate=True))
+
+testing/python/language/test_tilelang_language_reduce_maxmin_nan.py:100: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+testing/python/language/test_tilelang_language_reduce_maxmin_nan.py:16: in _compile
+    return tilelang.compile(prim_func, out_idx=-1, target="musa")
+tilelang/jit/__init__.py:112: in compile
+    return cached(
+tilelang/cache/__init__.py:87: in cached
+    return _dispatch_map[execution_backend].cached(
+tilelang/cache/kernel_cache.py:307: in cached
+    return JITKernel(
+tilelang/jit/kernel.py:133: in __init__
+    adapter = self._compile_and_create_adapter(func, out_idx)
+tilelang/jit/kernel.py:244: in _compile_and_create_adapter
+    artifact = tilelang.lower(
+tilelang/engine/lower.py:393: in lower
+    codegen_mod = device_codegen(device_mod, target) if enable_device_compile else device_codegen_without_compile(device_mod, target)
+tilelang/engine/lower.py:289: in device_codegen
+    device_mod = tvm.ffi.get_global_func("target.build.tilelang_musa")(device_mod, target)
+python/tvm_ffi/cython/function.pxi:968: in tvm_ffi.core.Function.__call__
+    ???
+<unknown>:0: in tvm::codegen::BuildTileLangMUSA(tvm::IRModule, tvm::Target)
+    ???
+<unknown>:0: in TVMFFIPyCallback(void*, TVMFFIAny const*, int, TVMFFIAny*)
+    ???
+<unknown>:0: in TVMFFIPyCallManager::ForwardPyErrorToFFI()
+    ???
+<unknown>:0: in TVMFFICyErrorSetRaisedFromPyError(_object*)
+    ???
+tilelang/engine/lower.py:199: in tilelang_callback_musa_compile
+    return mcc.compile_musa(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+>   raise RuntimeError(msg)
+E   RuntimeError: #include <tl_templates/musa/common.h>
+E   #include <tl_templates/musa/cvt.h>
+E   #include <tl_templates/musa/fop.h>
+E   #include <tl_templates/musa/accelerated_ops.h>
+E   #include <tl_templates/musa/intrin.h>
+E   #include <tl_templates/musa/gemm.h>
+E   #include <tl_templates/musa/copy.h>
+E   #include <tl_templates/musa/barrier.h>
+E   #include <tl_templates/musa/reduce.h>
+E   #include <tl_templates/musa/threadblock_swizzle.h>
+E   #include <tl_templates/musa/debug.h>
+E   
+E   extern "C" __global__ void kernel_kernel(const bfloat16_t* __restrict__ a, bfloat16_t* __restrict__ out);
+E   extern "C" __global__ void __launch_bounds__(32, 1) kernel_kernel(const bfloat16_t* __restrict__ a, bfloat16_t* __restrict__ out) {
+E     bfloat16_t frag[2];
+E     tl_bf2 out_frag_pack[1];
+E     bfloat16_t out_frag[1];
+E     *(tl_bf2*)(frag + 0) = *(tl_bf2*)(a + (((int)threadIdx.x) * 2));
+E     bfloat16_t broadcast_var = std::numeric_limits<bfloat16_t>::infinity();
+E     out_frag_pack[0] = (tl_bf2{make_tl_bf_elem(bfloat16_t(static_cast<float>(broadcast_var))), make_tl_bf_elem(bfloat16_t(static_cast<float>(broadcast_var)))});
+E     out_frag_pack[0] = tl::min2_nan(out_frag_pack[0], *(tl_bf2*)(frag + 0));
+E     out_frag[0] = bfloat16_t(__hmin_nan(__mt_bfloat16(tl_bf_elem_to_bfloat16((out_frag_pack[0])[0])), __mt_bfloat16(tl_bf_elem_to_bfloat16((out_frag_pack[0])[1]))));
+E     out_frag[0] = tl::AllReduce<tl::MinOpNan, 32, 1, 0>::run(out_frag[0]);
+E     if (((int)threadIdx.x) == 0) {
+E       out[0] = out_frag[0];
+E     }
+E   }
+E   
+E   
+E   Compilation error:
+E   In file included from /tmp/tmphv6w8qn0/tvm_kernels.mu:1:
+E   In file included from /root/s5000-calibration/tilelang-musa/3rdparty/../src/tl_templates/musa/common.h:3:
+E   In file included from /root/s5000-calibration/tilelang-musa/3rdparty/../src/tl_templates/musa/atomic.h:5:
+E   In file included from /root/s5000-calibration/tilelang-musa/3rdparty/mutlass/include/mutlass/numeric_types.h:81:
+E   In file included from /root/s5000-calibration/tilelang-musa/3rdparty/mutlass/include/mutlass/half.h:63:
+E   In file included from /root/s5000-calibration/tilelang-musa/3rdparty/mutlass/include/mutlass/float8.h:65:
+E   In file included from /usr/local/musa/include/musa_fp8.h:27:
+E   In file included from /usr/local/musa/include/musa_bf16.h:3607:
+E   /usr/local/musa/include/musa_bf16.hpp:2595:7: error: couldn't allocate output register for constraint 'h'
+E     asm("{ min.NaN.bf16 %0,%1,%2;\n}"
+E         ^
+E   /usr/local/musa/include/musa_bf16.hpp:2595:7: error: couldn't allocate output register for constraint 'h'
+E   /usr/local/musa/include/musa_bf16.hpp:2595:7: error: couldn't allocate output register for constraint 'h'
+E   /usr/local/musa/include/musa_bf16.hpp:2595:7: error: couldn't allocate output register for constraint 'h'
+E   /usr/local/musa/include/musa_bf16.hpp:2595:7: error: couldn't allocate output register for constraint 'h'
+E   /usr/local/musa/include/musa_bf16.hpp:2595:7: error: couldn't allocate output register for constraint 'h'
+E   /usr/local/musa/include/musa_bf16.hpp:2595:7: error: couldn't allocate output register for constraint 'h'
+E   /usr/local/musa/include/musa_bf16.hpp:2595:7: error: couldn't allocate output register for constraint 'h'
+E   8 errors generated when compiling for mp_31.
+E   
+E   Command: /usr/local/musa-4.3.5/bin/mcc --cuda-device-only --cuda-gpu-arch=mp_31 -std=c++17 -Wno-error=address-of-temporary -I/root/s5000-calibration/tilelang-musa/3rdparty/../src -I/root/s5000-calibration/tilelang-musa/3rdparty/mutlass/include -D__MUSA_ARCH_LIST__=310 -mllvm -mtgpu-alloc-shared-memory-from-zero=1 -o /tmp/tmphv6w8qn0/tvm_kernels.mubin /tmp/tmphv6w8qn0/tvm_kernels.mu
+
+tilelang/contrib/mcc.py:289: RuntimeError
+=============================== warnings summary ===============================
+../../../usr/local/lib/python3.10/dist-packages/_pytest/config/__init__.py:1296
+  /usr/local/lib/python3.10/dist-packages/_pytest/config/__init__.py:1296: PytestConfigWarning: Unknown config option: verbosity_assertions
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED testing/python/language/test_tilelang_language_reduce_maxmin_nan.py::test_reduce_max_runtime_nan_behavior
+FAILED testing/python/language/test_tilelang_language_reduce_maxmin_nan.py::test_reduce_min_runtime_nan_behavior
+2 failed, 1 warning in 23.54s

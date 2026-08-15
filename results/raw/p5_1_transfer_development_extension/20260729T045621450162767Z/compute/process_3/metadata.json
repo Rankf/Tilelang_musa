@@ -1,0 +1,51 @@
+{
+  "config": {
+    "phase": "P5.1-development",
+    "benchmark": "tilelang_compute_suite",
+    "purpose": "pre-model domain-coverage extension; neither shape equals a P6 or P6-v2 hold-out",
+    "warmup": 100,
+    "graph_unroll": 100,
+    "graph_samples": 30,
+    "profiler_repeats": 50,
+    "stability": {
+      "max_relative_span": 0.15,
+      "max_over_median": 2.0,
+      "max_graph_profiler_ratio_delta": 0.25
+    },
+    "cases": [
+      {
+        "id": "devext_gemm_1536x1024x1536",
+        "op": "gemm",
+        "dtype": "float16",
+        "accum_dtype": "float32",
+        "M": 1536,
+        "N": 1024,
+        "K": 1536,
+        "block_M": 64,
+        "block_N": 64,
+        "block_K": 64,
+        "num_warp": 4,
+        "policy": "default",
+        "num_stages": 1
+      },
+      {
+        "id": "devext_reduce_8192x1024",
+        "op": "reduce_sum",
+        "dtype": "float32",
+        "M": 8192,
+        "K": 1024,
+        "threads": 128
+      }
+    ]
+  },
+  "config_sha256": "6eff783fced5881403af3427b329ac916158d020c798344eede2989da8187ca7",
+  "harness_sha256": "b49e8a346387284cf21bc97f2b97513a3008c4b3908f10b1321f1ef2a7c7b626",
+  "tilelang_commit": "4d666968a005846314e9a84d8ff121c5dbffa9ee",
+  "tilelang_local_patch_sha256": "ae626f5586ea61ab2a7e0877706bd4744e914da98a7091dedce4b653af16c9ec",
+  "musa_home": "/usr/local/musa-4.3.5",
+  "mcc_version": "mcc version 4.3.5",
+  "musa_capability": [
+    3,
+    1
+  ]
+}

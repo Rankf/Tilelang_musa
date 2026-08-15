@@ -1,0 +1,5 @@
+stage,query_repetitions,dynamic_shared_bytes,registers_per_thread,static_shared_bytes,local_bytes_per_thread,max_threads_per_block,active_cta_per_mp_256_threads,status
+1,3,16384,45,0,0,1024,10,pass_recompiled_mubin
+2,3,32768,45,0,0,1024,6,pass_recompiled_mubin
+3,3,49152,45,0,0,1024,4,pass_recompiled_mubin
+4,3,65536,45,0,0,1024,3,pass_recompiled_mubin

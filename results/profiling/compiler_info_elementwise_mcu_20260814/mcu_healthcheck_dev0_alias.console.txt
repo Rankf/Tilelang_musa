@@ -1,0 +1,18 @@
+==PROF== '/root/s5000-calibration/build/p9_l1/operator_path_probe' started, pid:21352  
+==PROF== Profiling "0:0:vector_add_probe(float4 const*, float4 const*, float4*, unsigned long)" - 0 (1/1): Application replay pass 0 
+kernel=vector_add_probe,op=add,elements=16384,grid=16,threads=256,samples=1,latency_us=210392.211914,ordinary_read_bytes=131072,ordinary_write_bytes=65536,tma_read_bytes=0,shared_bytes=0,effective_gb_s=0.000934,correctness=pass
+==PROF== '/root/s5000-calibration/build/p9_l1/operator_path_probe' exit, exit code(0)  
+==PROF== Disconnected from process 21352 
+==PROF== Capture finished. Path is "/root/s5000-calibration/results/profiling/compiler_info_elementwise_mcu_20260814/mcu_healthcheck_dev0_alias.mcu-rep"  
+[21352] operator_path_probe@c82850fb110c 
+  22 - vector_add_probe(float4 const*, float4 const*, float4*, unsigned long) (16, 1, 1)x(256, 1, 1), Context 0, Stream 0, Device 0 
+    Section: Command line profiler metrics 
+    ---------------------- ----------- ------------ 
+    Metric Name            Metric Unit Metric Value 
+    ---------------------- ----------- ------------ 
+    gpu__time_duration.max          ns  6144.571429 
+    launch__grid_size                            16 
+    launch__block_size                          256 
+    ---------------------- ----------- ------------ 
+ 
+ 
