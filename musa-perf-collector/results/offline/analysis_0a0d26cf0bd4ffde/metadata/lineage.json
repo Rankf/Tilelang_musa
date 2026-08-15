@@ -1,0 +1,126 @@
+{
+  "compiler_provenance": {
+    "annotation": "tl.provenance_ordinal",
+    "stage_instance_counts": {
+      "S30_LAYOUT_INFERRED": {
+        "0": 1,
+        "1": 1,
+        "2": 1,
+        "3": 1,
+        "4": 1,
+        "5": 1
+      },
+      "S40_TILE_OP_LOWERED": {
+        "0": 1,
+        "1": 1,
+        "2": 1,
+        "3": 1,
+        "4": 1,
+        "5": 1
+      },
+      "S60_FINAL_DEVICE_IR": {
+        "0": 1,
+        "1": 1,
+        "2": 1,
+        "3": 1,
+        "4": 1,
+        "5": 1
+      }
+    }
+  },
+  "exact_runtime_instrumentation_allowed": true,
+  "mappings": [
+    {
+      "confidence": "exact",
+      "eligible_for_exact_runtime_instrumentation": true,
+      "final_device_instance_count": 1,
+      "lowered_instance_count": 1,
+      "reason": "compiler provenance ordinal matches source metadata and survives final device lowering",
+      "source_kind": "fill",
+      "source_loop_context": [],
+      "source_op_id": "op_4c15b007ad6dbbe1",
+      "source_ordinal": 0,
+      "source_snapshot": "S00_INPUT_TILE_IR",
+      "status": "compiler_exact_lineage",
+      "target_provenance_ordinal": 0,
+      "target_snapshot": "S40_TILE_OP_LOWERED"
+    },
+    {
+      "confidence": "exact",
+      "eligible_for_exact_runtime_instrumentation": true,
+      "final_device_instance_count": 1,
+      "lowered_instance_count": 1,
+      "reason": "compiler provenance ordinal matches source metadata and survives final device lowering",
+      "source_kind": "copy",
+      "source_loop_context": [],
+      "source_op_id": "op_c6c767ddc296d6a5",
+      "source_ordinal": 1,
+      "source_snapshot": "S00_INPUT_TILE_IR",
+      "status": "compiler_exact_lineage",
+      "target_provenance_ordinal": 1,
+      "target_snapshot": "S40_TILE_OP_LOWERED"
+    },
+    {
+      "confidence": "exact",
+      "eligible_for_exact_runtime_instrumentation": true,
+      "final_device_instance_count": 1,
+      "lowered_instance_count": 1,
+      "reason": "compiler provenance ordinal matches source metadata and survives final device lowering",
+      "source_kind": "copy",
+      "source_loop_context": [],
+      "source_op_id": "op_0c14384697378207",
+      "source_ordinal": 2,
+      "source_snapshot": "S00_INPUT_TILE_IR",
+      "status": "compiler_exact_lineage",
+      "target_provenance_ordinal": 2,
+      "target_snapshot": "S40_TILE_OP_LOWERED"
+    },
+    {
+      "confidence": "exact",
+      "eligible_for_exact_runtime_instrumentation": true,
+      "final_device_instance_count": 1,
+      "lowered_instance_count": 1,
+      "reason": "compiler provenance ordinal matches source metadata and survives final device lowering",
+      "source_kind": "gemm",
+      "source_loop_context": [],
+      "source_op_id": "op_ba6a0cf9b64ded14",
+      "source_ordinal": 3,
+      "source_snapshot": "S00_INPUT_TILE_IR",
+      "status": "compiler_exact_lineage",
+      "target_provenance_ordinal": 3,
+      "target_snapshot": "S40_TILE_OP_LOWERED"
+    },
+    {
+      "confidence": "exact",
+      "eligible_for_exact_runtime_instrumentation": true,
+      "final_device_instance_count": 1,
+      "lowered_instance_count": 1,
+      "reason": "compiler provenance ordinal matches source metadata and survives final device lowering",
+      "source_kind": "reduce",
+      "source_loop_context": [],
+      "source_op_id": "op_712a09f7641bd83c",
+      "source_ordinal": 4,
+      "source_snapshot": "S00_INPUT_TILE_IR",
+      "status": "compiler_exact_lineage",
+      "target_provenance_ordinal": 4,
+      "target_snapshot": "S40_TILE_OP_LOWERED"
+    },
+    {
+      "confidence": "exact",
+      "eligible_for_exact_runtime_instrumentation": true,
+      "final_device_instance_count": 1,
+      "lowered_instance_count": 1,
+      "reason": "compiler provenance ordinal matches source metadata and survives final device lowering",
+      "source_kind": "copy",
+      "source_loop_context": [],
+      "source_op_id": "op_db1f99cb37df543a",
+      "source_ordinal": 5,
+      "source_snapshot": "S00_INPUT_TILE_IR",
+      "status": "compiler_exact_lineage",
+      "target_provenance_ordinal": 5,
+      "target_snapshot": "S40_TILE_OP_LOWERED"
+    }
+  ],
+  "reason": "compiler provenance ordinals are complete and preserved through S60_FINAL_DEVICE_IR",
+  "status": "compiler_exact_lineage"
+}

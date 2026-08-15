@@ -1,0 +1,23 @@
+{
+  "baseline_primfunc_sha256": "76b9968039ed951c818b28186e7c322e43e2fe3119a12b4bdbfccaf3aa71172c",
+  "mappings": [
+    {
+      "lowered_instance_count": 1,
+      "lowering_semantics": "single",
+      "source_kind": "gemm",
+      "source_op_id": "op_ba6a0cf9b64ded14",
+      "source_ordinal": 3
+    },
+    {
+      "lowered_instance_count": 1,
+      "lowering_semantics": "single",
+      "source_kind": "reduce",
+      "source_op_id": "op_712a09f7641bd83c",
+      "source_ordinal": 4
+    }
+  ],
+  "plan_sha256": "755e4e69e0ec817ca55e9f43c6376b9bd4a1b2c77723937db619d958afe7b9b6",
+  "schema": "online-compiler-lineage-v1",
+  "status": "compiler_exact_lineage",
+  "tilelang_revision": "4d666968a005846314e9a84d8ff121c5dbffa9ee"
+}

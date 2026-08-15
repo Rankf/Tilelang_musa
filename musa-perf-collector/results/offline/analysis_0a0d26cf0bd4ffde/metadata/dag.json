@@ -1,0 +1,91 @@
+{
+  "edges": [
+    {
+      "buffer": "a_shared",
+      "confidence": "may_depend_buffer_match",
+      "edge_id": "edge_141557f8596e8808",
+      "from": "op_c6c767ddc296d6a5",
+      "kind": "data",
+      "to": "op_ba6a0cf9b64ded14"
+    },
+    {
+      "buffer": "b_shared",
+      "confidence": "may_depend_buffer_match",
+      "edge_id": "edge_bbe55d7b2823b27e",
+      "from": "op_0c14384697378207",
+      "kind": "data",
+      "to": "op_ba6a0cf9b64ded14"
+    },
+    {
+      "buffer": "acc",
+      "confidence": "may_depend_buffer_match",
+      "edge_id": "edge_0ab24987943bfc78",
+      "from": "op_4c15b007ad6dbbe1",
+      "kind": "data",
+      "to": "op_ba6a0cf9b64ded14"
+    },
+    {
+      "buffer": "acc",
+      "confidence": "may_depend_buffer_match",
+      "edge_id": "edge_4fff295bea834d7b",
+      "from": "op_ba6a0cf9b64ded14",
+      "kind": "data",
+      "to": "op_712a09f7641bd83c"
+    },
+    {
+      "buffer": "out_local",
+      "confidence": "may_depend_buffer_match",
+      "edge_id": "edge_3a03d456cb7c4a1a",
+      "from": "op_712a09f7641bd83c",
+      "kind": "data",
+      "to": "op_db1f99cb37df543a"
+    }
+  ],
+  "evidence_level": "semantic_derived",
+  "nodes": [
+    {
+      "family": "fill",
+      "kind": "fill",
+      "loop_context": [],
+      "op_id": "op_4c15b007ad6dbbe1",
+      "ordinal": 0
+    },
+    {
+      "family": "copy",
+      "kind": "copy",
+      "loop_context": [],
+      "op_id": "op_c6c767ddc296d6a5",
+      "ordinal": 1
+    },
+    {
+      "family": "copy",
+      "kind": "copy",
+      "loop_context": [],
+      "op_id": "op_0c14384697378207",
+      "ordinal": 2
+    },
+    {
+      "family": "gemm_dense",
+      "kind": "gemm",
+      "loop_context": [],
+      "op_id": "op_ba6a0cf9b64ded14",
+      "ordinal": 3
+    },
+    {
+      "family": "reduce",
+      "kind": "reduce",
+      "loop_context": [],
+      "op_id": "op_712a09f7641bd83c",
+      "ordinal": 4
+    },
+    {
+      "family": "copy",
+      "kind": "copy",
+      "loop_context": [],
+      "op_id": "op_db1f99cb37df543a",
+      "ordinal": 5
+    }
+  ],
+  "scope": "single input Tile IR snapshot; buffer-name matching is conservative and loop-carried dependencies are not expanded in v0",
+  "unknown_effect_barriers": []
+}

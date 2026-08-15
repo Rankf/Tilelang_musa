@@ -1,0 +1,14 @@
+{
+  "arch": "mp_31",
+  "device_compile": false,
+  "device_execution": false,
+  "device_ir_sha256": "4a1b757df55bed75dc60ec75722528ba8971a0540defe1ceb31011b6bedef5fc",
+  "evidence_level": "compiler_observed",
+  "host_ir_sha256": "2a8789759561ec29af83a9a666bac1960212265bc7cbed9b51e9c69bb17a564a",
+  "kernel_source_sha256": "d120c5f952cc86fa24f920b995bc151eb0673da4cbec1b7efe1aa833ce9243ee",
+  "pass_config": {},
+  "target": "{\"kind\":\"musa\",\"tag\":\"\",\"keys\":[\"musa\",\"gpu\"],\"max_num_threads\":1024,\"thread_warp_size\":32,\"arch\":\"mp_31\"}",
+  "tilelang_revision": "4d666968a005846314e9a84d8ff121c5dbffa9ee",
+  "tilelang_root": "/root/s5000-calibration/tilelang-musa",
+  "tilelang_version": "0.1.10+musa.1.git4d666968"
+}

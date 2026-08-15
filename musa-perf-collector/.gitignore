@@ -1,0 +1,9 @@
+# musa-perf-collector - local generated files
+
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+build/
+results/
+.pytest_cache/

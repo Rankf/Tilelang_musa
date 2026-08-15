@@ -1,0 +1,29 @@
+# from tvm.script import tirx as T
+
+@T.prim_func
+def kernel(A: T.handle, B: T.handle, offset: T.handle, C_handle: T.handle):
+    T.func_attr({"tilelang_out_idx": [-1]})
+    A_1 = T.match_buffer(A, (128, 128), "float16", strides=(128, 1))
+    B_1 = T.match_buffer(B, (128, 128), "float16", strides=(128, 1))
+    offset_1 = T.match_buffer(offset, (1,), "int32", strides=(1,))
+    C = T.match_buffer(C_handle, (128, 128), "float16", strides=(128, 1))
+    # with T.sblock("root"):
+    bx = T.launch_thread("blockIdx.x", 2)
+    by = T.launch_thread("blockIdx.y", 2)
+    tx = T.launch_thread("threadIdx.x", 256)
+    ty = T.launch_thread("threadIdx.y", 1)
+    tz = T.launch_thread("threadIdx.z", 1)
+    with T.sblock("tilelang_root"):
+        T.reads()
+        T.writes()
+        a_shared = T.sblock_alloc_buffer((64, 32), "float16", scope="shared.dyn")
+        b_shared = T.sblock_alloc_buffer((32, 64), "float16", scope="shared.dyn")
+        acc = T.sblock_alloc_buffer((64, 64), scope="local.fragment")
+        offset_local = T.sblock_alloc_buffer((1,), "int32", scope="local")
+        T.copy(T.region(offset_1[0], 1, 1), T.region(offset_local[0], 2, 1), eviction_policy=0, inner_cache_policy=2, outer_cache_policy=2)
+        T.fill(T.region(acc[0, 0], 2, 64, 64), 0)
+        for kk in T.serial(4, annotations={"num_stages": 2}):
+            T.copy(T.region(A_1[(by + offset_local[0]) * 64, kk * 32], 1, 64, 32), T.region(a_shared[0, 0], 2, 64, 32), eviction_policy=0, inner_cache_policy=2, outer_cache_policy=2)
+            T.copy(T.region(B_1[kk * 32, bx * 64], 1, 32, 64), T.region(b_shared[0, 0], 2, 32, 64), eviction_policy=0, inner_cache_policy=2, outer_cache_policy=2)
+            T.gemm(T.region(a_shared[0, 0], 1, 64, 32), T.region(b_shared[0, 0], 1, 32, 64), T.region(acc[0, 0], 3, 64, 64), T.bool(False), T.bool(False), 64, 64, 32, 0, T.bool(False), 32, 64, 0, 0, 1, 0, 0, 0, 0)
+        T.copy(T.region(acc[0, 0], 1, 64, 64), T.region(C[(by + offset_local[0]) * 64, bx * 64], 2, 64, 64), eviction_policy=0, inner_cache_policy=2, outer_cache_policy=2)

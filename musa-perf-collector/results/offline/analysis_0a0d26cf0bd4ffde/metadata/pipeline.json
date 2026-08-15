@@ -1,0 +1,9 @@
+{
+  "evidence_level": "compiler_observed",
+  "limitations": [
+    "v0 records Pipelined loop annotations but does not infer prologue, steady-state, or epilogue schedules"
+  ],
+  "pipeline_loops": [],
+  "source_snapshot": "S00_INPUT_TILE_IR",
+  "status": "structural_only"
+}

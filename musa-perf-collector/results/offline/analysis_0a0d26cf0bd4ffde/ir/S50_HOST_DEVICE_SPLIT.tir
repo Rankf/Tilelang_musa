@@ -1,0 +1,55 @@
+# from tvm.script import ir as I
+# from tvm.script import tirx as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def kernel(A: T.handle, B: T.handle, out_handle: T.handle):
+        T.func_attr({"target": T.target({"arch": "mp_31", "host": {"keys": ["cpu"], "kind": "c", "tag": ""}, "keys": ["musa", "gpu"], "kind": "musa", "max_num_threads": 1024, "tag": "", "thread_warp_size": 32}), "tilelang_out_idx": [-1], "tirx.is_entry_func": True, "tl.has_tma": T.bool(False), "tma_descriptor_args": {}})
+        A_1 = T.match_buffer(A, (128, 64), "float16", strides=(64, 1))
+        B_1 = T.match_buffer(B, (128, 64), "float16", strides=(64, 1))
+        out = T.match_buffer(out_handle, (128,), strides=(1,))
+        Module.kernel_kernel(A_1.data, B_1.data, out.data)
+
+    @T.prim_func(private=True)
+    def kernel_kernel(A: T.handle("float16", "global"), B: T.handle("float16", "global"), out: T.handle("float32", "global")):
+        T.func_attr({"target": T.target({"arch": "mp_31", "keys": ["musa", "gpu"], "kind": "musa", "max_num_threads": 1024, "tag": "", "thread_warp_size": 32}), "tirx.is_global_func": True, "tirx.noalias": True, "tl.non_restrict_params": []})
+        out_1 = T.decl_buffer((128,), data=out)
+        B_1 = T.decl_buffer((8192,), "float16", data=B)
+        A_1 = T.decl_buffer((8192,), "float16", data=A)
+        bx = T.launch_thread("blockIdx.x", 1)
+        acc = T.alloc_buffer((64,), scope="local")
+        a_shared = T.alloc_buffer((8192,), "float16", scope="shared.dyn")
+        b_shared = T.alloc_buffer((8192,), "float16", scope="shared.dyn")
+        out_local = T.alloc_buffer((8,), scope="local")
+        workspace = T.alloc_buffer((256,), scope="shared.dyn")
+        tx = T.launch_thread("threadIdx.x", 256)
+        ty = T.launch_thread("threadIdx.y", 1)
+        tz = T.launch_thread("threadIdx.z", 1)
+        a_shared_1 = T.decl_buffer((8192,), "float16", data=a_shared.data, scope="shared.dyn")
+        b_shared_1 = T.decl_buffer((8192,), "float16", data=b_shared.data, scope="shared.dyn")
+        acc_1 = T.decl_buffer((64,), data=acc.data, scope="local")
+        out_local_1 = T.decl_buffer((8,), data=out_local.data, scope="local")
+        with T.attr(0, "tl.provenance_ordinal", 0):
+            for i in T.unroll(16):
+                acc_1[i * 4:i * 4 + 4] = T.Broadcast(T.float32(0.0), 4)
+        with T.attr(0, "tl.provenance_ordinal", 1):
+            for i in T.unroll(4):
+                a_shared_1[i * 2048 + tx // 16 * 128 + T.bitwise_xor(tx % 16, tx // 16) * 8:i * 2048 + tx // 16 * 128 + T.bitwise_xor(tx % 16, tx // 16) * 8 + 8] = A_1[i * 2048 + tx * 8:i * 2048 + tx * 8 + 8]
+        with T.attr(0, "tl.provenance_ordinal", 2):
+            for i in T.unroll(4):
+                b_shared_1[i * 2048 + tx // 16 * 128 + T.bitwise_xor(tx % 16, tx // 16) * 8:i * 2048 + tx // 16 * 128 + T.bitwise_xor(tx % 16, tx // 16) * 8 + 8] = B_1[i * 2048 + tx * 8:i * 2048 + tx * 8 + 8]
+        with T.attr(0, "tl.provenance_ordinal", 3):
+            T.attr(0, "lexical_alloc_scope", 1)
+            T.tl_gemm("tl::gemm_ss<128, 128, 64, 4, 2, 0, 1, 0, 64, 64, 0, 0, true, 128, 64, 64>", T.tvm_access_ptr(T.type_annotation("float16"), a_shared.data, 0, 8192, 1), T.tvm_access_ptr(T.type_annotation("float16"), b_shared.data, 0, 8192, 1), T.tvm_access_ptr(T.type_annotation("float32"), acc.data, 0, 16384, 3), 0)
+        with T.attr(0, "tl.provenance_ordinal", 4):
+            for i in T.unroll(8):
+                out_local_1[i] = T.float32(0.0)
+                for rv in T.unroll(8):
+                    out_local_1[i] = out_local_1[i] + acc_1[i * 8 + rv]
+                out_local_1[i] = T.call_extern("float32", "tl::AllReduce<tl::SumOp, 256, 128, 0>::run", out_local_1[i], T.tvm_access_ptr(T.type_annotation("float32"), workspace.data, 0, 256, 2))
+                out_local_1[i] = T.call_extern("float32", "tl::AllReduce<tl::SumOp, 8, 1, 0>::run", out_local_1[i])
+        T.attr(0, "tl.provenance_ordinal", 5)
+        if tx % 8 * 2 + tx // 128 == 0:
+            for i in T.unroll(8):
+                out_1[i * 16 + tx % 128 // 8] = out_local_1[i]

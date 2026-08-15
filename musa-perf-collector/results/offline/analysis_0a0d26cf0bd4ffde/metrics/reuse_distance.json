@@ -1,0 +1,87 @@
+{
+  "capacity_sweep": [
+    {
+      "assumed_effective_capacity_bytes": 32768,
+      "evidence_level": "model_derived_unvalidated",
+      "potential_global_read_traffic_bytes": 32768,
+      "potential_reused_global_read_bytes": 0
+    },
+    {
+      "assumed_effective_capacity_bytes": 131072,
+      "evidence_level": "model_derived_unvalidated",
+      "potential_global_read_traffic_bytes": 32768,
+      "potential_reused_global_read_bytes": 0
+    },
+    {
+      "assumed_effective_capacity_bytes": 524288,
+      "evidence_level": "model_derived_unvalidated",
+      "potential_global_read_traffic_bytes": 32768,
+      "potential_reused_global_read_bytes": 0
+    },
+    {
+      "assumed_effective_capacity_bytes": 2097152,
+      "evidence_level": "model_derived_unvalidated",
+      "potential_global_read_traffic_bytes": 32768,
+      "potential_reused_global_read_bytes": 0
+    }
+  ],
+  "evidence_level": "model_derived_unvalidated",
+  "expanded_event_count_per_block": 6,
+  "limitations": [
+    "capacity sweep is a bounded static schedule model, not a measured hardware cache result",
+    "does not model S5000 cache capacity, associativity, or replacement policy"
+  ],
+  "reuse_events": [
+    {
+      "from_event": 1,
+      "iteration_coordinates": {},
+      "logical_bytes": 16384,
+      "op_distance": 2,
+      "reuse_key": "a_shared:['0', '0']:['128', '64']",
+      "scope": "shared.dyn",
+      "static_op_id": "op_ba6a0cf9b64ded14",
+      "to_event": 3
+    },
+    {
+      "from_event": 2,
+      "iteration_coordinates": {},
+      "logical_bytes": 16384,
+      "op_distance": 1,
+      "reuse_key": "b_shared:['0', '0']:['128', '64']",
+      "scope": "shared.dyn",
+      "static_op_id": "op_ba6a0cf9b64ded14",
+      "to_event": 3
+    },
+    {
+      "from_event": 0,
+      "iteration_coordinates": {},
+      "logical_bytes": 65536,
+      "op_distance": 3,
+      "reuse_key": "acc:['0', '0']:['128', '128']",
+      "scope": "local.fragment",
+      "static_op_id": "op_ba6a0cf9b64ded14",
+      "to_event": 3
+    },
+    {
+      "from_event": 3,
+      "iteration_coordinates": {},
+      "logical_bytes": 65536,
+      "op_distance": 1,
+      "reuse_key": "acc:['0', '0']:['128', '128']",
+      "scope": "local.fragment",
+      "static_op_id": "op_712a09f7641bd83c",
+      "to_event": 4
+    },
+    {
+      "from_event": 4,
+      "iteration_coordinates": {},
+      "logical_bytes": 512,
+      "op_distance": 1,
+      "reuse_key": "out_local:['0']:['128']",
+      "scope": "local.fragment",
+      "static_op_id": "op_db1f99cb37df543a",
+      "to_event": 5
+    }
+  ],
+  "status": "complete_bounded_static_schedule"
+}

@@ -1,0 +1,66 @@
+# from tvm.script import ir as I
+# from tvm.script import tirx as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def kernel(A: T.handle, B: T.handle, out_handle: T.handle):
+        T.func_attr({"target": T.target({"arch": "mp_31", "host": {"keys": ["cpu"], "kind": "c", "tag": ""}, "keys": ["musa", "gpu"], "kind": "musa", "max_num_threads": 1024, "tag": "", "thread_warp_size": 32}), "tilelang_out_idx": [-1], "tl.has_tma": T.bool(False)})
+        A_1 = T.match_buffer(A, (128, 64), "float16", strides=(64, 1))
+        B_1 = T.match_buffer(B, (128, 64), "float16", strides=(64, 1))
+        out = T.match_buffer(out_handle, (128,), strides=(1,))
+        with T.sblock("root"):
+            T.reads()
+            T.writes()
+            acc = T.Buffer((64,), scope="local")
+            a_shared = T.Buffer((128, 64), "float16", scope="shared.dyn")
+            b_shared = T.Buffer((128, 64), "float16", scope="shared.dyn")
+            out_local = T.Buffer((8,), scope="local")
+            T.sblock_attr({"k_major_map": {metadata["tl.Layout"][0]: T.bool(True), metadata["tl.Layout"][1]: T.bool(True)}, "layout_map": {acc: metadata["tl.Fragment"][0], a_shared: metadata["tl.Layout"][0], b_shared: metadata["tl.Layout"][1], out_local: metadata["tl.Fragment"][1]}, "sqmma_inst_split_map": {}, "sqmma_map": {metadata["tl.Layout"][0]: T.bool(True), metadata["tl.Layout"][1]: T.bool(True)}})
+            bx = T.launch_thread("blockIdx.x", 1)
+            tx = T.launch_thread("threadIdx.x", 256)
+            ty = T.launch_thread("threadIdx.y", 1)
+            tz = T.launch_thread("threadIdx.z", 1)
+            with T.sblock("tilelang_root"):
+                T.reads()
+                T.writes()
+                T.sblock_attr({"k_major_map": {metadata["tl.Layout"][0]: T.bool(True), metadata["tl.Layout"][1]: T.bool(True)}, "layout_map": {acc: metadata["tl.Fragment"][0], a_shared: metadata["tl.Layout"][0], b_shared: metadata["tl.Layout"][1], out_local: metadata["tl.Fragment"][1]}, "sqmma_inst_split_map": {}, "sqmma_map": {metadata["tl.Layout"][0]: T.bool(True), metadata["tl.Layout"][1]: T.bool(True)}})
+                a_shared = T.sblock_alloc_buffer((128, 64), "float16", data=a_shared.data, scope="shared.dyn")
+                b_shared = T.sblock_alloc_buffer((128, 64), "float16", data=b_shared.data, scope="shared.dyn")
+                acc = T.sblock_alloc_buffer((64,), data=acc.data, scope="local")
+                out_local = T.sblock_alloc_buffer((8,), data=out_local.data, scope="local")
+                workspace = T.sblock_alloc_buffer((256,), scope="shared.dyn")
+                with T.attr(0, "tl.provenance_ordinal", 0):
+                    if tx < 256 and tx >= 0:
+                        for i in T.unroll(16, annotations={"pragma_unroll_explicit": T.bool(False)}):
+                            for vec in T.vectorized(4):
+                                acc[((i * 4 + vec) // 8 * 16 + tx % 128 // 8) // 16 * 8 + (tx // 128 * 64 + (i * 4 + vec) % 8 * 8 + tx % 8) % 64 // 8] = T.Cast("float32", 0)
+                with T.attr(0, "tl.provenance_ordinal", 1):
+                    if tx < 256 and tx >= 0:
+                        for i in T.unroll(4, annotations={"pragma_unroll_explicit": T.bool(False)}):
+                            for vec in T.vectorized(8):
+                                a_shared[(((i * 8 + vec) // 8 * 32 + tx // 8) * 128 + (tx % 8 * 8 + (i * 8 + vec) % 8) * 2) // 256 * 2 + (T.bitwise_xor(((i * 8 + vec) // 8 * 32 + tx // 8) % 2 * 8 + (tx % 8 * 8 + (i * 8 + vec) % 8) // 8, (((i * 8 + vec) // 8 * 32 + tx // 8) % 32 * 128 + (tx % 8 * 8 + (i * 8 + vec) % 8) * 2) // 256) * 16 + (tx % 8 * 8 + (i * 8 + vec) % 8) % 8 * 2) // 128, T.bitwise_xor(((i * 8 + vec) // 8 * 32 + tx // 8) % 2 * 8 + (tx % 8 * 8 + (i * 8 + vec) % 8) // 8, (((i * 8 + vec) // 8 * 32 + tx // 8) % 32 * 128 + (tx % 8 * 8 + (i * 8 + vec) % 8) * 2) // 256) % 8 * 8 + (tx % 8 * 8 + (i * 8 + vec) % 8) % 8] = A_1[(i * 8 + vec) // 8 * 32 + tx // 8, tx % 8 * 8 + (i * 8 + vec) % 8]
+                with T.attr(0, "tl.provenance_ordinal", 2):
+                    if tx < 256 and tx >= 0:
+                        for i in T.unroll(4, annotations={"pragma_unroll_explicit": T.bool(False)}):
+                            for vec in T.vectorized(8):
+                                b_shared[(((i * 8 + vec) // 8 * 32 + tx // 8) * 128 + (tx % 8 * 8 + (i * 8 + vec) % 8) * 2) // 256 * 2 + (T.bitwise_xor(((i * 8 + vec) // 8 * 32 + tx // 8) % 2 * 8 + (tx % 8 * 8 + (i * 8 + vec) % 8) // 8, (((i * 8 + vec) // 8 * 32 + tx // 8) % 32 * 128 + (tx % 8 * 8 + (i * 8 + vec) % 8) * 2) // 256) * 16 + (tx % 8 * 8 + (i * 8 + vec) % 8) % 8 * 2) // 128, T.bitwise_xor(((i * 8 + vec) // 8 * 32 + tx // 8) % 2 * 8 + (tx % 8 * 8 + (i * 8 + vec) % 8) // 8, (((i * 8 + vec) // 8 * 32 + tx // 8) % 32 * 128 + (tx % 8 * 8 + (i * 8 + vec) % 8) * 2) // 256) % 8 * 8 + (tx % 8 * 8 + (i * 8 + vec) % 8) % 8] = B_1[(i * 8 + vec) // 8 * 32 + tx // 8, tx % 8 * 8 + (i * 8 + vec) % 8]
+                with T.attr(0, "tl.provenance_ordinal", 3):
+                    with T.sblock("_gemm_sqmma"):
+                        T.reads()
+                        T.writes()
+                        T.sblock_attr({"lexical_alloc_scope": 1})
+                        T.tl_gemm("tl::gemm_ss<128, 128, 64, 4, 2, 0, 1, 0, 64, 64, 0, 0, true, 128, 64, 64>", T.access_ptr(a_shared[(T.Mul(0, 128) + T.Mul(0, 2)) // 256 * 2 + (T.bitwise_xor(T.FloorMod(0, 2) * 8 + T.FloorDiv(0, 8), (T.FloorMod(0, 32) * 128 + T.Mul(0, 2)) // 256) * 16 + T.FloorMod(0, 8) * 2) // 128, T.bitwise_xor(T.FloorMod(0, 2) * 8 + T.FloorDiv(0, 8), (T.FloorMod(0, 32) * 128 + T.Mul(0, 2)) // 256) % 8 * 8 + T.FloorMod(0, 8)], 8192, 1), T.access_ptr(b_shared[(T.Mul(0, 128) + T.Mul(0, 2)) // 256 * 2 + (T.bitwise_xor(T.FloorMod(0, 2) * 8 + T.FloorDiv(0, 8), (T.FloorMod(0, 32) * 128 + T.Mul(0, 2)) // 256) * 16 + T.FloorMod(0, 8) * 2) // 128, T.bitwise_xor(T.FloorMod(0, 2) * 8 + T.FloorDiv(0, 8), (T.FloorMod(0, 32) * 128 + T.Mul(0, 2)) // 256) % 8 * 8 + T.FloorMod(0, 8)], 8192, 1), T.access_ptr(acc[T.FloorDiv(0, 16) * 8 + T.FloorMod(0, 64) // 8], 16384, 3), 0)
+                with T.attr(0, "tl.provenance_ordinal", 4):
+                    for i in T.unroll(8, annotations={"pragma_unroll_explicit": T.bool(False)}):
+                        out_local[i] = T.float32(0.0)
+                        for rv in T.unroll(8, annotations={"pragma_unroll_explicit": T.bool(False)}):
+                            out_local[i] = out_local[i] + acc[i * 8 + rv]
+                        out_local[i] = T.call_extern("float32", "tl::AllReduce<tl::SumOp, 256, 128, 0>::run", out_local[i], T.tvm_access_ptr(T.type_annotation("float32"), workspace.data, 0, 256, 2))
+                        out_local[i] = T.call_extern("float32", "tl::AllReduce<tl::SumOp, 8, 1, 0>::run", out_local[i])
+                T.attr(0, "tl.provenance_ordinal", 5)
+                if tx % 8 * 2 + tx // 128 == 0 and (tx < 256 and tx >= 0):
+                    for i in T.unroll(8, annotations={"pragma_unroll_explicit": T.bool(False)}):
+                        out[i * 16 + tx % 128 // 8] = out_local[(i * 16 + tx % 128 // 8) // 16]
+
+# Metadata omitted. Use show_meta=True in script() method to show it.

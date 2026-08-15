@@ -1,0 +1,263 @@
+{
+  "capacity_sweep": [
+    {
+      "assumed_effective_capacity_bytes": 32768,
+      "evidence_level": "model_derived_unvalidated",
+      "potential_global_read_traffic_bytes": 32772,
+      "potential_reused_global_read_bytes": 0
+    },
+    {
+      "assumed_effective_capacity_bytes": 131072,
+      "evidence_level": "model_derived_unvalidated",
+      "potential_global_read_traffic_bytes": 32772,
+      "potential_reused_global_read_bytes": 0
+    },
+    {
+      "assumed_effective_capacity_bytes": 524288,
+      "evidence_level": "model_derived_unvalidated",
+      "potential_global_read_traffic_bytes": 32772,
+      "potential_reused_global_read_bytes": 0
+    },
+    {
+      "assumed_effective_capacity_bytes": 2097152,
+      "evidence_level": "model_derived_unvalidated",
+      "potential_global_read_traffic_bytes": 32772,
+      "potential_reused_global_read_bytes": 0
+    }
+  ],
+  "evidence_level": "model_derived_unvalidated",
+  "expanded_event_count_per_block": 15,
+  "limitations": [
+    "capacity sweep is a bounded static schedule model, not a measured hardware cache result",
+    "does not model S5000 cache capacity, associativity, or replacement policy"
+  ],
+  "reuse_events": [
+    {
+      "from_event": 2,
+      "iteration_coordinates": {
+        "kk": 0
+      },
+      "logical_bytes": 4096,
+      "op_distance": 2,
+      "reuse_key": "a_shared:['0', '0']:['64', '32']",
+      "scope": "shared.dyn",
+      "static_op_id": "op_6087b7a3080c20aa",
+      "to_event": 4
+    },
+    {
+      "from_event": 3,
+      "iteration_coordinates": {
+        "kk": 0
+      },
+      "logical_bytes": 4096,
+      "op_distance": 1,
+      "reuse_key": "b_shared:['0', '0']:['32', '64']",
+      "scope": "shared.dyn",
+      "static_op_id": "op_6087b7a3080c20aa",
+      "to_event": 4
+    },
+    {
+      "from_event": 1,
+      "iteration_coordinates": {
+        "kk": 0
+      },
+      "logical_bytes": 16384,
+      "op_distance": 3,
+      "reuse_key": "acc:['0', '0']:['64', '64']",
+      "scope": "local.fragment",
+      "static_op_id": "op_6087b7a3080c20aa",
+      "to_event": 4
+    },
+    {
+      "from_event": 4,
+      "iteration_coordinates": {
+        "kk": 1
+      },
+      "logical_bytes": 4096,
+      "op_distance": 1,
+      "reuse_key": "a_shared:['0', '0']:['64', '32']",
+      "scope": "shared.dyn",
+      "static_op_id": "op_49d3893142a5ee46",
+      "to_event": 5
+    },
+    {
+      "from_event": 4,
+      "iteration_coordinates": {
+        "kk": 1
+      },
+      "logical_bytes": 4096,
+      "op_distance": 2,
+      "reuse_key": "b_shared:['0', '0']:['32', '64']",
+      "scope": "shared.dyn",
+      "static_op_id": "op_8d07ccf888b26a45",
+      "to_event": 6
+    },
+    {
+      "from_event": 5,
+      "iteration_coordinates": {
+        "kk": 1
+      },
+      "logical_bytes": 4096,
+      "op_distance": 2,
+      "reuse_key": "a_shared:['0', '0']:['64', '32']",
+      "scope": "shared.dyn",
+      "static_op_id": "op_6087b7a3080c20aa",
+      "to_event": 7
+    },
+    {
+      "from_event": 6,
+      "iteration_coordinates": {
+        "kk": 1
+      },
+      "logical_bytes": 4096,
+      "op_distance": 1,
+      "reuse_key": "b_shared:['0', '0']:['32', '64']",
+      "scope": "shared.dyn",
+      "static_op_id": "op_6087b7a3080c20aa",
+      "to_event": 7
+    },
+    {
+      "from_event": 4,
+      "iteration_coordinates": {
+        "kk": 1
+      },
+      "logical_bytes": 16384,
+      "op_distance": 3,
+      "reuse_key": "acc:['0', '0']:['64', '64']",
+      "scope": "local.fragment",
+      "static_op_id": "op_6087b7a3080c20aa",
+      "to_event": 7
+    },
+    {
+      "from_event": 7,
+      "iteration_coordinates": {
+        "kk": 2
+      },
+      "logical_bytes": 4096,
+      "op_distance": 1,
+      "reuse_key": "a_shared:['0', '0']:['64', '32']",
+      "scope": "shared.dyn",
+      "static_op_id": "op_49d3893142a5ee46",
+      "to_event": 8
+    },
+    {
+      "from_event": 7,
+      "iteration_coordinates": {
+        "kk": 2
+      },
+      "logical_bytes": 4096,
+      "op_distance": 2,
+      "reuse_key": "b_shared:['0', '0']:['32', '64']",
+      "scope": "shared.dyn",
+      "static_op_id": "op_8d07ccf888b26a45",
+      "to_event": 9
+    },
+    {
+      "from_event": 8,
+      "iteration_coordinates": {
+        "kk": 2
+      },
+      "logical_bytes": 4096,
+      "op_distance": 2,
+      "reuse_key": "a_shared:['0', '0']:['64', '32']",
+      "scope": "shared.dyn",
+      "static_op_id": "op_6087b7a3080c20aa",
+      "to_event": 10
+    },
+    {
+      "from_event": 9,
+      "iteration_coordinates": {
+        "kk": 2
+      },
+      "logical_bytes": 4096,
+      "op_distance": 1,
+      "reuse_key": "b_shared:['0', '0']:['32', '64']",
+      "scope": "shared.dyn",
+      "static_op_id": "op_6087b7a3080c20aa",
+      "to_event": 10
+    },
+    {
+      "from_event": 7,
+      "iteration_coordinates": {
+        "kk": 2
+      },
+      "logical_bytes": 16384,
+      "op_distance": 3,
+      "reuse_key": "acc:['0', '0']:['64', '64']",
+      "scope": "local.fragment",
+      "static_op_id": "op_6087b7a3080c20aa",
+      "to_event": 10
+    },
+    {
+      "from_event": 10,
+      "iteration_coordinates": {
+        "kk": 3
+      },
+      "logical_bytes": 4096,
+      "op_distance": 1,
+      "reuse_key": "a_shared:['0', '0']:['64', '32']",
+      "scope": "shared.dyn",
+      "static_op_id": "op_49d3893142a5ee46",
+      "to_event": 11
+    },
+    {
+      "from_event": 10,
+      "iteration_coordinates": {
+        "kk": 3
+      },
+      "logical_bytes": 4096,
+      "op_distance": 2,
+      "reuse_key": "b_shared:['0', '0']:['32', '64']",
+      "scope": "shared.dyn",
+      "static_op_id": "op_8d07ccf888b26a45",
+      "to_event": 12
+    },
+    {
+      "from_event": 11,
+      "iteration_coordinates": {
+        "kk": 3
+      },
+      "logical_bytes": 4096,
+      "op_distance": 2,
+      "reuse_key": "a_shared:['0', '0']:['64', '32']",
+      "scope": "shared.dyn",
+      "static_op_id": "op_6087b7a3080c20aa",
+      "to_event": 13
+    },
+    {
+      "from_event": 12,
+      "iteration_coordinates": {
+        "kk": 3
+      },
+      "logical_bytes": 4096,
+      "op_distance": 1,
+      "reuse_key": "b_shared:['0', '0']:['32', '64']",
+      "scope": "shared.dyn",
+      "static_op_id": "op_6087b7a3080c20aa",
+      "to_event": 13
+    },
+    {
+      "from_event": 10,
+      "iteration_coordinates": {
+        "kk": 3
+      },
+      "logical_bytes": 16384,
+      "op_distance": 3,
+      "reuse_key": "acc:['0', '0']:['64', '64']",
+      "scope": "local.fragment",
+      "static_op_id": "op_6087b7a3080c20aa",
+      "to_event": 13
+    },
+    {
+      "from_event": 13,
+      "iteration_coordinates": {},
+      "logical_bytes": 16384,
+      "op_distance": 1,
+      "reuse_key": "acc:['0', '0']:['64', '64']",
+      "scope": "local.fragment",
+      "static_op_id": "op_24b30d91b261d030",
+      "to_event": 14
+    }
+  ],
+  "status": "complete_bounded_static_schedule"
+}

@@ -1,0 +1,107 @@
+# from tvm.script import ir as I
+# from tvm.script import tirx as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def kernel(self_handle: T.handle, args: T.handle, num_args: T.int32, result: T.handle("void", "global")) -> T.int32:
+        T.func_attr({"calling_conv": 1, "target": T.target({"keys": ["cpu"], "kind": "c", "tag": ""}), "thread_extent": {}, "tilelang_out_idx": [-1], "tirx.is_entry_func": True, "tl.has_tma": T.bool(False), "tl.readonly_param_indices": [0, 1, 2], "tma_descriptor_args": {}})
+        assert num_args == 3, ("RuntimeError", ["kernel: num_args should be 3"])
+        assert not T.isnullptr(args), ("RuntimeError", ["kernel: args pointer is NULL"])
+        A_type_index: T.int32 = T.tvm_struct_get(args, 0, 13, "int32")
+        assert A_type_index == 0 or A_type_index == 4 or A_type_index == 7 or 64 <= A_type_index, ("RuntimeError", ["kernel kernel input A expected pointer or tensor handle"])
+        B_type_index: T.int32 = T.tvm_struct_get(args, 1, 13, "int32")
+        assert B_type_index == 0 or B_type_index == 4 or B_type_index == 7 or 64 <= B_type_index, ("RuntimeError", ["kernel kernel input B expected pointer or tensor handle"])
+        out_handle_type_index: T.int32 = T.tvm_struct_get(args, 2, 13, "int32")
+        assert out_handle_type_index == 0 or out_handle_type_index == 4 or out_handle_type_index == 7 or 64 <= out_handle_type_index, ("RuntimeError", ["kernel kernel input out expected pointer or tensor handle"])
+        A: T.handle = T.Select(A_type_index == 70, T.handle_add_byte_offset(T.tvm_struct_get(args, 0, 15, "handle"), 24), T.tvm_struct_get(args, 0, 15, "handle"))
+        B: T.handle = T.Select(B_type_index == 70, T.handle_add_byte_offset(T.tvm_struct_get(args, 1, 15, "handle"), 24), T.tvm_struct_get(args, 1, 15, "handle"))
+        out_handle: T.handle = T.Select(out_handle_type_index == 70, T.handle_add_byte_offset(T.tvm_struct_get(args, 2, 15, "handle"), 24), T.tvm_struct_get(args, 2, 15, "handle"))
+        kernel_A_is_null: T.bool = T.isnullptr(A)
+        assert not kernel_A_is_null, ("RuntimeError", ["kernel.A is expected to have non-NULL pointer"])
+        kernel_B_is_null: T.bool = T.isnullptr(B)
+        assert not kernel_B_is_null, ("RuntimeError", ["kernel.B is expected to have non-NULL pointer"])
+        kernel_out_is_null: T.bool = T.isnullptr(out_handle)
+        assert not kernel_out_is_null, ("RuntimeError", ["kernel.out is expected to have non-NULL pointer"])
+        kernel_A_shape: T.handle("int64", "global") = T.tvm_struct_get(A, 0, 2, "handle")
+        kernel_A_shape_1 = T.decl_buffer((2,), "int64", data=kernel_A_shape)
+        kernel_B_shape: T.handle("int64", "global") = T.tvm_struct_get(B, 0, 2, "handle")
+        kernel_B_shape_1 = T.decl_buffer((2,), "int64", data=kernel_B_shape)
+        kernel_out_shape: T.handle("int64", "global") = T.tvm_struct_get(out_handle, 0, 2, "handle")
+        kernel_out_shape_1 = T.decl_buffer((1,), "int64", data=kernel_out_shape)
+        if T.tvm_struct_get(A, 0, 4, "int32") != 2:
+            T.call_packed("__tvm_error_ndim_mismatch", "kernel", "A", T.int64(2), T.Cast("int64", T.tvm_struct_get(A, 0, 4, "int32")))
+        kernel_A_strides: T.handle("int64", "global") = T.tvm_struct_get(A, 0, 3, "handle")
+        kernel_A_strides_1 = T.decl_buffer((2,), "int64", data=kernel_A_strides)
+        dev_id: T.int32 = T.tvm_struct_get(A, 0, 9, "int32")
+        A_1: T.handle("float16", "global") = T.tvm_struct_get(A, 0, 1, "handle")
+        T.attr(A_1, "storage_alignment", 64)
+        if T.tvm_struct_get(B, 0, 4, "int32") != 2:
+            T.call_packed("__tvm_error_ndim_mismatch", "kernel", "B", T.int64(2), T.Cast("int64", T.tvm_struct_get(B, 0, 4, "int32")))
+        kernel_B_strides: T.handle("int64", "global") = T.tvm_struct_get(B, 0, 3, "handle")
+        kernel_B_strides_1 = T.decl_buffer((2,), "int64", data=kernel_B_strides)
+        B_1: T.handle("float16", "global") = T.tvm_struct_get(B, 0, 1, "handle")
+        T.attr(B_1, "storage_alignment", 64)
+        if T.tvm_struct_get(out_handle, 0, 4, "int32") != 1:
+            T.call_packed("__tvm_error_ndim_mismatch", "kernel", "out", T.int64(1), T.Cast("int64", T.tvm_struct_get(out_handle, 0, 4, "int32")))
+        kernel_out_strides: T.handle("int64", "global") = T.tvm_struct_get(out_handle, 0, 3, "handle")
+        kernel_out_strides_1 = T.decl_buffer((1,), "int64", data=kernel_out_strides)
+        out: T.handle("float32", "global") = T.tvm_struct_get(out_handle, 0, 1, "handle")
+        T.attr(out, "storage_alignment", 64)
+        T.attr("default", "device_id", dev_id)
+        T.attr("default", "device_type", 12)
+        if T.tvm_struct_get(A, 0, 5, "uint8") != T.uint8(2) or T.tvm_struct_get(A, 0, 6, "uint8") != T.uint8(16) or T.tvm_struct_get(A, 0, 7, "uint16") != T.uint16(1):
+            T.call_packed("__tvm_error_dtype_mismatch", "kernel", "A", T.Cast("int64", T.tvm_struct_get(A, 0, 5, "uint8")), T.Cast("int64", T.tvm_struct_get(A, 0, 6, "uint8")), T.Cast("int64", T.tvm_struct_get(A, 0, 7, "uint16")), T.int64(2), T.int64(16), T.int64(1))
+        if T.Cast("int32", kernel_A_shape_1[0]) != 128:
+            T.call_packed("__tvm_error_expect_eq", "kernel", "A", "shape[0]", T.int64(128), T.Cast("int64", T.Cast("int32", kernel_A_shape_1[0])))
+        if T.Cast("int32", kernel_A_shape_1[1]) != 64:
+            T.call_packed("__tvm_error_expect_eq", "kernel", "A", "shape[1]", T.int64(64), T.Cast("int64", T.Cast("int32", kernel_A_shape_1[1])))
+        if T.if_then_else(T.isnullptr(kernel_A_strides), 1, T.Cast("int32", kernel_A_strides_1[1])) != 1:
+            T.call_packed("__tvm_error_expect_eq", "kernel", "A", "strides[1]", T.int64(1), T.Cast("int64", T.if_then_else(T.isnullptr(kernel_A_strides), 1, T.Cast("int32", kernel_A_strides_1[1]))))
+        if T.if_then_else(T.isnullptr(kernel_A_strides), 1, T.Cast("int32", kernel_A_strides_1[0])) != 64:
+            T.call_packed("__tvm_error_expect_eq", "kernel", "A", "strides[0]", T.int64(64), T.Cast("int64", T.if_then_else(T.isnullptr(kernel_A_strides), 1, T.Cast("int32", kernel_A_strides_1[0]))))
+        if T.uint64(0) != T.tvm_struct_get(A, 0, 8, "uint64"):
+            T.call_packed("__tvm_error_byte_offset_mismatch", "kernel", "A", T.int64(0), T.Cast("int64", T.tvm_struct_get(A, 0, 8, "uint64")))
+        if T.tvm_struct_get(A, 0, 10, "int32") != 12:
+            T.call_packed("__tvm_error_device_type_mismatch", "kernel", "A", T.int64(12), T.Cast("int64", T.tvm_struct_get(A, 0, 10, "int32")))
+        if T.isnullptr(A_1):
+            T.call_packed("__tvm_error_null_ptr", "kernel", "A", "data pointer")
+        if T.tvm_struct_get(B, 0, 5, "uint8") != T.uint8(2) or T.tvm_struct_get(B, 0, 6, "uint8") != T.uint8(16) or T.tvm_struct_get(B, 0, 7, "uint16") != T.uint16(1):
+            T.call_packed("__tvm_error_dtype_mismatch", "kernel", "B", T.Cast("int64", T.tvm_struct_get(B, 0, 5, "uint8")), T.Cast("int64", T.tvm_struct_get(B, 0, 6, "uint8")), T.Cast("int64", T.tvm_struct_get(B, 0, 7, "uint16")), T.int64(2), T.int64(16), T.int64(1))
+        if T.Cast("int32", kernel_B_shape_1[0]) != 128:
+            T.call_packed("__tvm_error_expect_eq", "kernel", "B", "shape[0]", T.int64(128), T.Cast("int64", T.Cast("int32", kernel_B_shape_1[0])))
+        if T.Cast("int32", kernel_B_shape_1[1]) != 64:
+            T.call_packed("__tvm_error_expect_eq", "kernel", "B", "shape[1]", T.int64(64), T.Cast("int64", T.Cast("int32", kernel_B_shape_1[1])))
+        if T.if_then_else(T.isnullptr(kernel_B_strides), 1, T.Cast("int32", kernel_B_strides_1[1])) != 1:
+            T.call_packed("__tvm_error_expect_eq", "kernel", "B", "strides[1]", T.int64(1), T.Cast("int64", T.if_then_else(T.isnullptr(kernel_B_strides), 1, T.Cast("int32", kernel_B_strides_1[1]))))
+        if T.if_then_else(T.isnullptr(kernel_B_strides), 1, T.Cast("int32", kernel_B_strides_1[0])) != 64:
+            T.call_packed("__tvm_error_expect_eq", "kernel", "B", "strides[0]", T.int64(64), T.Cast("int64", T.if_then_else(T.isnullptr(kernel_B_strides), 1, T.Cast("int32", kernel_B_strides_1[0]))))
+        if T.uint64(0) != T.tvm_struct_get(B, 0, 8, "uint64"):
+            T.call_packed("__tvm_error_byte_offset_mismatch", "kernel", "B", T.int64(0), T.Cast("int64", T.tvm_struct_get(B, 0, 8, "uint64")))
+        if T.tvm_struct_get(B, 0, 9, "int32") != T.tvm_struct_get(A, 0, 9, "int32"):
+            T.call_packed("__tvm_error_expect_eq", "kernel", "B", "device_id", T.Cast("int64", T.tvm_struct_get(A, 0, 9, "int32")), T.Cast("int64", T.tvm_struct_get(B, 0, 9, "int32")))
+        if T.tvm_struct_get(B, 0, 10, "int32") != 12:
+            T.call_packed("__tvm_error_device_type_mismatch", "kernel", "B", T.int64(12), T.Cast("int64", T.tvm_struct_get(B, 0, 10, "int32")))
+        if T.isnullptr(B_1):
+            T.call_packed("__tvm_error_null_ptr", "kernel", "B", "data pointer")
+        if T.tvm_struct_get(out_handle, 0, 5, "uint8") != T.uint8(2) or T.tvm_struct_get(out_handle, 0, 6, "uint8") != T.uint8(32) or T.tvm_struct_get(out_handle, 0, 7, "uint16") != T.uint16(1):
+            T.call_packed("__tvm_error_dtype_mismatch", "kernel", "out", T.Cast("int64", T.tvm_struct_get(out_handle, 0, 5, "uint8")), T.Cast("int64", T.tvm_struct_get(out_handle, 0, 6, "uint8")), T.Cast("int64", T.tvm_struct_get(out_handle, 0, 7, "uint16")), T.int64(2), T.int64(32), T.int64(1))
+        if T.Cast("int32", kernel_out_shape_1[0]) != 128:
+            T.call_packed("__tvm_error_expect_eq", "kernel", "out", "shape[0]", T.int64(128), T.Cast("int64", T.Cast("int32", kernel_out_shape_1[0])))
+        if T.if_then_else(T.isnullptr(kernel_out_strides), 1, T.Cast("int32", kernel_out_strides_1[0])) != 1:
+            T.call_packed("__tvm_error_expect_eq", "kernel", "out", "strides[0]", T.int64(1), T.Cast("int64", T.if_then_else(T.isnullptr(kernel_out_strides), 1, T.Cast("int32", kernel_out_strides_1[0]))))
+        if T.uint64(0) != T.tvm_struct_get(out_handle, 0, 8, "uint64"):
+            T.call_packed("__tvm_error_byte_offset_mismatch", "kernel", "out", T.int64(0), T.Cast("int64", T.tvm_struct_get(out_handle, 0, 8, "uint64")))
+        if T.tvm_struct_get(out_handle, 0, 9, "int32") != T.tvm_struct_get(A, 0, 9, "int32"):
+            T.call_packed("__tvm_error_expect_eq", "kernel", "out", "device_id", T.Cast("int64", T.tvm_struct_get(A, 0, 9, "int32")), T.Cast("int64", T.tvm_struct_get(out_handle, 0, 9, "int32")))
+        if T.tvm_struct_get(out_handle, 0, 10, "int32") != 12:
+            T.call_packed("__tvm_error_device_type_mismatch", "kernel", "out", T.int64(12), T.Cast("int64", T.tvm_struct_get(out_handle, 0, 10, "int32")))
+        if T.isnullptr(out):
+            T.call_packed("__tvm_error_null_ptr", "kernel", "out", "data pointer")
+        A_2 = T.decl_buffer((128, 64), "float16", data=A_1, strides=(64, 1))
+        B_2 = T.decl_buffer((128, 64), "float16", data=B_1, strides=(64, 1))
+        out_1 = T.decl_buffer((128,), data=out, strides=(1,))
+        T.call_packed("__tvm_set_device", 12, dev_id)
+        with T.attr(0, "compute_scope", "kernel_compute_"):
+            T.call_packed("kernel_kernel", A_1, B_1, out, 1, 256, 1, 1, 32768)
+        return 0

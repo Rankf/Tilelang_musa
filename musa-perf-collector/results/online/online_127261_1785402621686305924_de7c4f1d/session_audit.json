@@ -1,0 +1,42 @@
+{
+  "audit_inputs_path": "session_audit_inputs.json",
+  "audit_revision": "P6.9.4",
+  "checks": [
+    "launch_accounting",
+    "fast_reason_accounting",
+    "instrumented_dispatch_accounting",
+    "trace_slot_layout",
+    "plan_hash",
+    "launch_trace_identity",
+    "generation_ownership",
+    "trace_pair_layout",
+    "lowered_instance_layout",
+    "trace_pair_validity",
+    "clock_interval_derivation",
+    "event_time_consistency",
+    "raw_enriched_identity",
+    "tileop_identity",
+    "strict_schema_types",
+    "budget_bounds",
+    "persisted_evidence_replay"
+  ],
+  "evidence_source": "persisted_session_files",
+  "observed": {
+    "enriched_trace_records": 4,
+    "fast_path_launches": 2,
+    "instrumented_dispatches": 1,
+    "instrumented_launches": 1,
+    "launches": 1,
+    "total_launches": 3,
+    "trace_records": 4
+  },
+  "reserved": {
+    "instrumented_launches": 1,
+    "trace_bytes": 32,
+    "trace_records": 4
+  },
+  "schema": "online-session-audit-v1",
+  "status": "pass",
+  "violation_count": 0,
+  "violations": []
+}

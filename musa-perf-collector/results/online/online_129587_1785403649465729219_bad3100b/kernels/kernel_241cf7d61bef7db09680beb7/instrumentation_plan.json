@@ -1,0 +1,107 @@
+{
+  "baseline_primfunc_sha256": "c528c6d99016cd8ce58a1d7e45f895bf39704a472a2a9569689cd5b9ad8a4a4c",
+  "execution_backend": "tvm_ffi",
+  "launch_context": {
+    "block_axes": {
+      "blockIdx.x": 2,
+      "blockIdx.y": 2,
+      "blockIdx.z": 1
+    },
+    "block_count": 4,
+    "thread_axes": {
+      "threadIdx.x": 256,
+      "threadIdx.y": 1,
+      "threadIdx.z": 1
+    },
+    "thread_count": 256
+  },
+  "lineage_artifact": "/root/musa-perf-collector/results/offline/analysis_e9455c90b580aef2/metadata/lineage.json",
+  "lowered_instance_counts": [
+    2
+  ],
+  "lowering_semantics": "lowered_instance",
+  "normalized_out_idx": [
+    3
+  ],
+  "plan_sha256": "6185149728c57598fc6df42e247407a8bab8f0b48b040a12e72c63952edcada1",
+  "schema": "online-instrumentation-plan-v1",
+  "selected_blocks": [
+    [
+      0,
+      0,
+      0
+    ]
+  ],
+  "slot_layout": [
+    {
+      "block": [
+        0,
+        0,
+        0
+      ],
+      "boundary": "begin",
+      "lowered_instance_index": 0,
+      "lowering_semantics": "lowered_instance",
+      "op_id": "op_bfdf2ff536ef6911",
+      "ordinal": 0,
+      "slot": 0,
+      "source_kind": "copy"
+    },
+    {
+      "block": [
+        0,
+        0,
+        0
+      ],
+      "boundary": "end",
+      "lowered_instance_index": 0,
+      "lowering_semantics": "lowered_instance",
+      "op_id": "op_bfdf2ff536ef6911",
+      "ordinal": 0,
+      "slot": 1,
+      "source_kind": "copy"
+    },
+    {
+      "block": [
+        0,
+        0,
+        0
+      ],
+      "boundary": "begin",
+      "lowered_instance_index": 1,
+      "lowering_semantics": "lowered_instance",
+      "op_id": "op_bfdf2ff536ef6911",
+      "ordinal": 0,
+      "slot": 2,
+      "source_kind": "copy"
+    },
+    {
+      "block": [
+        0,
+        0,
+        0
+      ],
+      "boundary": "end",
+      "lowered_instance_index": 1,
+      "lowering_semantics": "lowered_instance",
+      "op_id": "op_bfdf2ff536ef6911",
+      "ordinal": 0,
+      "slot": 3,
+      "source_kind": "copy"
+    }
+  ],
+  "source_kinds": [
+    "copy"
+  ],
+  "source_op_ids": [
+    "op_bfdf2ff536ef6911"
+  ],
+  "source_ordinals": [
+    0
+  ],
+  "target": "{\"kind\":\"musa\",\"tag\":\"\",\"keys\":[\"musa\",\"gpu\"],\"arch\":\"mp_31\",\"max_num_threads\":1024,\"thread_warp_size\":32}",
+  "tilelang_revision": "4d666968a005846314e9a84d8ff121c5dbffa9ee",
+  "trace_buffer_name": "__musa_perf_trace",
+  "trace_bytes": 32,
+  "trace_extent": 4
+}

@@ -1,0 +1,9 @@
+{
+  "baseline_kernel_source_sha256": "d120c5f952cc86fa24f920b995bc151eb0673da4cbec1b7efe1aa833ce9243ee",
+  "cache_namespace": "instrumented/755e4e69e0ec817ca55e9f43c6376b9bd4a1b2c77723937db619d958afe7b9b6",
+  "instrumented_kernel_source_sha256": "fc1a39d7684ea69fc3e07324fb5286888bcba30332059995adb4a7da65d77aea",
+  "parameter_count": 4,
+  "plan_sha256": "755e4e69e0ec817ca55e9f43c6376b9bd4a1b2c77723937db619d958afe7b9b6",
+  "schema": "online-instrumented-manifest-v1",
+  "trace_parameter_index": 3
+}

@@ -1,0 +1,16 @@
+{
+  "baseline_primfunc_sha256": "c528c6d99016cd8ce58a1d7e45f895bf39704a472a2a9569689cd5b9ad8a4a4c",
+  "mappings": [
+    {
+      "lowered_instance_count": 2,
+      "lowering_semantics": "lowered_instance",
+      "source_kind": "copy",
+      "source_op_id": "op_bfdf2ff536ef6911",
+      "source_ordinal": 0
+    }
+  ],
+  "plan_sha256": "6185149728c57598fc6df42e247407a8bab8f0b48b040a12e72c63952edcada1",
+  "schema": "online-compiler-lineage-v1",
+  "status": "compiler_exact_lineage",
+  "tilelang_revision": "4d666968a005846314e9a84d8ff121c5dbffa9ee"
+}

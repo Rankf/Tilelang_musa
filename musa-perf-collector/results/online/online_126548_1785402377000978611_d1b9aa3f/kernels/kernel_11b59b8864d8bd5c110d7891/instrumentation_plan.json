@@ -1,0 +1,111 @@
+{
+  "baseline_primfunc_sha256": "76b9968039ed951c818b28186e7c322e43e2fe3119a12b4bdbfccaf3aa71172c",
+  "execution_backend": "tvm_ffi",
+  "launch_context": {
+    "block_axes": {
+      "blockIdx.x": 1,
+      "blockIdx.y": 1,
+      "blockIdx.z": 1
+    },
+    "block_count": 1,
+    "thread_axes": {
+      "threadIdx.x": 256,
+      "threadIdx.y": 1,
+      "threadIdx.z": 1
+    },
+    "thread_count": 256
+  },
+  "lineage_artifact": "/root/musa-perf-collector/results/offline/analysis_0a0d26cf0bd4ffde/metadata/lineage.json",
+  "lowered_instance_counts": [
+    1,
+    1
+  ],
+  "lowering_semantics": "single",
+  "normalized_out_idx": [
+    2
+  ],
+  "plan_sha256": "755e4e69e0ec817ca55e9f43c6376b9bd4a1b2c77723937db619d958afe7b9b6",
+  "schema": "online-instrumentation-plan-v1",
+  "selected_blocks": [
+    [
+      0,
+      0,
+      0
+    ]
+  ],
+  "slot_layout": [
+    {
+      "block": [
+        0,
+        0,
+        0
+      ],
+      "boundary": "begin",
+      "lowered_instance_index": null,
+      "lowering_semantics": "single",
+      "op_id": "op_ba6a0cf9b64ded14",
+      "ordinal": 3,
+      "slot": 0,
+      "source_kind": "gemm"
+    },
+    {
+      "block": [
+        0,
+        0,
+        0
+      ],
+      "boundary": "end",
+      "lowered_instance_index": null,
+      "lowering_semantics": "single",
+      "op_id": "op_ba6a0cf9b64ded14",
+      "ordinal": 3,
+      "slot": 1,
+      "source_kind": "gemm"
+    },
+    {
+      "block": [
+        0,
+        0,
+        0
+      ],
+      "boundary": "begin",
+      "lowered_instance_index": null,
+      "lowering_semantics": "single",
+      "op_id": "op_712a09f7641bd83c",
+      "ordinal": 4,
+      "slot": 2,
+      "source_kind": "reduce"
+    },
+    {
+      "block": [
+        0,
+        0,
+        0
+      ],
+      "boundary": "end",
+      "lowered_instance_index": null,
+      "lowering_semantics": "single",
+      "op_id": "op_712a09f7641bd83c",
+      "ordinal": 4,
+      "slot": 3,
+      "source_kind": "reduce"
+    }
+  ],
+  "source_kinds": [
+    "gemm",
+    "reduce"
+  ],
+  "source_op_ids": [
+    "op_ba6a0cf9b64ded14",
+    "op_712a09f7641bd83c"
+  ],
+  "source_ordinals": [
+    3,
+    4
+  ],
+  "target": "{\"kind\":\"musa\",\"tag\":\"\",\"keys\":[\"musa\",\"gpu\"],\"arch\":\"mp_31\",\"max_num_threads\":1024,\"thread_warp_size\":32}",
+  "tilelang_revision": "4d666968a005846314e9a84d8ff121c5dbffa9ee",
+  "trace_buffer_name": "__musa_perf_trace",
+  "trace_bytes": 32,
+  "trace_extent": 4
+}

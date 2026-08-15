@@ -1,0 +1,55 @@
+{
+  "attrs": {
+    "global_symbol": "kernel",
+    "tilelang_out_idx": "(-1,)"
+  },
+  "evidence_level": "compiler_observed",
+  "launch_context": {
+    "block_axes": {
+      "blockIdx.x": 1,
+      "blockIdx.y": 1,
+      "blockIdx.z": 1
+    },
+    "block_count": 1,
+    "thread_axes": {
+      "threadIdx.x": 256,
+      "threadIdx.y": 1,
+      "threadIdx.z": 1
+    },
+    "thread_count": 256
+  },
+  "name": "kernel",
+  "source_snapshot": "S00_INPUT_TILE_IR",
+  "thread_bindings": [
+    {
+      "axis": "blockIdx.x",
+      "evidence_level": "compiler_observed",
+      "extent": 1
+    },
+    {
+      "axis": "blockIdx.y",
+      "evidence_level": "compiler_observed",
+      "extent": 1
+    },
+    {
+      "axis": "blockIdx.z",
+      "evidence_level": "compiler_observed",
+      "extent": 1
+    },
+    {
+      "axis": "threadIdx.x",
+      "evidence_level": "compiler_observed",
+      "extent": 256
+    },
+    {
+      "axis": "threadIdx.y",
+      "evidence_level": "compiler_observed",
+      "extent": 1
+    },
+    {
+      "axis": "threadIdx.z",
+      "evidence_level": "compiler_observed",
+      "extent": 1
+    }
+  ]
+}

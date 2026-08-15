@@ -1,0 +1,9 @@
+{
+  "config_sha256": "sha256:771d94fbc0dbf38a05ed10a9da0acdc03f0dc636b489a9fbf3e63883ab378ffe",
+  "correctness": "application_owned",
+  "created_at": "2026-07-30T09:10:21.687255+00:00",
+  "pid": 127261,
+  "profile": "online_runtime_observation_v1",
+  "schema": "online-process-manifest-v1",
+  "session_id": "online_127261_1785402621686305924_de7c4f1d"
+}

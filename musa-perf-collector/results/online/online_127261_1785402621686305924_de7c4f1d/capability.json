@@ -1,0 +1,18 @@
+{
+  "automatic_instrumentation": true,
+  "compile_observation": true,
+  "dispatch_path": "native_c_vectorcall",
+  "event_timing_every": 1,
+  "execution_backend": "tvm_ffi",
+  "launch_observation": true,
+  "lineage": "compiler_exact",
+  "lowering_semantics": "single",
+  "native_trace_error": null,
+  "native_trace_status": "available",
+  "phase": "P6.9",
+  "readback_policy": "native_deferred_at_flush",
+  "schema": "online-capability-v1",
+  "target": "musa",
+  "trace_pool_capacity": 10,
+  "trace_pool_device": 0
+}

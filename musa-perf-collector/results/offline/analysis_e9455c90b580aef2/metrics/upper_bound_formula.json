@@ -1,0 +1,47 @@
+{
+  "absolute_latency_prediction": null,
+  "demand_vector": {
+    "ambiguous_scope_transfers": [
+      {
+        "destination_logical_bytes": 8192,
+        "from_scope": "local.fragment",
+        "reason": "endpoint logical byte counts differ or are symbolic",
+        "source_logical_bytes": 16384,
+        "to_scope": "global"
+      }
+    ],
+    "arithmetic_intensity_all_logical": 3.8786730979788713,
+    "arithmetic_intensity_global_logical": 25.597500244116784,
+    "evidence_level": "semantic_derived",
+    "execution_domain": "per_kernel_launch",
+    "flops": 4194304,
+    "global_endpoint_transfer_bytes": 131088,
+    "global_logical_bytes": 163856,
+    "logical_read_bytes": 589840,
+    "logical_total_bytes": 1081376,
+    "logical_write_bytes": 491536,
+    "scope_transfer_bytes": {
+      "global->local": 16,
+      "global->shared.dyn": 131072
+    },
+    "symbolic_multiplicity_ops": [],
+    "symbolic_terms": {
+      "flops": [],
+      "logical_read_bytes": [],
+      "logical_total_bytes": [],
+      "logical_write_bytes": []
+    },
+    "unknown_access_effect_ops": [],
+    "unknown_byte_fields": 0
+  },
+  "evidence_level": "model_derived_unvalidated",
+  "formulae": [
+    "T_compute >= FLOPs / P_compute_effective",
+    "T_transfer(scope) >= logical_bytes(scope) / BW_scope_effective(scope)",
+    "T_pipeline >= max(overlappable components) + sum(serial components)"
+  ],
+  "variables": {
+    "BW_scope_effective": "effective bandwidth for each observed scope transfer supplied only after calibration",
+    "P_compute_effective": "effective compute throughput supplied only after calibration"
+  }
+}

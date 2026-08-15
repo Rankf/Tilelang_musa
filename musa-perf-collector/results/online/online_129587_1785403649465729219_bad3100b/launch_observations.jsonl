@@ -1,0 +1,1 @@
+{"at": "2026-07-30T09:27:35.646222+00:00", "callable_wall_ns": 594745, "device_id": 0, "error_type": null, "evidence": "host_observation_only", "kernel_id": "kernel_241cf7d61bef7db09680beb7", "launch_index": 0, "pid": 129587, "schema": "online-launch-observation-v1", "selection_reason": "selected", "status": "instrumented", "stream_id": 0, "thread_id": 140111163819136}

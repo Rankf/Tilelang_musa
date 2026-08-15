@@ -1,0 +1,34 @@
+{
+  "ambiguous_scope_transfers": [
+    {
+      "destination_logical_bytes": 8192,
+      "from_scope": "local.fragment",
+      "reason": "endpoint logical byte counts differ or are symbolic",
+      "source_logical_bytes": 16384,
+      "to_scope": "global"
+    }
+  ],
+  "arithmetic_intensity_all_logical": 3.8786730979788713,
+  "arithmetic_intensity_global_logical": 25.597500244116784,
+  "evidence_level": "semantic_derived",
+  "execution_domain": "per_block",
+  "flops": 1048576,
+  "global_endpoint_transfer_bytes": 32772,
+  "global_logical_bytes": 40964,
+  "logical_read_bytes": 147460,
+  "logical_total_bytes": 270344,
+  "logical_write_bytes": 122884,
+  "scope_transfer_bytes": {
+    "global->local": 4,
+    "global->shared.dyn": 32768
+  },
+  "symbolic_multiplicity_ops": [],
+  "symbolic_terms": {
+    "flops": [],
+    "logical_read_bytes": [],
+    "logical_total_bytes": [],
+    "logical_write_bytes": []
+  },
+  "unknown_access_effect_ops": [],
+  "unknown_byte_fields": 0
+}

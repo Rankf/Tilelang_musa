@@ -1,0 +1,25 @@
+{
+  "application_correctness_status": "pass",
+  "audit_revision": "P6.9.4",
+  "audit_violation_count": 0,
+  "automatic_instrumentation": true,
+  "compile_observation_count": 1,
+  "correctness": "application_reported",
+  "elapsed_s": 12.969832763075829,
+  "fast_path_launch_count": 2,
+  "fast_path_skip_reasons": {
+    "launch_not_selected": 2
+  },
+  "independent_audit": "pass",
+  "instrumented_dispatch_count": 1,
+  "instrumented_launch_count": 1,
+  "launch_observation_count": 1,
+  "phase": "P6.9",
+  "reserved_instrumented_launches": 1,
+  "reserved_trace_bytes": 32,
+  "reserved_trace_records": 4,
+  "schema": "online-session-validation-v1",
+  "status": "complete",
+  "total_launch_count": 3,
+  "trace_record_count": 4
+}

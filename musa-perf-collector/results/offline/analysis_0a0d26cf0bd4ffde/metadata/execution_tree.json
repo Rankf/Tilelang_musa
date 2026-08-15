@@ -1,0 +1,122 @@
+[
+  {
+    "condition_context": [],
+    "execution": {
+      "block_count_expr": "1",
+      "block_count_value": 1,
+      "calls_per_block_expr": "1",
+      "calls_per_block_value": 1,
+      "calls_per_kernel_expr": "1",
+      "calls_per_kernel_value": 1,
+      "condition_expr": "true",
+      "evidence_level": "semantic_derived",
+      "execution_domain": "per_invocation",
+      "serial_multiplicity_per_block_expr": "1",
+      "serial_multiplicity_per_block_value": 1,
+      "static_occurrences": 1
+    },
+    "loop_context": [],
+    "op_id": "op_4c15b007ad6dbbe1",
+    "statement_path": "tileop/0"
+  },
+  {
+    "condition_context": [],
+    "execution": {
+      "block_count_expr": "1",
+      "block_count_value": 1,
+      "calls_per_block_expr": "1",
+      "calls_per_block_value": 1,
+      "calls_per_kernel_expr": "1",
+      "calls_per_kernel_value": 1,
+      "condition_expr": "true",
+      "evidence_level": "semantic_derived",
+      "execution_domain": "per_invocation",
+      "serial_multiplicity_per_block_expr": "1",
+      "serial_multiplicity_per_block_value": 1,
+      "static_occurrences": 1
+    },
+    "loop_context": [],
+    "op_id": "op_c6c767ddc296d6a5",
+    "statement_path": "tileop/1"
+  },
+  {
+    "condition_context": [],
+    "execution": {
+      "block_count_expr": "1",
+      "block_count_value": 1,
+      "calls_per_block_expr": "1",
+      "calls_per_block_value": 1,
+      "calls_per_kernel_expr": "1",
+      "calls_per_kernel_value": 1,
+      "condition_expr": "true",
+      "evidence_level": "semantic_derived",
+      "execution_domain": "per_invocation",
+      "serial_multiplicity_per_block_expr": "1",
+      "serial_multiplicity_per_block_value": 1,
+      "static_occurrences": 1
+    },
+    "loop_context": [],
+    "op_id": "op_0c14384697378207",
+    "statement_path": "tileop/2"
+  },
+  {
+    "condition_context": [],
+    "execution": {
+      "block_count_expr": "1",
+      "block_count_value": 1,
+      "calls_per_block_expr": "1",
+      "calls_per_block_value": 1,
+      "calls_per_kernel_expr": "1",
+      "calls_per_kernel_value": 1,
+      "condition_expr": "true",
+      "evidence_level": "semantic_derived",
+      "execution_domain": "per_invocation",
+      "serial_multiplicity_per_block_expr": "1",
+      "serial_multiplicity_per_block_value": 1,
+      "static_occurrences": 1
+    },
+    "loop_context": [],
+    "op_id": "op_ba6a0cf9b64ded14",
+    "statement_path": "tileop/3"
+  },
+  {
+    "condition_context": [],
+    "execution": {
+      "block_count_expr": "1",
+      "block_count_value": 1,
+      "calls_per_block_expr": "1",
+      "calls_per_block_value": 1,
+      "calls_per_kernel_expr": "1",
+      "calls_per_kernel_value": 1,
+      "condition_expr": "true",
+      "evidence_level": "semantic_derived",
+      "execution_domain": "per_invocation",
+      "serial_multiplicity_per_block_expr": "1",
+      "serial_multiplicity_per_block_value": 1,
+      "static_occurrences": 1
+    },
+    "loop_context": [],
+    "op_id": "op_712a09f7641bd83c",
+    "statement_path": "tileop/4"
+  },
+  {
+    "condition_context": [],
+    "execution": {
+      "block_count_expr": "1",
+      "block_count_value": 1,
+      "calls_per_block_expr": "1",
+      "calls_per_block_value": 1,
+      "calls_per_kernel_expr": "1",
+      "calls_per_kernel_value": 1,
+      "condition_expr": "true",
+      "evidence_level": "semantic_derived",
+      "execution_domain": "per_invocation",
+      "serial_multiplicity_per_block_expr": "1",
+      "serial_multiplicity_per_block_value": 1,
+      "static_occurrences": 1
+    },
+    "loop_context": [],
+    "op_id": "op_db1f99cb37df543a",
+    "statement_path": "tileop/5"
+  }
+]

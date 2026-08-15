@@ -1,0 +1,122 @@
+{
+  "edges": [
+    {
+      "buffer": "a_shared",
+      "confidence": "may_depend_buffer_match",
+      "edge_id": "edge_cd05dac2af65a8cd",
+      "from": "op_49d3893142a5ee46",
+      "kind": "data",
+      "to": "op_6087b7a3080c20aa"
+    },
+    {
+      "buffer": "b_shared",
+      "confidence": "may_depend_buffer_match",
+      "edge_id": "edge_0c80c7079e8dc4ff",
+      "from": "op_8d07ccf888b26a45",
+      "kind": "data",
+      "to": "op_6087b7a3080c20aa"
+    },
+    {
+      "buffer": "acc",
+      "confidence": "may_depend_buffer_match",
+      "edge_id": "edge_03e781fdd78761c1",
+      "from": "op_2135d85641054d3f",
+      "kind": "data",
+      "to": "op_6087b7a3080c20aa"
+    },
+    {
+      "buffer": "acc",
+      "confidence": "may_depend_buffer_match",
+      "edge_id": "edge_1e0675b2360403bc",
+      "from": "op_6087b7a3080c20aa",
+      "kind": "data",
+      "to": "op_24b30d91b261d030"
+    }
+  ],
+  "evidence_level": "semantic_derived",
+  "nodes": [
+    {
+      "family": "copy",
+      "kind": "copy",
+      "loop_context": [],
+      "op_id": "op_bfdf2ff536ef6911",
+      "ordinal": 0
+    },
+    {
+      "family": "fill",
+      "kind": "fill",
+      "loop_context": [],
+      "op_id": "op_2135d85641054d3f",
+      "ordinal": 1
+    },
+    {
+      "family": "copy",
+      "kind": "copy",
+      "loop_context": [
+        {
+          "annotations": {
+            "num_stages": "2"
+          },
+          "extent": "4",
+          "extent_value": 4,
+          "kind": "0",
+          "loop_id": "lexical_loop/0",
+          "min": "0",
+          "thread_binding": null,
+          "var": "kk"
+        }
+      ],
+      "op_id": "op_49d3893142a5ee46",
+      "ordinal": 2
+    },
+    {
+      "family": "copy",
+      "kind": "copy",
+      "loop_context": [
+        {
+          "annotations": {
+            "num_stages": "2"
+          },
+          "extent": "4",
+          "extent_value": 4,
+          "kind": "0",
+          "loop_id": "lexical_loop/0",
+          "min": "0",
+          "thread_binding": null,
+          "var": "kk"
+        }
+      ],
+      "op_id": "op_8d07ccf888b26a45",
+      "ordinal": 3
+    },
+    {
+      "family": "gemm_dense",
+      "kind": "gemm",
+      "loop_context": [
+        {
+          "annotations": {
+            "num_stages": "2"
+          },
+          "extent": "4",
+          "extent_value": 4,
+          "kind": "0",
+          "loop_id": "lexical_loop/0",
+          "min": "0",
+          "thread_binding": null,
+          "var": "kk"
+        }
+      ],
+      "op_id": "op_6087b7a3080c20aa",
+      "ordinal": 4
+    },
+    {
+      "family": "copy",
+      "kind": "copy",
+      "loop_context": [],
+      "op_id": "op_24b30d91b261d030",
+      "ordinal": 5
+    }
+  ],
+  "scope": "single input Tile IR snapshot; buffer-name matching is conservative and loop-carried dependencies are not expanded in v0",
+  "unknown_effect_barriers": []
+}

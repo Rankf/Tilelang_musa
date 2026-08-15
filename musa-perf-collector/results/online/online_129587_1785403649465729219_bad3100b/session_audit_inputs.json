@@ -1,0 +1,24 @@
+{
+  "budget": {
+    "max_instrumented_launches": 10,
+    "max_trace_bytes": 320,
+    "max_trace_records": 40
+  },
+  "fast_path_launch_count": 2,
+  "fast_path_skip_reasons": {
+    "launch_not_selected": 2
+  },
+  "instrumented_dispatch_count": 1,
+  "instrumented_launch_count": 1,
+  "kernels": {
+    "kernel_241cf7d61bef7db09680beb7": {
+      "plan_path": "kernels/kernel_241cf7d61bef7db09680beb7/instrumentation_plan.json",
+      "readback_policy": "native_deferred_at_flush"
+    }
+  },
+  "reserved_instrumented_launches": 1,
+  "reserved_trace_bytes": 32,
+  "reserved_trace_records": 4,
+  "schema": "online-session-audit-inputs-v1",
+  "total_launch_count": 3
+}

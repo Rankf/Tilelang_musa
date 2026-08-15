@@ -1,0 +1,27 @@
+{
+  "baseline_cache_identity": "sha256:11b59b8864d8bd5c110d78918e0971c1c8d2e82aef78ccec2a2facffab438ee9",
+  "kernel_id": "kernel_11b59b8864d8bd5c110d7891",
+  "kernel_source_sha256": "d120c5f952cc86fa24f920b995bc151eb0673da4cbec1b7efe1aa833ce9243ee",
+  "launch_context": {
+    "block_axes": {
+      "blockIdx.x": 1,
+      "blockIdx.y": 1,
+      "blockIdx.z": 1
+    },
+    "block_count": 1,
+    "thread_axes": {
+      "threadIdx.x": 256,
+      "threadIdx.y": 1,
+      "threadIdx.z": 1
+    },
+    "thread_count": 256
+  },
+  "normalized_out_idx": [
+    2
+  ],
+  "original_out_idx": [
+    -1
+  ],
+  "primfunc_sha256": "76b9968039ed951c818b28186e7c322e43e2fe3119a12b4bdbfccaf3aa71172c",
+  "schema": "online-baseline-manifest-v1"
+}

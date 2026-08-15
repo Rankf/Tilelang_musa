@@ -1,0 +1,24 @@
+{
+  "evidence_level": "compiler_observed",
+  "limitations": [
+    "v0 records Pipelined loop annotations but does not infer prologue, steady-state, or epilogue schedules"
+  ],
+  "pipeline_loops": [
+    {
+      "annotations": {
+        "num_stages": "2"
+      },
+      "evidence_level": "compiler_observed",
+      "extent": "4",
+      "extent_value": 4,
+      "kind": "0",
+      "loop_id": "loop_7028e68ab48b0704",
+      "min": "0",
+      "source_snapshot": "S00_INPUT_TILE_IR",
+      "thread_binding": null,
+      "var": "kk"
+    }
+  ],
+  "source_snapshot": "S00_INPUT_TILE_IR",
+  "status": "structural_only"
+}

@@ -1,0 +1,20 @@
+{
+  "end": {
+    "evidence_level": "runtime_telemetry",
+    "host_monotonic_s": 6740348.523597588,
+    "kind": "snapshot",
+    "raw_json": "{\n    \"Timestamp\": \"Thu Jul 30 17:27:42 2026\",\n    \"Driver Version\": \"3.3.5-server\",\n    \"Attached GPUs\": \"1\",\n    \"GPU\": [\n        {\n            \"Index\": \"0\",\n            \"Temperature\": {\n                \"GPU Current Temp\": \"35C\"\n            },\n            \"Clocks\": {\n                \"Graphics\": \"1750MHz\",\n                \"Memory\": \"2500MHz\",\n                \"Video\": \"0MHz\"\n            },\n            \"Power Readings\": {\n                \"Power Draw \": \"393.78W\",\n                \"Current Power Limit\": \"950.00W\",\n                \"Requested Power Limit\": \"950.00W\",\n                \"Default Power Limit\": \"950.00W\",\n                \"Min Power Limit\": \"600.00W\",\n                \"Max Power Limit\": \"950.00W\"\n            }\n        }\n    ]\n}",
+    "returncode": 0,
+    "stderr": ""
+  },
+  "schema": "online-telemetry-snapshots-v1",
+  "start": {
+    "evidence_level": "runtime_telemetry",
+    "host_monotonic_s": 6740335.590057858,
+    "kind": "snapshot",
+    "raw_json": "{\n    \"Timestamp\": \"Thu Jul 30 17:27:29 2026\",\n    \"Driver Version\": \"3.3.5-server\",\n    \"Attached GPUs\": \"1\",\n    \"GPU\": [\n        {\n            \"Index\": \"0\",\n            \"Temperature\": {\n                \"GPU Current Temp\": \"35C\"\n            },\n            \"Clocks\": {\n                \"Graphics\": \"1750MHz\",\n                \"Memory\": \"2500MHz\",\n                \"Video\": \"0MHz\"\n            },\n            \"Power Readings\": {\n                \"Power Draw \": \"394.51W\",\n                \"Current Power Limit\": \"950.00W\",\n                \"Requested Power Limit\": \"950.00W\",\n                \"Default Power Limit\": \"950.00W\",\n                \"Min Power Limit\": \"600.00W\",\n                \"Max Power Limit\": \"950.00W\"\n            }\n        }\n    ]\n}",
+    "returncode": 0,
+    "stderr": ""
+  },
+  "timing_scope": "outside_kernel_event_window"
+}

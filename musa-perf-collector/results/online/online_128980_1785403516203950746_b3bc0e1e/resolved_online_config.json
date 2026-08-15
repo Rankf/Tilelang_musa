@@ -1,0 +1,44 @@
+{
+  "artifact_policy": "compiler_exact_only",
+  "block_selector": {
+    "indices": [
+      0
+    ]
+  },
+  "budget": {
+    "max_instrumented_launches": 10,
+    "max_pending_readbacks": 2,
+    "max_total_duration_s": 30,
+    "max_trace_bytes": 320,
+    "max_trace_records": 40
+  },
+  "buffer_unavailable_policy": "run_baseline_and_record_skip",
+  "compile_policy": "eager_dual_variant",
+  "config_sha256": "sha256:b8c7dde20e87dc65a01d6b54f872af31c8d8f9799067ecee871ae270bd222ca8",
+  "correctness_policy": "application_owned",
+  "enabled": true,
+  "event_timing_every": 1,
+  "execution_backends": [
+    "tvm_ffi"
+  ],
+  "kernel_selector": {
+    "probability": 1.0
+  },
+  "launch_candidate_count": 10000,
+  "launch_selector": {
+    "every": 64,
+    "start": 0
+  },
+  "lineage_artifact": "/root/musa-perf-collector/results/offline/analysis_e9455c90b580aef2",
+  "lowering_semantics": "lowered_instance",
+  "output": "/root/musa-perf-collector/results/online",
+  "schema": "musa-perf-collector/online-config-v1",
+  "target": "musa",
+  "telemetry": {
+    "device": 0,
+    "enabled": true
+  },
+  "trace_op_ids": [
+    "op_bfdf2ff536ef6911"
+  ]
+}

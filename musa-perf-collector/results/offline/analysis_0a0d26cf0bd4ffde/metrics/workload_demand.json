@@ -1,0 +1,57 @@
+{
+  "deprecated_reason": "mixed per-representative-tile metrics were removed",
+  "evidence_level": "semantic_derived",
+  "per_block": {
+    "ambiguous_scope_transfers": [],
+    "arithmetic_intensity_all_logical": 5.793493635077794,
+    "arithmetic_intensity_global_logical": 63.01538461538462,
+    "evidence_level": "semantic_derived",
+    "execution_domain": "per_block",
+    "flops": 2097152,
+    "global_endpoint_transfer_bytes": 33280,
+    "global_logical_bytes": 33280,
+    "logical_read_bytes": 197120,
+    "logical_total_bytes": 361984,
+    "logical_write_bytes": 164864,
+    "scope_transfer_bytes": {
+      "global->shared.dyn": 32768,
+      "local.fragment->global": 512
+    },
+    "symbolic_multiplicity_ops": [],
+    "symbolic_terms": {
+      "flops": [],
+      "logical_read_bytes": [],
+      "logical_total_bytes": [],
+      "logical_write_bytes": []
+    },
+    "unknown_access_effect_ops": [],
+    "unknown_byte_fields": 0
+  },
+  "per_kernel_launch": {
+    "ambiguous_scope_transfers": [],
+    "arithmetic_intensity_all_logical": 5.793493635077794,
+    "arithmetic_intensity_global_logical": 63.01538461538462,
+    "evidence_level": "semantic_derived",
+    "execution_domain": "per_kernel_launch",
+    "flops": 2097152,
+    "global_endpoint_transfer_bytes": 33280,
+    "global_logical_bytes": 33280,
+    "logical_read_bytes": 197120,
+    "logical_total_bytes": 361984,
+    "logical_write_bytes": 164864,
+    "scope_transfer_bytes": {
+      "global->shared.dyn": 32768,
+      "local.fragment->global": 512
+    },
+    "symbolic_multiplicity_ops": [],
+    "symbolic_terms": {
+      "flops": [],
+      "logical_read_bytes": [],
+      "logical_total_bytes": [],
+      "logical_write_bytes": []
+    },
+    "unknown_access_effect_ops": [],
+    "unknown_byte_fields": 0
+  },
+  "status": "execution_domain_index"
+}

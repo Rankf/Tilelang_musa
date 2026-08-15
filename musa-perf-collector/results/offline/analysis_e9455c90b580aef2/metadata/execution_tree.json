@@ -1,0 +1,161 @@
+[
+  {
+    "condition_context": [],
+    "execution": {
+      "block_count_expr": "4",
+      "block_count_value": 4,
+      "calls_per_block_expr": "1",
+      "calls_per_block_value": 1,
+      "calls_per_kernel_expr": "4",
+      "calls_per_kernel_value": 4,
+      "condition_expr": "true",
+      "evidence_level": "semantic_derived",
+      "execution_domain": "per_invocation",
+      "serial_multiplicity_per_block_expr": "1",
+      "serial_multiplicity_per_block_value": 1,
+      "static_occurrences": 1
+    },
+    "loop_context": [],
+    "op_id": "op_bfdf2ff536ef6911",
+    "statement_path": "tileop/0"
+  },
+  {
+    "condition_context": [],
+    "execution": {
+      "block_count_expr": "4",
+      "block_count_value": 4,
+      "calls_per_block_expr": "1",
+      "calls_per_block_value": 1,
+      "calls_per_kernel_expr": "4",
+      "calls_per_kernel_value": 4,
+      "condition_expr": "true",
+      "evidence_level": "semantic_derived",
+      "execution_domain": "per_invocation",
+      "serial_multiplicity_per_block_expr": "1",
+      "serial_multiplicity_per_block_value": 1,
+      "static_occurrences": 1
+    },
+    "loop_context": [],
+    "op_id": "op_2135d85641054d3f",
+    "statement_path": "tileop/1"
+  },
+  {
+    "condition_context": [],
+    "execution": {
+      "block_count_expr": "4",
+      "block_count_value": 4,
+      "calls_per_block_expr": "4",
+      "calls_per_block_value": 4,
+      "calls_per_kernel_expr": "16",
+      "calls_per_kernel_value": 16,
+      "condition_expr": "true",
+      "evidence_level": "semantic_derived",
+      "execution_domain": "per_invocation",
+      "serial_multiplicity_per_block_expr": "4",
+      "serial_multiplicity_per_block_value": 4,
+      "static_occurrences": 1
+    },
+    "loop_context": [
+      {
+        "annotations": {
+          "num_stages": "2"
+        },
+        "extent": "4",
+        "extent_value": 4,
+        "kind": "0",
+        "loop_id": "lexical_loop/0",
+        "min": "0",
+        "thread_binding": null,
+        "var": "kk"
+      }
+    ],
+    "op_id": "op_49d3893142a5ee46",
+    "statement_path": "tileop/2"
+  },
+  {
+    "condition_context": [],
+    "execution": {
+      "block_count_expr": "4",
+      "block_count_value": 4,
+      "calls_per_block_expr": "4",
+      "calls_per_block_value": 4,
+      "calls_per_kernel_expr": "16",
+      "calls_per_kernel_value": 16,
+      "condition_expr": "true",
+      "evidence_level": "semantic_derived",
+      "execution_domain": "per_invocation",
+      "serial_multiplicity_per_block_expr": "4",
+      "serial_multiplicity_per_block_value": 4,
+      "static_occurrences": 1
+    },
+    "loop_context": [
+      {
+        "annotations": {
+          "num_stages": "2"
+        },
+        "extent": "4",
+        "extent_value": 4,
+        "kind": "0",
+        "loop_id": "lexical_loop/0",
+        "min": "0",
+        "thread_binding": null,
+        "var": "kk"
+      }
+    ],
+    "op_id": "op_8d07ccf888b26a45",
+    "statement_path": "tileop/3"
+  },
+  {
+    "condition_context": [],
+    "execution": {
+      "block_count_expr": "4",
+      "block_count_value": 4,
+      "calls_per_block_expr": "4",
+      "calls_per_block_value": 4,
+      "calls_per_kernel_expr": "16",
+      "calls_per_kernel_value": 16,
+      "condition_expr": "true",
+      "evidence_level": "semantic_derived",
+      "execution_domain": "per_invocation",
+      "serial_multiplicity_per_block_expr": "4",
+      "serial_multiplicity_per_block_value": 4,
+      "static_occurrences": 1
+    },
+    "loop_context": [
+      {
+        "annotations": {
+          "num_stages": "2"
+        },
+        "extent": "4",
+        "extent_value": 4,
+        "kind": "0",
+        "loop_id": "lexical_loop/0",
+        "min": "0",
+        "thread_binding": null,
+        "var": "kk"
+      }
+    ],
+    "op_id": "op_6087b7a3080c20aa",
+    "statement_path": "tileop/4"
+  },
+  {
+    "condition_context": [],
+    "execution": {
+      "block_count_expr": "4",
+      "block_count_value": 4,
+      "calls_per_block_expr": "1",
+      "calls_per_block_value": 1,
+      "calls_per_kernel_expr": "4",
+      "calls_per_kernel_value": 4,
+      "condition_expr": "true",
+      "evidence_level": "semantic_derived",
+      "execution_domain": "per_invocation",
+      "serial_multiplicity_per_block_expr": "1",
+      "serial_multiplicity_per_block_value": 1,
+      "static_occurrences": 1
+    },
+    "loop_context": [],
+    "op_id": "op_24b30d91b261d030",
+    "statement_path": "tileop/5"
+  }
+]
