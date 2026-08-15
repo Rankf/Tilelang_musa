@@ -254,9 +254,10 @@
 
 文件：`/root/s5000-calibration/analyze_op.py`
 
-支持三个算子：
+GEMM只接受5.1编译期metadata；Relu/Add保留直接参数入口：
 ```bash
-python3 analyze_op.py gemm --M 4096 --N 4096 --K 4096 -o report.json
+python3 analyze_op.py --tile-metadata \
+  docs/tilesight_5_1_gemm_4096_output.json -o report.json
 python3 analyze_op.py relu --N 16777216 -o report.json
 python3 analyze_op.py add --N 16777216 -o report.json
 ```

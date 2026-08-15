@@ -11,7 +11,8 @@ def L2_hit_rate_flow_sim_reuse_distance(M, N, K, tb_m, tb_n, tb_k,
                                         L2_Cap, SM_Count, mem_levels,
                                         row_panel,
                                         column_panel=None,
-                                        raster_axis="legacy"):
+                                        raster_axis="legacy",
+                                        return_detail=False):
     """Accept an explicit `column_panel` (M-direction
     sub-block height) and a `raster_axis` selecting the scan pattern.
 
@@ -96,7 +97,33 @@ def L2_hit_rate_flow_sim_reuse_distance(M, N, K, tb_m, tb_n, tb_k,
 
     hit_rate = 1 - DDR_IO / L2_IO
 
-    return hit_rate
+    if not return_detail:
+        return hit_rate
+
+    # Expose the two probabilities already accumulated above.  This branch is
+    # deliberately observational: it does not change scheduling, reuse
+    # distance, SDCM probabilities, or the aggregate hit-rate formula.
+    spatial_requests = float(gridM * gridN)
+    a_hit_rate = hit_prob_mk / spatial_requests if spatial_requests else 0.0
+    b_hit_rate = hit_prob_nk / spatial_requests if spatial_requests else 0.0
+    return {
+        "l2_hit_rate": float(hit_rate),
+        "ddr_miss_rate": float(1 - hit_rate),
+        "per_tensor": {
+            "in1": {
+                "predicted_hit_requests": float(hit_prob_mk),
+                "total_requests": spatial_requests,
+                "l2_hit_rate": float(a_hit_rate),
+                "ddr_miss_rate": float(1 - a_hit_rate),
+            },
+            "in2": {
+                "predicted_hit_requests": float(hit_prob_nk),
+                "total_requests": spatial_requests,
+                "l2_hit_rate": float(b_hit_rate),
+                "ddr_miss_rate": float(1 - b_hit_rate),
+            },
+        },
+    }
 
 # # 使用实际参数调用函数81024
 # M, N, K, tb_m, tb_n, tb_k, L2_Cap, SM_Count, BYTE_per_num, stage_num, block_per_sm=8192,8192,8192,128,128,32,8102431457280,108,2,3,1

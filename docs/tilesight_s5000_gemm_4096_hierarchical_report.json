@@ -1,0 +1,514 @@
+{
+  "schema": "tilesight/hierarchical-report-v1",
+  "report_scope": "kernel",
+  "value_kind": "model_estimate",
+  "source": "existing_analyze_op_fields",
+  "calculation_change": "none; report-layer transformation only",
+  "kernel_summary": {
+    "op": "gemm",
+    "shape": [
+      4096,
+      4096,
+      4096
+    ],
+    "arch": "S5000",
+    "latency_us": 995.9,
+    "latency_with_memory_hierarchy_us": 995.9,
+    "critical_path": {
+      "scope": "steady_state_pipeline_iteration",
+      "bottleneck": "compute",
+      "dominant_memory_level": "l2",
+      "cost_us_per_iter": 0.8205,
+      "reason": "steady-state compute cost 0.8205 us/iter is not less than memory cost 0.8020 us/iter",
+      "pipeline_id": "pipeline_55cb7cd195173372",
+      "tile_ops": [
+        {
+          "op_id": "op_1543d5dc0c6f297c",
+          "category": "gemm",
+          "role": "compute",
+          "modeled_cost_us_per_iter": 0.8205,
+          "value_kind": "model_estimate"
+        }
+      ]
+    }
+  },
+  "hotspots": {
+    "resource_by_utilization": [
+      {
+        "rank": 1,
+        "resource": "compute",
+        "utilization_pct": 74.9,
+        "ranking_metric": "modeled_physical_peak_utilization_pct",
+        "value_kind": "model_estimate"
+      },
+      {
+        "rank": 2,
+        "resource": "shared_memory",
+        "utilization_pct": 56.2,
+        "ranking_metric": "modeled_physical_peak_utilization_pct",
+        "value_kind": "model_estimate"
+      },
+      {
+        "rank": 3,
+        "resource": "l2",
+        "utilization_pct": 30.6,
+        "ranking_metric": "modeled_physical_peak_utilization_pct",
+        "value_kind": "model_estimate"
+      },
+      {
+        "rank": 4,
+        "resource": "global_memory_ddr",
+        "utilization_pct": 9.7,
+        "ranking_metric": "modeled_physical_peak_utilization_pct",
+        "value_kind": "model_estimate"
+      }
+    ],
+    "tile_op_category_by_cost": [
+      {
+        "rank": 1,
+        "tile_op_category": "gemm",
+        "cost_us_per_pipeline_iteration": 0.8205,
+        "ranking_metric": "modeled_cost_us_per_pipeline_iteration",
+        "value_kind": "model_estimate"
+      },
+      {
+        "rank": 2,
+        "tile_op_category": "copy",
+        "cost_us_per_pipeline_iteration": 0.802,
+        "ranking_metric": "modeled_cost_us_per_pipeline_iteration",
+        "value_kind": "model_estimate"
+      }
+    ],
+    "tile_transfer_by_ddr_bytes": [
+      {
+        "rank": 1,
+        "op_id": "op_a4e41ee4df136690",
+        "pipeline_id": "pipeline_55cb7cd195173372",
+        "tile_op_category": "copy",
+        "operand": "A",
+        "path": "global->l2->shared",
+        "tile_shape": [
+          128,
+          64
+        ],
+        "logical_request_bytes": 1073741824,
+        "predicted_ddr_read_bytes": 118397787,
+        "l2_hit_rate_pct": 88.973347,
+        "ranking_metric": "predicted_ddr_read_bytes",
+        "value_kind": "model_estimate"
+      },
+      {
+        "rank": 2,
+        "op_id": "op_aa8718a84345e162",
+        "pipeline_id": "pipeline_55cb7cd195173372",
+        "tile_op_category": "copy",
+        "operand": "B",
+        "path": "global->l2->shared",
+        "tile_shape": [
+          64,
+          128
+        ],
+        "logical_request_bytes": 1073741824,
+        "predicted_ddr_read_bytes": 35717783,
+        "l2_hit_rate_pct": 96.673522,
+        "ranking_metric": "predicted_ddr_read_bytes",
+        "value_kind": "model_estimate"
+      }
+    ],
+    "pipeline_phase_by_duration": [
+      {
+        "rank": 1,
+        "phase": "steady",
+        "duration_us": 52.48,
+        "ranking_metric": "modeled_per_tile_phase_duration_us",
+        "value_kind": "model_estimate"
+      },
+      {
+        "rank": 2,
+        "phase": "epilogue",
+        "duration_us": 11.35,
+        "ranking_metric": "modeled_per_tile_phase_duration_us",
+        "value_kind": "model_estimate"
+      },
+      {
+        "rank": 3,
+        "phase": "prologue",
+        "duration_us": 5.61,
+        "ranking_metric": "modeled_per_tile_phase_duration_us",
+        "value_kind": "model_estimate"
+      }
+    ]
+  },
+  "timeline": {
+    "scope": "per_tile_pipeline_model",
+    "events": [
+      {
+        "sequence": 0,
+        "event": "pipeline_prologue",
+        "start_us": 0.0,
+        "duration_us": 5.61,
+        "end_us": 5.61,
+        "scope": "per_tile_pipeline_model",
+        "value_kind": "model_estimate"
+      },
+      {
+        "sequence": 1,
+        "event": "pipeline_steady",
+        "start_us": 5.61,
+        "duration_us": 52.48,
+        "end_us": 58.09,
+        "scope": "per_tile_pipeline_model",
+        "value_kind": "model_estimate"
+      },
+      {
+        "sequence": 2,
+        "event": "pipeline_epilogue",
+        "start_us": 58.09,
+        "duration_us": 11.35,
+        "end_us": 69.44,
+        "scope": "per_tile_pipeline_model",
+        "value_kind": "model_estimate"
+      }
+    ],
+    "interpretation": "model timeline; not a runtime trace. GEMM phase offsets describe one Tile pipeline and exclude cross-SM wave scheduling"
+  },
+  "hardware_hierarchy": {
+    "path": [
+      "global_memory_ddr",
+      "l2",
+      "ordinary_l1_or_bypass",
+      "shared_memory",
+      "register_tensor_compute"
+    ],
+    "levels": [
+      {
+        "level": "ordinary_l1",
+        "predicted_hit_rate_pct": "not_applicable",
+        "read_bytes": 0,
+        "write_bytes": 33554432,
+        "total_traffic_bytes": null,
+        "service_cost_us": 6.4125,
+        "value_kind": "model_estimate"
+      },
+      {
+        "level": "l2",
+        "predicted_hit_rate_pct": 92.823,
+        "read_bytes": 2147483648,
+        "write_bytes": 33554432,
+        "total_traffic_bytes": 2181038080,
+        "service_cost_us": 889.6909,
+        "value_kind": "model_estimate"
+      },
+      {
+        "level": "global_memory_ddr",
+        "predicted_hit_rate_pct": "not_applicable",
+        "read_bytes": 154115570,
+        "write_bytes": 33554432,
+        "total_traffic_bytes": 187670002,
+        "service_cost_us": 133.897,
+        "value_kind": "model_estimate"
+      },
+      {
+        "level": "shared_memory",
+        "predicted_hit_rate_pct": "not_applicable",
+        "read_bytes": 4294967296,
+        "write_bytes": 2147483648,
+        "total_traffic_bytes": 6442450944,
+        "service_cost_us": 588.6742,
+        "value_kind": "model_estimate"
+      }
+    ],
+    "critical_memory_path": {
+      "bottleneck": "l2",
+      "service_cost_us": 889.6909,
+      "overlap_rule": "max(L1 Cache, L2, DDR, Shared service cost)"
+    }
+  },
+  "cache_behavior": {
+    "status": "available",
+    "scope": "gemm_tile_operand",
+    "value_kind": "model_estimate",
+    "calculation_change": "none; formats existing cache-model accumulators",
+    "aggregate": {
+      "l2_hit_rate_pct": 92.823435,
+      "weighted_operand_l2_hit_rate_pct": 92.823435,
+      "l2_request_bytes": 2147483648,
+      "predicted_l2_hit_bytes": 1993368078,
+      "predicted_l2_miss_bytes": 154115570,
+      "predicted_ddr_read_bytes": 154115570,
+      "global_to_shared_bytes": 2147483648
+    },
+    "operands": [
+      {
+        "operand": "A",
+        "model_tensor": "in1",
+        "operation": "copy",
+        "source_level": "global",
+        "destination_level": "shared",
+        "tile_shape": [
+          128,
+          64
+        ],
+        "tile_request_bytes_per_k_iter": 16384,
+        "k_iterations": 64,
+        "logical_request_bytes": 1073741824,
+        "ordinary_l1": {
+          "status": "bypass",
+          "predicted_hit_rate_pct": "not_applicable"
+        },
+        "l2": {
+          "predicted_hit_rate_pct": 88.973347,
+          "request_bytes": 1073741824,
+          "predicted_hit_bytes": 955344037,
+          "predicted_miss_bytes": 118397787
+        },
+        "ddr": {
+          "predicted_read_bytes": 118397787
+        },
+        "shared_memory": {
+          "write_bytes": 1073741824,
+          "hit_rate": "not_applicable"
+        },
+        "raw_cache_observation": {
+          "predicted_hit_requests": 911.0870711648649,
+          "total_requests": 1024.0,
+          "l2_hit_rate": 0.8897334679344384,
+          "ddr_miss_rate": 0.11026653206556158
+        },
+        "op_id": "op_a4e41ee4df136690",
+        "pipeline_id": "pipeline_55cb7cd195173372"
+      },
+      {
+        "operand": "B",
+        "model_tensor": "in2",
+        "operation": "copy",
+        "source_level": "global",
+        "destination_level": "shared",
+        "tile_shape": [
+          64,
+          128
+        ],
+        "tile_request_bytes_per_k_iter": 16384,
+        "k_iterations": 64,
+        "logical_request_bytes": 1073741824,
+        "ordinary_l1": {
+          "status": "bypass",
+          "predicted_hit_rate_pct": "not_applicable"
+        },
+        "l2": {
+          "predicted_hit_rate_pct": 96.673522,
+          "request_bytes": 1073741824,
+          "predicted_hit_bytes": 1038024041,
+          "predicted_miss_bytes": 35717783
+        },
+        "ddr": {
+          "predicted_read_bytes": 35717783
+        },
+        "shared_memory": {
+          "write_bytes": 1073741824,
+          "hit_rate": "not_applicable"
+        },
+        "raw_cache_observation": {
+          "predicted_hit_requests": 989.9368675331079,
+          "total_requests": 1024.0,
+          "l2_hit_rate": 0.9667352222003007,
+          "ddr_miss_rate": 0.033264777799699274
+        },
+        "op_id": "op_aa8718a84345e162",
+        "pipeline_id": "pipeline_55cb7cd195173372"
+      }
+    ]
+  },
+  "scale_units": {
+    "kernel": {
+      "modeled_latency_us": 995.9,
+      "waves": 4.3,
+      "grid_shape_tiles": [
+        32,
+        32
+      ],
+      "grid_tile_count": 1024,
+      "inner_iterations_per_tile": 64
+    },
+    "sm": {
+      "count": 60,
+      "resident_tiles_per_sm": 4
+    },
+    "thread_block": {
+      "tile_shape": [
+        128,
+        128,
+        64
+      ],
+      "warps_per_block": 4,
+      "pipeline_stages": 2
+    },
+    "warp": {
+      "warp_tile": [
+        64,
+        64,
+        64
+      ]
+    }
+  },
+  "anomaly_summary": {
+    "status": "available",
+    "overall_status": "warning",
+    "analysis_scope": "tile_pipeline_and_hardware_model",
+    "input_dependency": "operator shape/tile/pipeline and S5000 profile only",
+    "summary": {
+      "anomaly_count": 0,
+      "warning_count": 2,
+      "normal_count": 5
+    },
+    "findings": [
+      {
+        "rule_id": "excess_l1_downstream_read",
+        "path": "ordinary_global->l1->l2",
+        "status": "not_applicable",
+        "severity": "info",
+        "predicted": null,
+        "model_reference": null,
+        "threshold": null,
+        "reason": "no ordinary L1-eligible read traffic",
+        "value_kind": "model_estimate"
+      },
+      {
+        "rule_id": "cross_level_read_conservation",
+        "path": "l1/tma->l2",
+        "status": "normal",
+        "severity": "info",
+        "predicted": {
+          "l2_input_bytes": 2147483648,
+          "residual_bytes": 0
+        },
+        "model_reference": {
+          "l1_downstream_plus_bypass_bytes": 2147483648
+        },
+        "threshold": {
+          "absolute_or_relative_tolerance": "max(64 B, 5%)"
+        },
+        "reason": "cross-level read traffic is conserved by the model",
+        "value_kind": "model_estimate"
+      },
+      {
+        "rule_id": "excess_ddr_read",
+        "path": "l2->ddr",
+        "status": "normal",
+        "severity": "info",
+        "predicted": {
+          "ddr_read_over_l2_input": 0.071766
+        },
+        "model_reference": {
+          "maximum_ratio": 1.0
+        },
+        "threshold": {
+          "anomaly_if_ratio_gt": 1.05
+        },
+        "reason": "DDR read does not exceed predicted L2 input",
+        "value_kind": "model_estimate"
+      },
+      {
+        "rule_id": "logical_transfer_amplification",
+        "path": "global/tma->cache/shared",
+        "status": "warning",
+        "severity": "warning",
+        "predicted": {
+          "logical_source_read_bytes": 2147483648,
+          "minimum_useful_read_bytes": 67108864,
+          "amplification_ratio": 32.0
+        },
+        "model_reference": {
+          "ideal_amplification_ratio": 1.0
+        },
+        "threshold": {
+          "warning_if_gt": 4.0,
+          "anomaly_if_gt": 64.0
+        },
+        "reason": "Tile schedule creates high repeated cross-level read traffic",
+        "value_kind": "model_estimate"
+      },
+      {
+        "rule_id": "transfer_service_pressure",
+        "path": "l1_cache",
+        "status": "normal",
+        "severity": "info",
+        "predicted": {
+          "service_cost_us": 6.4125,
+          "pressure_pct": 0.644
+        },
+        "model_reference": {
+          "report_latency_us": 995.9
+        },
+        "threshold": {
+          "warning_pct": 85.0,
+          "anomaly_pct": 105.0
+        },
+        "reason": "transfer service pressure is below the warning threshold",
+        "value_kind": "model_estimate"
+      },
+      {
+        "rule_id": "transfer_service_pressure",
+        "path": "l2",
+        "status": "warning",
+        "severity": "warning",
+        "predicted": {
+          "service_cost_us": 889.6909,
+          "pressure_pct": 89.335
+        },
+        "model_reference": {
+          "report_latency_us": 995.9
+        },
+        "threshold": {
+          "warning_pct": 85.0,
+          "anomaly_pct": 105.0
+        },
+        "reason": "transfer path is close to the calibrated sustained-service limit",
+        "value_kind": "model_estimate"
+      },
+      {
+        "rule_id": "transfer_service_pressure",
+        "path": "ddr",
+        "status": "normal",
+        "severity": "info",
+        "predicted": {
+          "service_cost_us": 133.897,
+          "pressure_pct": 13.445
+        },
+        "model_reference": {
+          "report_latency_us": 995.9
+        },
+        "threshold": {
+          "warning_pct": 85.0,
+          "anomaly_pct": 105.0
+        },
+        "reason": "transfer service pressure is below the warning threshold",
+        "value_kind": "model_estimate"
+      },
+      {
+        "rule_id": "transfer_service_pressure",
+        "path": "shared_memory",
+        "status": "normal",
+        "severity": "info",
+        "predicted": {
+          "service_cost_us": 588.6742,
+          "pressure_pct": 59.11
+        },
+        "model_reference": {
+          "report_latency_us": 995.9
+        },
+        "threshold": {
+          "warning_pct": 85.0,
+          "anomaly_pct": 105.0
+        },
+        "reason": "transfer service pressure is below the warning threshold",
+        "value_kind": "model_estimate"
+      }
+    ]
+  },
+  "limitations": [
+    "No runtime trace or hardware counter is consumed by this report.",
+    "Tile op IDs require the 5.1 metadata index to be supplied in a future joined report.",
+    "Per-SM measured load distribution is not inferred from aggregate model data."
+  ]
+}

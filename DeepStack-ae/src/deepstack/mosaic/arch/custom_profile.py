@@ -313,6 +313,15 @@ class StackedGpuConfig:
     support_utcmma: bool = False
     use_tensor_core_resource_model: bool = False
     apply_dram_wave_quantization: bool = False
+    # Ordinary Global-load L1 cache.  This is deliberately separate from
+    # Shared Memory: ``l1_max_utilization`` above is retained for the existing
+    # Shared/SMEM resource model and must not be reused as an L1-cache value.
+    l1_cache_capacity_bytes_per_sm: int | None = None
+    l1_cache_line_bytes: int | None = None
+    l1_cache_sector_bytes: int | None = None
+    l1_cache_peak_bandwidth_bytes_per_s: float | None = None
+    l1_cache_max_utilization: float | None = None
+    tma_bypasses_ordinary_l1: bool = False
 
     def __post_init__(self) -> None:
         if not isinstance(self.name, str) or not self.name.strip():
@@ -374,6 +383,21 @@ class StackedGpuConfig:
             "compute_max_utilization",
         ):
             _fraction(getattr(self, field), field)
+        for field in (
+            "l1_cache_capacity_bytes_per_sm",
+            "l1_cache_line_bytes",
+            "l1_cache_sector_bytes",
+        ):
+            value = getattr(self, field)
+            if value is not None:
+                _positive_int(value, field)
+        if self.l1_cache_peak_bandwidth_bytes_per_s is not None:
+            _finite_number(
+                self.l1_cache_peak_bandwidth_bytes_per_s,
+                "l1_cache_peak_bandwidth_bytes_per_s",
+            )
+        if self.l1_cache_max_utilization is not None:
+            _fraction(self.l1_cache_max_utilization, "l1_cache_max_utilization")
         if not isinstance(self.support_wgmma, bool):
             raise TypeError("support_wgmma must be a bool")
         if not isinstance(self.support_utcmma, bool):
@@ -382,6 +406,8 @@ class StackedGpuConfig:
             raise TypeError("use_tensor_core_resource_model must be a bool")
         if not isinstance(self.apply_dram_wave_quantization, bool):
             raise TypeError("apply_dram_wave_quantization must be a bool")
+        if not isinstance(self.tma_bypasses_ordinary_l1, bool):
+            raise TypeError("tma_bypasses_ordinary_l1 must be a bool")
 
 
 class ConfigurableStackedGpu(Arch):
@@ -426,6 +452,12 @@ class ConfigurableStackedGpu(Arch):
         self.apply_dram_wave_quantization = (
             config.apply_dram_wave_quantization
         )
+        self.l1_cache_capacity = config.l1_cache_capacity_bytes_per_sm
+        self.l1_cache_line_bytes = config.l1_cache_line_bytes
+        self.l1_cache_sector_bytes = config.l1_cache_sector_bytes
+        self.l1_cache_bandwidth = config.l1_cache_peak_bandwidth_bytes_per_s
+        self.l1_cache_max_util = config.l1_cache_max_utilization
+        self.tma_bypasses_ordinary_l1 = config.tma_bypasses_ordinary_l1
         self.chip_energy_config = config.chip_energy_config
         self.ddr_transaction_size = config.dram.transaction_bytes
         self.ddr_stack = config.dram.channels_per_connected_layer

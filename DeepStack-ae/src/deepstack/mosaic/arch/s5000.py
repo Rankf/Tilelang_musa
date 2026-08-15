@@ -32,10 +32,15 @@ P8 measured parameters (2026-08-07):
 - warp_schedulers_per_sm (same as sm_sub_partitions on S5000)
 - sfu_cores_per_sm (ILP-saturated expf: 645 Gops/s, confirmed ~8 cores/SM)
 - l1_smem_throughput_per_cycle (shared memory sequential read: 11.0 TB/s, 122 bytes/cycle/SM, confirmed ~128)
+- ordinary Global-load L1 effective capacity (32 KiB/MP), line candidate
+  (64 B), sector candidate (32 B), and MCU physical peak (7168 GB/s)
+- TMA Global-to-Shared payload bypasses the MCU ordinary-L1 counter path
 - ddr_max_util (fill microbench: 1401/1600 = 87.6%)
 - compute_max_util (Tensor Core GEMM: 153.4/184 = 83.2%; single value used for all compute)
 - int32_cores_per_sm (inconclusive: MAD 4.35 TOP/s, ADD 5.62 TOP/s; kept at NVIDIA-like 64)
-- l2_bandwidth / l2_max_util / l1_max_util (P8 read-only stride sweep)
+- l2 peak bandwidth (MCU l2pu cache-bandwidth metric, 7168 GB/s)
+- l2_max_util (P8 sustained read bandwidth, ~2450 GB/s / 7168 GB/s)
+- l1_max_util (P8 shared-memory throughput)
 """
 
 from .custom_profile import (
@@ -73,7 +78,9 @@ def make_s5000_config() -> StackedGpuConfig:
         transaction_bytes=128,                       # cache line size
         fully_connected_efficiency=1.0,              # single layer, always connected
         uncached_max_utilization=0.876,              # P8: fill 1401/1600
-        l2_bandwidth_multiplier=1.53,                # P8: measured L2/DDR ratio
+        # MCU reports a 7168 GB/s physical L2 peak.  Sustained bandwidth is
+        # represented separately by l2_max_utilization below.
+        l2_bandwidth_multiplier=4.48,                # 7168/1600 GB/s
         bank_timing=None,
     )
 
@@ -117,7 +124,7 @@ def make_s5000_config() -> StackedGpuConfig:
 
         # Utilisation ceilings (all P8 measured)
         ddr_max_utilization=0.876,          # P8: fill 1401/1600
-        l2_max_utilization=0.95,            # P8: L2 read ~2450 GB/s
+        l2_max_utilization=0.342,           # P8: ~2450/7168 GB/s sustained
         l1_max_utilization=0.95,            # P8: smem 11.01/11.52 = 95.6%
         compute_max_utilization=0.832,      # Tensor Core GEMM 153.4/184 (single value)
 
@@ -126,6 +133,16 @@ def make_s5000_config() -> StackedGpuConfig:
         support_utcmma=False,               # not applicable to MUSA
         use_tensor_core_resource_model=False,
         apply_dram_wave_quantization=False,
+
+        # Ordinary cached Global-load L1 (P9 measured).  Keep separate from
+        # the 192 KiB Shared Memory and its 11.52 TB/s physical bandwidth.
+        l1_cache_capacity_bytes_per_sm=32 * 1024,
+        l1_cache_line_bytes=64,
+        l1_cache_sector_bytes=32,
+        l1_cache_peak_bandwidth_bytes_per_s=7168e9,
+        # P9 ILP4 probe: 5.23 TB/s / 7.168 TB/s physical peak.
+        l1_cache_max_utilization=0.73,
+        tma_bypasses_ordinary_l1=True,
     )
 
 

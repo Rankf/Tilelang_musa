@@ -1,21 +1,44 @@
-results/
-logs/
-*.bak
+# ============================================================
+# S5000-Calibration Project — .gitignore
+# ============================================================
+# 默认上传源码/配置/文档；已审核的校准证据快照可显式强制加入
+
+# ---- Python 缓存 ----
 __pycache__/
 *.pyc
-.venv-tilelang-musa/
-check_occ.py
-check_occ2.py
-debug_l2_util.py
-export_kernel.py
-get_kernel_src.py
-.git/
-
-# Build and packaging artifacts.
-build/
-dist/
+*.pyo
+*.egg-info/
 .cache/
 .pytest_cache/
-CMakeFiles/
-*.egg-info/
+
+# ---- 虚拟环境 ----
+.venv-tilelang-musa/
+.venv*/
+venv/
+
+# ---- 编译产物 ----
+*.so
 *.o
+*.a
+*.mubin
+build/
+dist/
+CMakeFiles/
+
+# ---- 结果数据（中间产物） ----
+results/
+logs/
+
+# ---- 核心转储 ----
+core_*.mudmp
+*.mcu-rep
+*.msys-rep
+
+# ---- 本地仓库元数据/镜像（项目源码快照本身仍由顶层仓库跟踪） ----
+.git/
+DeepStack-git/
+
+# ---- 系统文件 ----
+.DS_Store
+Thumbs.db
+*.bak

@@ -94,3 +94,6 @@ class PipelineResult:
 
     # Pipeline 各阶段时间（用于调试/可视化）
     pipeline_detail: Optional[PipelineDetail] = None
+
+    # 缓存模型已有的分 operand 明细；不参与延迟或利用率计算。
+    cache_detail: Optional[Dict] = None

@@ -1,0 +1,554 @@
+{
+  "schema_version": "tilesight/tile-metadata-v1",
+  "architecture": "S5000",
+  "analysis_phase": "pre_lowering",
+  "kernels": [
+    {
+      "kernel_id": "kernel_a0316b506d1f69cc",
+      "name": "main",
+      "analysis_phase": "pre_lowering",
+      "attrs": {
+        "global_symbol": "main"
+      },
+      "launch": {
+        "grid_axes": {
+          "blockIdx.y": 32,
+          "blockIdx.x": 32
+        },
+        "thread_axes": {
+          "threadIdx.z": 1,
+          "threadIdx.y": 1,
+          "threadIdx.x": 128
+        },
+        "grid_size": 1024,
+        "threads_per_block": 128,
+        "evidence": "compiler_observed"
+      },
+      "buffers": [
+        {
+          "buffer_id": "buffer_349ec28aebd51e0d",
+          "name": "A",
+          "origin": "parameter",
+          "shape": [
+            "4096",
+            "4096"
+          ],
+          "dtype": "float16",
+          "scope": "global",
+          "elements": 16777216,
+          "allocation_bytes": 33554432,
+          "evidence": "compiler_observed"
+        },
+        {
+          "buffer_id": "buffer_13ba03bc493ca877",
+          "name": "B",
+          "origin": "parameter",
+          "shape": [
+            "4096",
+            "4096"
+          ],
+          "dtype": "float16",
+          "scope": "global",
+          "elements": 16777216,
+          "allocation_bytes": 33554432,
+          "evidence": "compiler_observed"
+        },
+        {
+          "buffer_id": "buffer_4d2665c0967fd03e",
+          "name": "C",
+          "origin": "parameter",
+          "shape": [
+            "4096",
+            "4096"
+          ],
+          "dtype": "float16",
+          "scope": "global",
+          "elements": 16777216,
+          "allocation_bytes": 33554432,
+          "evidence": "compiler_observed"
+        },
+        {
+          "buffer_id": "buffer_5b012e7b98cb8650",
+          "name": "a_shared",
+          "origin": "allocation",
+          "shape": [
+            "128",
+            "64"
+          ],
+          "dtype": "float16",
+          "scope": "shared",
+          "elements": 8192,
+          "allocation_bytes": 16384,
+          "evidence": "compiler_observed"
+        },
+        {
+          "buffer_id": "buffer_1968f74428fe4022",
+          "name": "b_shared",
+          "origin": "allocation",
+          "shape": [
+            "64",
+            "128"
+          ],
+          "dtype": "float16",
+          "scope": "shared",
+          "elements": 8192,
+          "allocation_bytes": 16384,
+          "evidence": "compiler_observed"
+        },
+        {
+          "buffer_id": "buffer_01e8c4b2df177e5d",
+          "name": "c_local",
+          "origin": "allocation",
+          "shape": [
+            "128",
+            "128"
+          ],
+          "dtype": "float32",
+          "scope": "local",
+          "elements": 16384,
+          "allocation_bytes": 65536,
+          "evidence": "compiler_observed"
+        }
+      ],
+      "loops": [
+        {
+          "loop_id": "loop_3492ce065a216a19",
+          "ordinal": 0,
+          "var": "k",
+          "min": "0",
+          "extent": "64",
+          "extent_value": 64,
+          "kind": "0",
+          "thread_binding": null,
+          "annotations": {
+            "num_stages": "2"
+          },
+          "evidence": "compiler_observed"
+        }
+      ],
+      "operations": [
+        {
+          "op_id": "op_00482a5309f05771",
+          "ordinal": 0,
+          "category": "fill",
+          "kind": "fill",
+          "source_kind": "tileop_call",
+          "reads": [],
+          "writes": [
+            {
+              "buffer": "c_local",
+              "scope": "local",
+              "dtype": "float32",
+              "indices": [
+                "0",
+                "0"
+              ],
+              "extents": [
+                "128",
+                "128"
+              ],
+              "access_type": 2,
+              "logical_bytes": 65536
+            }
+          ],
+          "hardware_levels": {
+            "read": [],
+            "write": [
+              "local"
+            ]
+          },
+          "dependency_ids": [],
+          "loop_ids": [],
+          "tile_shape": null,
+          "annotations": {},
+          "raw_ir": "T.fill(T.region(c_local[0, 0], 2, 128, 128), 0)",
+          "evidence": "compiler_observed",
+          "support_level": "structured"
+        },
+        {
+          "op_id": "op_a4e41ee4df136690",
+          "ordinal": 1,
+          "category": "copy",
+          "kind": "copy",
+          "source_kind": "tileop_call",
+          "reads": [
+            {
+              "buffer": "A",
+              "scope": "global",
+              "dtype": "float16",
+              "indices": [
+                "by * 128",
+                "k * 64"
+              ],
+              "extents": [
+                "128",
+                "64"
+              ],
+              "access_type": 1,
+              "logical_bytes": 16384
+            }
+          ],
+          "writes": [
+            {
+              "buffer": "a_shared",
+              "scope": "shared",
+              "dtype": "float16",
+              "indices": [
+                "0",
+                "0"
+              ],
+              "extents": [
+                "128",
+                "64"
+              ],
+              "access_type": 2,
+              "logical_bytes": 16384
+            }
+          ],
+          "hardware_levels": {
+            "read": [
+              "global"
+            ],
+            "write": [
+              "shared"
+            ]
+          },
+          "dependency_ids": [],
+          "loop_ids": [
+            "loop_3492ce065a216a19"
+          ],
+          "tile_shape": null,
+          "annotations": {
+            "eviction_policy": "0",
+            "inner_cache_policy": "2",
+            "outer_cache_policy": "2"
+          },
+          "raw_ir": "T.copy(T.region(A[by * 128, k * 64], 1, 128, 64), T.region(a_shared[0, 0], 2, 128, 64), eviction_policy=0, inner_cache_policy=2, outer_cache_policy=2)",
+          "evidence": "compiler_observed",
+          "support_level": "structured"
+        },
+        {
+          "op_id": "op_aa8718a84345e162",
+          "ordinal": 2,
+          "category": "copy",
+          "kind": "copy",
+          "source_kind": "tileop_call",
+          "reads": [
+            {
+              "buffer": "B",
+              "scope": "global",
+              "dtype": "float16",
+              "indices": [
+                "k * 64",
+                "bx * 128"
+              ],
+              "extents": [
+                "64",
+                "128"
+              ],
+              "access_type": 1,
+              "logical_bytes": 16384
+            }
+          ],
+          "writes": [
+            {
+              "buffer": "b_shared",
+              "scope": "shared",
+              "dtype": "float16",
+              "indices": [
+                "0",
+                "0"
+              ],
+              "extents": [
+                "64",
+                "128"
+              ],
+              "access_type": 2,
+              "logical_bytes": 16384
+            }
+          ],
+          "hardware_levels": {
+            "read": [
+              "global"
+            ],
+            "write": [
+              "shared"
+            ]
+          },
+          "dependency_ids": [],
+          "loop_ids": [
+            "loop_3492ce065a216a19"
+          ],
+          "tile_shape": null,
+          "annotations": {
+            "eviction_policy": "0",
+            "inner_cache_policy": "2",
+            "outer_cache_policy": "2"
+          },
+          "raw_ir": "T.copy(T.region(B[k * 64, bx * 128], 1, 64, 128), T.region(b_shared[0, 0], 2, 64, 128), eviction_policy=0, inner_cache_policy=2, outer_cache_policy=2)",
+          "evidence": "compiler_observed",
+          "support_level": "structured"
+        },
+        {
+          "op_id": "op_1543d5dc0c6f297c",
+          "ordinal": 3,
+          "category": "gemm",
+          "kind": "gemm",
+          "source_kind": "tileop_call",
+          "reads": [
+            {
+              "buffer": "a_shared",
+              "scope": "shared",
+              "dtype": "float16",
+              "indices": [
+                "0",
+                "0"
+              ],
+              "extents": [
+                "128",
+                "64"
+              ],
+              "access_type": 1,
+              "logical_bytes": 16384
+            },
+            {
+              "buffer": "b_shared",
+              "scope": "shared",
+              "dtype": "float16",
+              "indices": [
+                "0",
+                "0"
+              ],
+              "extents": [
+                "64",
+                "128"
+              ],
+              "access_type": 1,
+              "logical_bytes": 16384
+            },
+            {
+              "buffer": "c_local",
+              "scope": "local",
+              "dtype": "float32",
+              "indices": [
+                "0",
+                "0"
+              ],
+              "extents": [
+                "128",
+                "128"
+              ],
+              "access_type": 3,
+              "logical_bytes": 65536
+            }
+          ],
+          "writes": [
+            {
+              "buffer": "c_local",
+              "scope": "local",
+              "dtype": "float32",
+              "indices": [
+                "0",
+                "0"
+              ],
+              "extents": [
+                "128",
+                "128"
+              ],
+              "access_type": 3,
+              "logical_bytes": 65536
+            }
+          ],
+          "hardware_levels": {
+            "read": [
+              "local",
+              "shared"
+            ],
+            "write": [
+              "local"
+            ]
+          },
+          "dependency_ids": [
+            "op_a4e41ee4df136690",
+            "op_aa8718a84345e162",
+            "op_00482a5309f05771"
+          ],
+          "loop_ids": [
+            "loop_3492ce065a216a19"
+          ],
+          "tile_shape": {
+            "m": 128,
+            "n": 128,
+            "k": 64
+          },
+          "annotations": {},
+          "raw_ir": "T.gemm(T.region(a_shared[0, 0], 1, 128, 64), T.region(b_shared[0, 0], 1, 64, 128), T.region(c_local[0, 0], 3, 128, 128), T.bool(False), T.bool(False), 128, 128, 64, 0, T.bool(False), 64, 128, 0, 0, 1, 0, 0, 0, 0)",
+          "evidence": "compiler_observed",
+          "support_level": "structured"
+        },
+        {
+          "op_id": "op_f2bd1297b0eb62ec",
+          "ordinal": 4,
+          "category": "copy",
+          "kind": "copy",
+          "source_kind": "tileop_call",
+          "reads": [
+            {
+              "buffer": "c_local",
+              "scope": "local",
+              "dtype": "float32",
+              "indices": [
+                "0",
+                "0"
+              ],
+              "extents": [
+                "128",
+                "128"
+              ],
+              "access_type": 1,
+              "logical_bytes": 65536
+            }
+          ],
+          "writes": [
+            {
+              "buffer": "C",
+              "scope": "global",
+              "dtype": "float16",
+              "indices": [
+                "by * 128",
+                "bx * 128"
+              ],
+              "extents": [
+                "128",
+                "128"
+              ],
+              "access_type": 2,
+              "logical_bytes": 32768
+            }
+          ],
+          "hardware_levels": {
+            "read": [
+              "local"
+            ],
+            "write": [
+              "global"
+            ]
+          },
+          "dependency_ids": [
+            "op_1543d5dc0c6f297c"
+          ],
+          "loop_ids": [],
+          "tile_shape": null,
+          "annotations": {
+            "eviction_policy": "0",
+            "inner_cache_policy": "2",
+            "outer_cache_policy": "2"
+          },
+          "raw_ir": "T.copy(T.region(c_local[0, 0], 1, 128, 128), T.region(C[by * 128, bx * 128], 2, 128, 128), eviction_policy=0, inner_cache_policy=2, outer_cache_policy=2)",
+          "evidence": "compiler_observed",
+          "support_level": "structured"
+        }
+      ],
+      "dependencies": {
+        "nodes": [
+          {
+            "op_id": "op_00482a5309f05771",
+            "ordinal": 0,
+            "family": "fill"
+          },
+          {
+            "op_id": "op_a4e41ee4df136690",
+            "ordinal": 1,
+            "family": "copy"
+          },
+          {
+            "op_id": "op_aa8718a84345e162",
+            "ordinal": 2,
+            "family": "copy"
+          },
+          {
+            "op_id": "op_1543d5dc0c6f297c",
+            "ordinal": 3,
+            "family": "gemm"
+          },
+          {
+            "op_id": "op_f2bd1297b0eb62ec",
+            "ordinal": 4,
+            "family": "copy"
+          }
+        ],
+        "edges": [
+          {
+            "from": "op_a4e41ee4df136690",
+            "to": "op_1543d5dc0c6f297c",
+            "buffer": "a_shared",
+            "kind": "RAW",
+            "confidence": "buffer_level_may_depend"
+          },
+          {
+            "from": "op_aa8718a84345e162",
+            "to": "op_1543d5dc0c6f297c",
+            "buffer": "b_shared",
+            "kind": "RAW",
+            "confidence": "buffer_level_may_depend"
+          },
+          {
+            "from": "op_00482a5309f05771",
+            "to": "op_1543d5dc0c6f297c",
+            "buffer": "c_local",
+            "kind": "RAW",
+            "confidence": "buffer_level_may_depend"
+          },
+          {
+            "from": "op_00482a5309f05771",
+            "to": "op_1543d5dc0c6f297c",
+            "buffer": "c_local",
+            "kind": "WAW",
+            "confidence": "buffer_level_may_depend"
+          },
+          {
+            "from": "op_1543d5dc0c6f297c",
+            "to": "op_f2bd1297b0eb62ec",
+            "buffer": "c_local",
+            "kind": "RAW",
+            "confidence": "buffer_level_may_depend"
+          }
+        ],
+        "scope": "single kernel; conservative buffer-level dependence without alias proof",
+        "evidence": "semantically_derived"
+      },
+      "pipeline": {
+        "status": "explicit",
+        "pipelines": [
+          {
+            "pipeline_id": "pipeline_55cb7cd195173372",
+            "loop_id": "loop_3492ce065a216a19",
+            "stage_count": 2,
+            "operation_ids": [
+              "op_a4e41ee4df136690",
+              "op_aa8718a84345e162",
+              "op_1543d5dc0c6f297c"
+            ],
+            "stage_assignment_status": "unavailable_without_explicit_per_operation_annotation",
+            "evidence": "compiler_annotation"
+          }
+        ],
+        "limitations": []
+      },
+      "coverage": {
+        "operation_count": 5,
+        "structured_operation_count": 5,
+        "structural_or_unknown_operation_count": 0,
+        "tileop_semantics_available": true,
+        "lossless_action_claim": false
+      },
+      "diagnostics": []
+    }
+  ],
+  "summary": {
+    "kernel_count": 1,
+    "operation_count": 5,
+    "diagnostic_count": 0
+  },
+  "value_kind": "compiler_observed_and_semantically_derived_metadata"
+}

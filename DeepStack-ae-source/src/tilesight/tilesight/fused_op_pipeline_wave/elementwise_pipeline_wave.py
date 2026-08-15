@@ -49,7 +49,8 @@ def _compute_thread_overhead(thread_per_tb):
         return 1
 
 
-def _build_result(tile_res, tiles_per_sm, arch, l2_hit_rate, data_bytes=4):
+def _build_result(tile_res, tiles_per_sm, arch, l2_hit_rate, data_bytes=4,
+                  cache_detail=None):
     """从 TileResources 构建 PipelineResult 的通用流程。"""
     # Pipeline latency
     sm_latency, pipeline_detail = compute_pipeline_tile_latency_with_occupancy(
@@ -73,14 +74,78 @@ def _build_result(tile_res, tiles_per_sm, arch, l2_hit_rate, data_bytes=4):
         tiles_per_sm=tiles_per_sm,
         waves=wave_info['waves_float'],
         pipeline_detail=pipeline_detail,
+        cache_detail=cache_detail,
     )
+
+
+def _estimate_elementwise_cache(read_working_set_bytes,
+                                logical_output_write_bytes, arch,
+                                cache_condition):
+    """Estimate cache residency for one standalone element-wise kernel.
+
+    ``cache_condition`` describes input residency before the modeled kernel.
+    Output stores are write-back traffic: when the complete read/output working
+    set fits L2, dirty output can remain resident beyond the kernel measurement
+    window.  The logical output traffic is retained separately so that callers
+    do not confuse an in-kernel DDR observation with bytes eventually written
+    back after eviction.
+    """
+    if cache_condition not in ("cold", "warm"):
+        raise ValueError(
+            "cache_condition must be either 'cold' or 'warm', got "
+            f"{cache_condition!r}"
+        )
+
+    l2_capacity = arch.l2_capacity
+    if cache_condition == "cold":
+        l2_hit_rate = 0.0
+        prediction_method = "cold_start"
+        prediction_range_pct = None
+    elif read_working_set_bytes <= l2_capacity:
+        # S5000 P9 warm element-wise validation, derived from byte traffic:
+        # ReLU 1M=99.7317%, Add 1M=99.8065%.  Use a conservative rounded
+        # midpoint rather than claiming an exact 100% cache hit rate.
+        l2_hit_rate = 0.9975
+        prediction_method = "calibrated_warm_working_set_fits_l2"
+        prediction_range_pct = [99.0, 100.0]
+    else:
+        l2_hit_rate = 0.0
+        prediction_method = "warm_working_set_exceeds_l2_capacity"
+        prediction_range_pct = None
+
+    resident_working_set = (
+        read_working_set_bytes + logical_output_write_bytes
+    )
+    if resident_working_set <= l2_capacity:
+        kernel_scope_ddr_write = 0
+        deferred_writeback = logical_output_write_bytes
+        write_prediction_method = "dirty_output_resident_in_l2_during_kernel"
+    else:
+        kernel_scope_ddr_write = logical_output_write_bytes
+        deferred_writeback = 0
+        write_prediction_method = "writeback_reaches_ddr_in_kernel_scope"
+
+    return {
+        "cache_condition": cache_condition,
+        "l2_hit_rate": l2_hit_rate,
+        "l2_prediction_method": prediction_method,
+        "l2_prediction_range_pct": prediction_range_pct,
+        "read_working_set_bytes": read_working_set_bytes,
+        "logical_output_write_bytes": logical_output_write_bytes,
+        "resident_working_set_bytes": resident_working_set,
+        "kernel_scope_ddr_write_bytes": kernel_scope_ddr_write,
+        "deferred_writeback_bytes": deferred_writeback,
+        "ddr_write_prediction_method": write_prediction_method,
+        "l2_capacity_bytes": l2_capacity,
+    }
 
 
 # =====================================================================
 # N_0 Element-wise: 单输入单输出, 形状不变
 # =====================================================================
 def calculate_N_0_elementwise_pipeline_wave(op_shape, tb_shape, dim_threads,
-                                            arch, mem_levels, num_ops=1):
+                                            arch, mem_levels, num_ops=1, *,
+                                            cache_condition="cold"):
     """N_0 element-wise pipeline-aware model.
 
     Args:
@@ -90,6 +155,7 @@ def calculate_N_0_elementwise_pipeline_wave(op_shape, tb_shape, dim_threads,
         arch: 架构对象
         mem_levels: {'in1': [...], 'out1': [...]}
         num_ops: fused 操作数
+        cache_condition: modeled L2 input state, ``cold`` or ``warm``
 
     Returns:
         PipelineResult
@@ -105,17 +171,23 @@ def calculate_N_0_elementwise_pipeline_wave(op_shape, tb_shape, dim_threads,
     in1_level = mem_levels['in1']
     out1_level = mem_levels['out1']
 
-    l2_hit_rate = 0
-
     # ---- IO 计算 ----
     total_elements = np.prod(op_shape)
-    l2_read_io = total_elements * in1_level[0] * in1_level[-1]
-    l2_store_io = total_elements * out1_level[-1] * out1_level[0]
+    logical_l2_read_io = total_elements * in1_level[0] * in1_level[-1]
+    logical_l2_store_io = total_elements * out1_level[-1] * out1_level[0]
+    cache_detail = _estimate_elementwise_cache(
+        logical_l2_read_io, logical_l2_store_io, arch, cache_condition)
+    l2_hit_rate = cache_detail["l2_hit_rate"]
+
+    l2_read_io = logical_l2_read_io
+    l2_store_io = logical_l2_store_io
 
     l2_read_io = _apply_wave_bytes_correction(l2_read_io, arch)
     l2_store_io = _apply_wave_bytes_correction(l2_store_io, arch)
 
-    ddr_io = (l2_read_io * (1 - l2_hit_rate) + l2_store_io) * DDR_non_ideal_para
+    ddr_write_io = _apply_wave_bytes_correction(
+        cache_detail["kernel_scope_ddr_write_bytes"], arch)
+    ddr_io = (l2_read_io * (1 - l2_hit_rate) + ddr_write_io) * DDR_non_ideal_para
 
     if arch.core in ("A100", "H100", "B200"):
         l2_io = l2_read_io * l2_hit_rate + l2_read_io * (1 - l2_hit_rate) * 2 + l2_store_io * 2
@@ -136,7 +208,9 @@ def calculate_N_0_elementwise_pipeline_wave(op_shape, tb_shape, dim_threads,
     per_tile_smem *= overheads
 
     # ---- Footprint ----
-    smem_footprint = per_tile_elements * (out1_level[1] - out1_level[0]) * out1_level[-1]
+    smem_footprint = (per_tile_elements
+                      * max(out1_level[1] - out1_level[0], 0)
+                      * out1_level[-1])
     reg_footprint = math.ceil(np.prod(thread_tiles)
                               * (in1_level[1] * in1_level[-1] / 4 + out1_level[1] / 4)
                               * REG_spill_para)
@@ -162,7 +236,7 @@ def calculate_N_0_elementwise_pipeline_wave(op_shape, tb_shape, dim_threads,
         max(int(thread_per_tb / 32), 1), arch)
 
     return _build_result(tile_res, tiles_per_sm, arch, l2_hit_rate,
-                         data_bytes=out1_level[-1])
+                         data_bytes=out1_level[-1], cache_detail=cache_detail)
 
 
 # =====================================================================
@@ -271,7 +345,8 @@ def calculate_N_1_elementwise_pipeline_wave(in1_shape, in2_shape, in1_tb_shape,
 # N_N Element-wise: 两输入同形状, 单输出
 # =====================================================================
 def calculate_N_N_elementwise_pipeline_wave(op_shape, tb_shape, dim_threads,
-                                            arch, mem_levels, num_ops=1):
+                                            arch, mem_levels, num_ops=1, *,
+                                            cache_condition="cold"):
     """N_N element-wise pipeline-aware model.
 
     Args:
@@ -281,6 +356,7 @@ def calculate_N_N_elementwise_pipeline_wave(op_shape, tb_shape, dim_threads,
         arch: 架构对象
         mem_levels: {'in1': [...], 'in2': [...], 'out1': [...]}
         num_ops: fused 操作数
+        cache_condition: modeled L2 input state, ``cold`` or ``warm``
 
     Returns:
         PipelineResult
@@ -297,17 +373,25 @@ def calculate_N_N_elementwise_pipeline_wave(op_shape, tb_shape, dim_threads,
     in2_level = mem_levels['in2']
     out1_level = mem_levels['out1']
 
-    l2_hit_rate = 0
     total_elements = np.prod(op_shape)
 
     # ---- IO ----
-    l2_read_io = total_elements * in1_level[0] * in1_level[-1] + total_elements * in2_level[0] * in2_level[-1]
-    l2_store_io = total_elements * out1_level[-1] * out1_level[0]
+    logical_l2_read_io = (total_elements * in1_level[0] * in1_level[-1]
+                          + total_elements * in2_level[0] * in2_level[-1])
+    logical_l2_store_io = total_elements * out1_level[-1] * out1_level[0]
+    cache_detail = _estimate_elementwise_cache(
+        logical_l2_read_io, logical_l2_store_io, arch, cache_condition)
+    l2_hit_rate = cache_detail["l2_hit_rate"]
+
+    l2_read_io = logical_l2_read_io
+    l2_store_io = logical_l2_store_io
 
     l2_read_io = _apply_wave_bytes_correction(l2_read_io, arch)
     l2_store_io = _apply_wave_bytes_correction(l2_store_io, arch)
 
-    ddr_io = (l2_read_io * (1 - l2_hit_rate) + l2_store_io) * DDR_non_ideal_para
+    ddr_write_io = _apply_wave_bytes_correction(
+        cache_detail["kernel_scope_ddr_write_bytes"], arch)
+    ddr_io = (l2_read_io * (1 - l2_hit_rate) + ddr_write_io) * DDR_non_ideal_para
 
     if arch.core in ("A100", "H100", "B200"):
         l2_io = l2_read_io * l2_hit_rate + l2_read_io * (1 - l2_hit_rate) * 2 + l2_store_io * 2
@@ -329,7 +413,9 @@ def calculate_N_N_elementwise_pipeline_wave(op_shape, tb_shape, dim_threads,
     per_tile_smem *= overheads
 
     # ---- Footprint ----
-    smem_footprint = per_tile_elements * (out1_level[1] - out1_level[0]) * out1_level[-1]
+    smem_footprint = (per_tile_elements
+                      * max(out1_level[1] - out1_level[0], 0)
+                      * out1_level[-1])
     reg_footprint = math.ceil(
         np.prod(thread_tiles)
         * (out1_level[-1] / 4 + in1_level[1] * in1_level[-1] / 4
@@ -355,4 +441,4 @@ def calculate_N_N_elementwise_pipeline_wave(op_shape, tb_shape, dim_threads,
         max(int(thread_per_tb / 32), 1), arch)
 
     return _build_result(tile_res, tiles_per_sm, arch, l2_hit_rate,
-                         data_bytes=out1_level[-1])
+                         data_bytes=out1_level[-1], cache_detail=cache_detail)

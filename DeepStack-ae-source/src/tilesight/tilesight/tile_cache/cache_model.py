@@ -65,9 +65,11 @@ def multi_level_hit_rate(M, N, K, tb_m, tb_n, tb_k, arch, mem_levels,
             arch.l2_capacity, arch.sm_count, mem_levels, row_panel,
             column_panel=column_panel,
             raster_axis=raster_axis,
+            return_detail=True,
         )
         return {
             'l1_5_hit_rate': 0.0,
-            'l2_hit_rate': float(l2_hr),
-            'ddr_miss_rate': float(1 - l2_hr),
+            'l2_hit_rate': l2_hr['l2_hit_rate'],
+            'ddr_miss_rate': l2_hr['ddr_miss_rate'],
+            'per_tensor': l2_hr['per_tensor'],
         }

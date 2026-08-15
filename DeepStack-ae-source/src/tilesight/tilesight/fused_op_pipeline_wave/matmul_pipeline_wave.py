@@ -276,12 +276,15 @@ def calculate_matmul_pipeline_wave(op_shape, tb_shape, wp_shape, stage_num, arch
                           + tb_n / smem_in2_div * tb_k
                             * (1 - (in2_level[1] - in2_level[0])) * in2_level[-1]
                           + tb_m * tb_n
-                            * (out1_level[1] - out1_level[0]) * out1_level[-1]
+                            * max(out1_level[1] - out1_level[0], 0)
+                            * out1_level[-1]
                           ) * stage_num
     else:
         smem_footprint = (tb_m * tb_k * (1 - (in1_level[1] - in1_level[0])) * in1_level[-1]
                           + tb_n * tb_k * (1 - (in2_level[1] - in2_level[0])) * in2_level[-1]
-                          + tb_m * tb_n * (out1_level[1] - out1_level[0]) * out1_level[-1]
+                          + tb_m * tb_n
+                          * max(out1_level[1] - out1_level[0], 0)
+                          * out1_level[-1]
                           ) * stage_num
 
     if arch.core == "B200" and mma_type in ("utcmma_cta1", "utcmma_cta2"):
@@ -416,6 +419,7 @@ def calculate_matmul_pipeline_wave(op_shape, tb_shape, wp_shape, stage_num, arch
         tiles_per_sm=tiles_per_sm,
         waves=wave_info['waves_float'],
         pipeline_detail=pipeline_detail,
+        cache_detail=cache_result,
     )
 
     return result
@@ -502,7 +506,9 @@ def calculate_matmul_triton_swizzle_pipeline_wave(op_shape, tb_shape, wp_shape,
     # ---- Footprint ----
     smem_footprint = (tb_m * tb_k * (1 - (in1_level[1] - in1_level[0])) * in1_level[-1]
                       + tb_n * tb_k * (1 - (in2_level[1] - in2_level[0])) * in2_level[-1]
-                      + tb_m * tb_n * (out1_level[1] - out1_level[0]) * out1_level[-1]
+                      + tb_m * tb_n
+                      * max(out1_level[1] - out1_level[0], 0)
+                      * out1_level[-1]
                       ) * stage_num
 
     if uses_gpu_resource_model(arch, include_lut=True):

@@ -12,11 +12,11 @@
 |:----:|:-------|:------------|:---------|:---------|:--------:|
 | 5.1 | 编译期 tile 元数据与 pipeline 提取 | 提取 tile 操作类别、硬件层级、数据依赖关系，构建 tile pipeline 结构 | TileLang 编译生成 `.mu` 源码，含 `__launch_bounds__`、`T.Pipelined` 多 stage 配置，`mcc -resource-usage` 输出寄存器/共享内存用量 | `benchmarks/p2_tilelang_fp16_gemm.py`、`benchmarks/p4_run_tilelang_pipeline.sh` | ✅ 已实现 |
 | 5.2 | Tile 性能建模 | 基于 tile pipeline 和目标硬件能力描述，估算 tile 操作代价、跨层级搬运代价及关键路径 | DeepStack 核心引擎，`s5000.py` 含 18 个硬件参数，`analyze_op.py` 可查询任意 shape/tile 的延迟、利用率、瓶颈预测 | `analyze_op.py`、`s5000.py`、`P6 hold-out MAPE=4.39%` | ✅ 已实现 |
-| 5.3 | 缓存行为预测 | 基于 tile pipeline 访问模式与缓存层级结构，预测 tile 维度缓存命中率与搬运行为 | 模型输出 `l2_hit_rate` 命中率。P3 实测了 8~512 MiB 工作集扫描 + pointer chase，测量了 L1/L2/DDR 带宽拐点 | `l2_hit_rate_pct` 输出、`aggregate_fixed_grid_cache.csv`、`aggregate_pointer_chase.csv` | ⚠️ 部分实现 |
+| 5.3 | 缓存行为预测 | 基于 tile pipeline 访问模式与缓存层级结构，预测 tile 维度缓存命中率与搬运行为 | 已输出普通L1 eligible/downstream、TMA bypass、L2、DDR和Shared分层流量、命中率与代价；warm小工作集采用99.75%校准值及范围 | `memory_hierarchy_prediction`、P9 L1/TME报告 | ⚠️ 基本实现，复杂reuse-distance待完善 |
 | 5.4 | 运行期 tile-aware trace 采集 | 运行期将硬件计数器与运行时事件按 tile pipeline 结构归集 | MUSA event 计时、MUSAGraph replay、profiler self-device time、P7 Runtime A/B 测试全部可用，三进程独立计时门禁 | `benchmarks/p2_tilelang_fp16_gemm.py`、`scripts/p7_1_run_runtime_ab.sh` | ✅ 已实现 |
 | 5.5 | 离线分析与报告 | 按 tile op 类别、硬件层级、scale unit、kernel 维度生成热点排序、时间线与层级感知视图 | 25 份 `calibration_docs` 文档覆盖 P0~P8 全阶段，`analyze_op.py` 输出 JSON 报告，CSV 聚合数据，含跨进程跨度、正确性门禁 | `calibration_docs/`、`analyze_op.py`、`results/processed/` | ✅ 已实现 |
 | 5.6 | Tile pipeline 瓶颈 | 通过 tile 维度代价模型与实测对照，定位 pipeline 中计算/搬运关键路径，判断计算/带宽/同步瓶颈 | DeepStack 预测标注 `compute_util_pct` 和 `ddr_util_pct`，`analyze_op.py` 输出含瓶颈类型。P7 大 GEMM 诊断确认计算瓶颈 | `analyze_op.py` 输出 `compute_util_pct`、`ddr_util_pct`、P7.3 pilot 验证 | ✅ 已实现 |
-| 5.7 | 跨层级搬运异常 | 通过 tile 维度搬运量与代价聚合，发现跨层级流量超预期、搬运效率偏低 | P3 stride 扫描发现 misalignment 敏感（偏移 1 元素后带宽从 1315→1067 GB/s），标注了 32 MiB 点不稳定被拒绝 | `aggregate_fixed_grid_cache.csv`、`aggregate_pointer_chase.csv` 中标注 `parameter_eligible: false` | ⚠️ 部分实现 |
+| 5.7 | 跨层级搬运异常 | 通过 tile 维度搬运量与代价聚合，发现跨层级流量超预期、搬运效率偏低 | `transfer_anomaly_analysis` 仅基于Tile pipeline和硬件Profile，结构化输出层级守恒、搬运放大和service pressure；区分normal/warning/anomaly/not_applicable | `analyze_op.py`、`tests/test_analyze_op.py` | ✅ 已实现，不依赖实测输入 |
 | 5.8 | 缓存利用异常 | 通过缓存行为预测与实测对照，发现缓存命中率偏低、流量分布不均、跨层级搬运超预期 | 大小工作集带宽对比可反推缓存命中，P3 8/16 MiB vs 64/128 MiB 有明确带宽差异。但 L2 工作集边界标注为 "unknown" | `s5000_memory_parameters_provisional.json` 中 `candidate_effective_cache_workset_boundary: unknown` | ⚠️ 部分实现 |
 | 5.9 | 计算-IO 重叠失败 | 评估计算阶段与数据搬运阶段在 pipeline 上的实际重叠程度，定位 overlap 失败或不足的 tile 操作 | P4 pipeline stage 扫描（1~4 stage）找到最佳 stage=2，`PipelineDetail` 输出 `mem_time_per_iter` 和 `compute_time_per_iter` 可判断重叠 | `aggregate_tilelang_pipeline.csv`、`PipelineDetail` 包含 `mem_time` 和 `compute_time` | ⚠️ 部分实现 |
 | 5.10 | 负载不均 | 通过 scale unit 维度代价聚合，发现 CTA、cluster 或更粗层级负载不均与资源闲置 | P4 wave 扫描精确测量了 CTA 边界尾波开销：720→721 CTA 时延 +2.57%，1440→1441 时延 +3.87%，compute-dominant kernel 测得 0.392~2.790 µs 尾波区间 | `aggregate_tilelang_wave.csv`、`aggregate_tilelang_compute_wave.csv` | ✅ 已实现 |
@@ -39,7 +39,7 @@
 
 | 指标 | 已做 | 缺口 |
 |:-----|:-----|:------|
-| **5.3 缓存行为预测** | 输出 `l2_hit_rate`，实测了 8~512 MiB 工作集扫描 | L2 工作集边界标为 "unknown"（32 MiB 点不稳定被拒绝，pointer chase 无阶梯），L1 边界未单独测量 |
-| **5.7 跨层级搬运异常** | 发现 misalignment 敏感，标注了不稳定数据点 | 无系统化的异常检测机制，仅靠人工分析 |
+| **5.3 缓存行为预测** | 已增加32 KiB/MP普通L1、TMA bypass、Shared语义及分层流量预测 | 复杂reuse-distance、地址哈希和任意Tile访问模式仍待完善 |
+| **5.7 跨层级搬运异常** | 已有结构化模型规则和异常/告警输出，仅依赖Tile pipeline与硬件Profile | 当前规则覆盖流量守恒、逻辑搬运放大和传输压力；后续可继续扩展算子特定规则，但不影响本项基础响应 |
 | **5.8 缓存利用异常** | 大小工作集带宽对比可反推命中率 | 无独立的缓存命中率预测模型，需人工分析 |
 | **5.9 计算-IO 重叠失败** | `PipelineDetail` 含 `mem_time` 和 `compute_time`，可判断重叠 | 仅对特定 GEMM 做了 stage 扫描，未通用化 |
