@@ -23,6 +23,12 @@ def make_snapshot_instrument(tvm: Any) -> Any:
     class SnapshotInstrument:
         def __init__(self):
             self.snapshots: dict[str, str] = {}
+            # Keep the immutable IRModule snapshots in memory as well as their
+            # text form.  Project-side collectors can then extract structured
+            # compiler facts without parsing pretty-printed TIR.  This uses
+            # TVM's existing PassInstrument API and does not require a
+            # TileLang-MUSA extension.
+            self.stage_modules: dict[str, Any] = {}
             self.pass_sequence: list[str] = []
 
         def run_after_pass(self, mod, pass_info):
@@ -31,5 +37,6 @@ def make_snapshot_instrument(tvm: Any) -> Any:
             for stage, matcher in STAGE_MATCHERS.items():
                 if matcher in name:
                     self.snapshots[stage] = mod.script()
+                    self.stage_modules[stage] = mod
 
     return SnapshotInstrument()
