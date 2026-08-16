@@ -167,6 +167,17 @@ def _collect_buffers(function: Any, nodes: list[Any]) -> list[dict[str, Any]]:
 def _collect_launch(nodes: list[Any]) -> dict[str, Any]:
     axes: dict[str, int | str] = {}
     for node in nodes:
+        if type(node).__name__ == "For":
+            binding = getattr(node, "thread_binding", None)
+            if binding is not None:
+                axis = getattr(binding, "thread_tag", None)
+                axis = getattr(axis, "value", axis)
+                if axis is not None:
+                    extent = _integer(node.extent)
+                    axes[str(axis)] = (
+                        extent if extent is not None else str(node.extent)
+                    )
+            continue
         if type(node).__name__ != "AttrStmt" or str(node.attr_key) != "thread_extent":
             continue
         axis = getattr(getattr(node.node, "thread_tag", None), "value", None)
@@ -203,7 +214,11 @@ def _collect_loops(nodes: list[Any], kernel_id: str) -> list[dict[str, Any]]:
             "extent": str(node.extent),
             "extent_value": _integer(node.extent),
             "kind": str(node.kind),
-            "thread_binding": str(node.thread_binding) if node.thread_binding else None,
+            "thread_binding": (
+                str(node.thread_binding)
+                if node.thread_binding is not None
+                else None
+            ),
             "annotations": annotations,
             "evidence": "compiler_observed",
             "_node": node,
@@ -465,7 +480,14 @@ def _pipeline(loops: list[dict[str, Any]], operations: list[dict[str, Any]], ker
 def _loop_multiplier(operation: dict[str, Any], loop_by_id: dict[str, dict[str, Any]]) -> int | None:
     value = 1
     for loop_id in operation["loop_ids"]:
-        extent = loop_by_id[loop_id]["extent_value"]
+        loop = loop_by_id[loop_id]
+        # Newer TVM represents the kernel launch as thread-bound For nodes.
+        # Those axes describe placement, not repeated TileOp work: block axes
+        # are accounted for by grid_size below, while a TileOp call already
+        # denotes the work of the complete thread block.
+        if loop["thread_binding"] is not None:
+            continue
+        extent = loop["extent_value"]
         if extent is None:
             return None
         value *= extent

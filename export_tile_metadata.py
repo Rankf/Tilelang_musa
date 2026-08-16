@@ -12,7 +12,7 @@ BASE = Path(__file__).resolve().parent
 os.environ.setdefault("MUSA_HOME", "/usr/local/musa")
 sys.path[:0] = [
     str(BASE),
-    str(BASE / "TileOPs"),
+    str(BASE / "TileOPs" / "src"),
     str(BASE / "tilelang-musa"),
     str(BASE / "DeepStack-ae-source" / "src" / "tilesight"),
     str(BASE / "DeepStack-ae" / "src"),

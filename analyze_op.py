@@ -10,7 +10,7 @@ from pathlib import Path
 
 os.environ.setdefault("MUSA_HOME", "/usr/local/musa")
 BASE = "/root/s5000-calibration"
-sys.path = [BASE, BASE+"/TileOPs", BASE+"/DeepStack-ae-source/src/tilesight",
+sys.path = [BASE, BASE+"/TileOPs/src", BASE+"/DeepStack-ae-source/src/tilesight",
             BASE+"/DeepStack-ae/src"] + sys.path
 
 # ── S5000 架构（使用校准后的 ConfigurableStackedGpu 配置）──
