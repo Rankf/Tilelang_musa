@@ -1,31 +1,15 @@
 import pytest
 import torch
-import torch.nn.functional as F
 
 from tests.test_base import FixtureBase, TestBase
 from tileops.ops.norm.fused_add_layer_norm import FusedAddLayerNormFwdOp
 from workloads.normalization import (
-    FusedAddLayerNormTest as _FusedAddLayerNormTestWorkload,
+    FusedAddLayerNormWorkload,
 )
 
 
-class FusedAddLayerNormTest(_FusedAddLayerNormTestWorkload, TestBase):
-    def ref_program(
-        self,
-        x: torch.Tensor,
-        residual: torch.Tensor,
-        weight: torch.Tensor,
-        bias: torch.Tensor,
-    ) -> tuple[torch.Tensor, torch.Tensor]:
-        add_result = (x.float() + residual.float()).to(x.dtype)
-        y = F.layer_norm(
-            add_result.float(),
-            (self.n,),
-            weight=weight.float(),
-            bias=bias.float(),
-            eps=self.eps,
-        ).to(x.dtype)
-        return y, add_result
+class FusedAddLayerNormTest(FusedAddLayerNormWorkload, TestBase):
+    pass
 
 
 class FusedAddLayerNormFixture(FixtureBase):
@@ -63,7 +47,7 @@ def _get_tolerances(dtype: torch.dtype) -> tuple[float, float]:
 @FusedAddLayerNormFixture
 def test_fused_add_layer_norm_op(m: int, n: int, dtype: torch.dtype, tune: bool) -> None:
     test = FusedAddLayerNormTest(m, n, dtype)
-    op = FusedAddLayerNormFwdOp(dtype=dtype, tune=tune)
+    op = FusedAddLayerNormFwdOp(tune=tune)
     atol, rtol = _get_tolerances(dtype)
     test.check(op, *test.gen_inputs(), atol=atol, rtol=rtol)
 
@@ -88,7 +72,7 @@ def test_fused_add_layer_norm_non_contiguous(m: int, n: int, dtype: torch.dtype)
     weight = torch.randn(n, dtype=dtype, device="cuda")
     bias = torch.randn(n, dtype=dtype, device="cuda")
 
-    op = FusedAddLayerNormFwdOp(M=m, N=n, dtype=dtype)
+    op = FusedAddLayerNormFwdOp(M=m, N=n)
 
     # Reference on contiguous copies
     test = FusedAddLayerNormTest(m, n, dtype)
@@ -121,7 +105,7 @@ def test_fused_add_layer_norm_3d(batch: int, seq: int, hidden: int, dtype: torch
     bias = torch.randn(hidden, dtype=dtype, device="cuda")
 
     M = batch * seq
-    op = FusedAddLayerNormFwdOp(dtype=dtype)
+    op = FusedAddLayerNormFwdOp()
 
     test = FusedAddLayerNormTest(M, hidden, dtype)
     y_ref, add_ref = test.ref_program(x, residual, weight, bias)

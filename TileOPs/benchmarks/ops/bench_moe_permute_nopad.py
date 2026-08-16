@@ -24,31 +24,9 @@ except ImportError:
 from benchmarks.benchmark_base import BenchmarkReport, ManifestBenchmark
 from tileops.manifest import load_workloads
 from tileops.ops.moe import MoePermuteNopadFwdOp
-from workloads.workload_base import WorkloadBase
+from workloads.moe import MoePermuteWorkload
 
 _OP_NAME = "MoePermuteNopadFwdOp"
-
-# Test class
-
-
-class MoePermuteNopadTest(WorkloadBase):
-    def __init__(self, total_tokens, top_k, num_experts, hidden_size, dtype):
-        self.total_tokens = total_tokens
-        self.top_k = top_k
-        self.num_experts = num_experts
-        self.hidden_size = hidden_size
-        self.dtype = dtype
-
-    def gen_inputs(self):
-        torch.manual_seed(42)
-        dev = "cuda"
-        hidden_states = torch.randn(self.total_tokens, self.hidden_size, dtype=self.dtype, device=dev)
-        topk_ids = torch.randint(0, self.num_experts, (self.total_tokens, self.top_k), dtype=torch.int32, device=dev)
-        return hidden_states, topk_ids
-
-    def ref_program(self, *args):
-        return None
-
 
 # Benchmark class
 
@@ -83,17 +61,17 @@ def test_moe_permute_nopad_bench(
     total_tokens: int, top_k: int, num_experts: int, hidden_size: int
 ) -> None:
     dtype = torch.bfloat16
-    test = MoePermuteNopadTest(total_tokens, top_k, num_experts, hidden_size, dtype)
-    hidden_states, topk_ids = test.gen_inputs()
+    workload = MoePermuteWorkload(total_tokens, top_k, num_experts, hidden_size, dtype)
+    torch.manual_seed(42)
+    hidden_states, topk_ids = workload.gen_inputs()
 
     # TileOPs
-    op = MoePermuteNopadFwdOp(num_experts=num_experts, dtype=dtype)
-    bm = ManifestBenchmark(_OP_NAME, op, test)
+    op = MoePermuteNopadFwdOp(num_experts=num_experts)
+    bm = ManifestBenchmark(_OP_NAME, op, workload)
     op(hidden_states, topk_ids)  # warmup / JIT compile
     torch.cuda.synchronize()
 
-    result = bm.profile(op, hidden_states, topk_ids)
-    BenchmarkReport.record(op, locals(), result, tag="tileops")
+    functors = {"tileops": op}
 
     # vLLM baseline (optional)
     if _VLLM_AVAILABLE:
@@ -103,8 +81,7 @@ def test_moe_permute_nopad_bench(
         _vllm_fn(hidden_states, topk_ids)  # warmup
         torch.cuda.synchronize()
 
-        result_vllm = bm.profile(_vllm_fn, hidden_states, topk_ids)
-        BenchmarkReport.record(op, locals(), result_vllm, tag="vllm")
+        functors["vllm"] = _vllm_fn
     else:
         # PyTorch vectorized baseline: counting sort + gather
         numel = total_tokens * top_k
@@ -136,9 +113,6 @@ def test_moe_permute_nopad_bench(
         _torch_fn(hidden_states, topk_ids)  # warmup
         torch.cuda.synchronize()
 
-        result_torch = bm.profile(_torch_fn, hidden_states, topk_ids)
-        BenchmarkReport.record(op, locals(), result_torch, tag="torch-ref")
+        functors["torch-ref"] = _torch_fn
 
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-vvs"])
+    bm.compare(functors, hidden_states, topk_ids, record_as=op, params=locals())

@@ -31,7 +31,7 @@ def _write_bench_dir(tmp_path: Path, files: dict[str, str]) -> Path:
 
 
 def _run_runner(
-    tmp_path: Path, bench_dir: Path, timeout_per_file: str, extra: list | None = None
+    tmp_path: Path, bench_dir: Path, stall_timeout: str, extra: list | None = None
 ) -> tuple:
     out_xml = tmp_path / "bench_results.xml"
     dump_dir = tmp_path / "dumps"
@@ -42,8 +42,8 @@ def _run_runner(
             str(bench_dir),
             "--junit-xml",
             str(out_xml),
-            "--timeout-per-file",
-            timeout_per_file,
+            "--stall-timeout",
+            stall_timeout,
             "--dump-dir",
             str(dump_dir),
             *(extra or []),
@@ -72,7 +72,7 @@ def test_native_crash_loses_only_the_crashing_file(tmp_path):
             "bench_ok.py": "def test_ok():\n    pass\n",
         },
     )
-    proc, out_xml, _ = _run_runner(tmp_path, bench_dir, timeout_per_file="120")
+    proc, out_xml, _ = _run_runner(tmp_path, bench_dir, stall_timeout="120")
 
     assert proc.returncode == 1, proc.stdout + proc.stderr
     cases = _cases(out_xml)
@@ -93,7 +93,7 @@ def test_hung_file_is_killed_dumped_and_reported(tmp_path):
         },
     )
     # Above the child's post-release startup, far below the sleep.
-    proc, out_xml, dump_dir = _run_runner(tmp_path, bench_dir, timeout_per_file="10")
+    proc, out_xml, dump_dir = _run_runner(tmp_path, bench_dir, stall_timeout="10")
 
     assert proc.returncode == 1, proc.stdout + proc.stderr
     cases = _cases(out_xml)
@@ -101,7 +101,8 @@ def test_hung_file_is_killed_dumped_and_reported(tmp_path):
 
     errors = [err for tc in cases.values() if (err := tc.find("error")) is not None]
     assert len(errors) == 1
-    assert "timed out" in errors[0].attrib["message"]
+    # The message names the test it stopped in, not just the file.
+    assert "test_hang" in errors[0].attrib["message"]
 
     dumps = list(dump_dir.glob("*.txt"))
     assert len(dumps) == 1
@@ -129,7 +130,7 @@ def test_fragments_and_profile_logs_merge(tmp_path):
             "bench_import_abort.py": "import os\nos.abort()\n",
         },
     )
-    proc, out_xml, _ = _run_runner(tmp_path, bench_dir, timeout_per_file="120")
+    proc, out_xml, _ = _run_runner(tmp_path, bench_dir, stall_timeout="120")
 
     assert proc.returncode == 1, proc.stdout + proc.stderr
     cases = _cases(out_xml)
@@ -167,15 +168,15 @@ def test_teardown_crash_is_reported(tmp_path):
             ),
         },
     )
-    proc, out_xml, _ = _run_runner(tmp_path, bench_dir, timeout_per_file="120")
+    proc, out_xml, _ = _run_runner(tmp_path, bench_dir, stall_timeout="120")
 
     assert proc.returncode == 1, proc.stdout + proc.stderr
     assert "died in teardown" in proc.stdout
     assert _error_node_count(out_xml, "bench_teardown_abort") == 1
 
 
-def test_teardown_deadline_enforced_during_next_file(tmp_path):
-    """A teardown-stuck child is killed while the next file runs, not after."""
+def test_teardown_deadline_kills_a_stuck_child(tmp_path):
+    """A child that never finishes teardown is killed at its deadline, not waited on."""
     bench_dir = _write_bench_dir(
         tmp_path,
         {
@@ -184,19 +185,98 @@ def test_teardown_deadline_enforced_during_next_file(tmp_path):
                 "atexit.register(time.sleep, 60)\n"
                 "def test_ok():\n    pass\n"
             ),
-            "bench_b_next.py": (
-                "import time\n"
-                "def test_next():\n    time.sleep(8)\n"
-            ),
+            "bench_b_next.py": "def test_next():\n    pass\n",
         },
     )
     proc, out_xml, _ = _run_runner(
-        tmp_path, bench_dir, timeout_per_file="120",
+        tmp_path, bench_dir, stall_timeout="120",
         extra=["--teardown-timeout", "2", "--prewarm", "0"],
     )
 
     assert proc.returncode == 1, proc.stdout + proc.stderr
     out = proc.stdout
     assert "stuck in teardown" in out
-    assert out.index("stuck in teardown") < out.index("bench_b_next.py finished")
+    assert out.index("stuck in teardown") < out.index("bench_a_slow_teardown.py finished")
     assert any("bench_a_slow_teardown" in k for k in _cases(out_xml))
+
+
+def test_next_file_starts_only_after_the_previous_child_exited(tmp_path):
+    """The GPU stays owned by one file until its process is gone, not until it reported."""
+    bench_dir = _write_bench_dir(
+        tmp_path,
+        {
+            # The sleep is the margin: restoring the overlap only shows up as a
+            # failure if the next file reaches its assertion while this teardown
+            # is still running, and a loaded machine is slow to get there.
+            "bench_a_slow_teardown.py": (
+                "import atexit, time\n"
+                "def _exit():\n"
+                "    time.sleep(5)\n"
+                "    open('teardown_done', 'w').write('gone')\n"
+                "atexit.register(_exit)\n"
+                "def test_ok():\n    pass\n"
+            ),
+            "bench_b_next.py": (
+                "import os\n"
+                "def test_next():\n    assert os.path.exists('teardown_done')\n"
+            ),
+        },
+    )
+    proc, _, _ = _run_runner(tmp_path, bench_dir, stall_timeout="120")
+
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+
+
+@pytest.mark.smoke
+def test_slow_file_outlives_the_stall_timeout(tmp_path):
+    """The deadline measures silence, not total runtime."""
+    bench_dir = _write_bench_dir(
+        tmp_path,
+        {
+            "bench_slow.py": (
+                "import time\n"
+                "def test_a():\n    time.sleep(1.2)\n"
+                "def test_b():\n    time.sleep(1.2)\n"
+                "def test_c():\n    time.sleep(1.2)\n"
+                "def test_d():\n    time.sleep(1.2)\n"
+            ),
+        },
+    )
+    proc, out_xml, _ = _run_runner(tmp_path, bench_dir, stall_timeout="3")
+
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert len(_cases(out_xml)) == 4
+
+
+@pytest.mark.smoke
+def test_failure_report_survives_the_child_stdout_buffer(tmp_path):
+    """pytest's FAILURES section reaches the log, so a bench F has a reason."""
+    bench_dir = _write_bench_dir(
+        tmp_path,
+        {"bench_fail.py": "def test_boom():\n    assert 0, 'explosive-marker'\n"},
+    )
+    proc, _, _ = _run_runner(tmp_path, bench_dir, stall_timeout="120")
+
+    assert proc.returncode == 1
+    assert "explosive-marker" in proc.stdout
+
+
+@pytest.mark.smoke
+def test_spent_budget_reports_the_files_it_never_reached(tmp_path):
+    """A spent budget stops the sweep with the report intact and the gap named."""
+    bench_dir = _write_bench_dir(
+        tmp_path,
+        {
+            "bench_a_slow.py": "import time\n\ndef test_slow():\n    time.sleep(6)\n",
+            "bench_z_never.py": "def test_never():\n    pass\n",
+        },
+    )
+    proc, out_xml, _ = _run_runner(
+        tmp_path, bench_dir, stall_timeout="120",
+        extra=["--total-budget", "2", "--prewarm", "0"],
+    )
+
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "not benchmarked" in proc.stdout
+    skipped = ET.parse(out_xml).getroot().findall(".//skipped")
+    assert any("bench_z_never.py" in s.get("message", "") for s in skipped)

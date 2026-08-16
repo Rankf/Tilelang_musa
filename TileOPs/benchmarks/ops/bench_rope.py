@@ -1,7 +1,7 @@
 """Benchmarks for the RoPE op family.
 
 Workload shapes, dtypes, layouts, and roofline formulas are loaded from the
-ops manifest (``tileops/manifest/position_encoding.yaml``); nothing about a
+ops manifest (``src/tileops/manifest/position_encoding.yaml``); nothing about a
 workload is hard-coded here.
 
 One ``test_*_bench`` per op, so the validator's L4 AST check can tie each
@@ -30,8 +30,8 @@ from tileops.ops.rope import (
 _BASE = 10000.0
 
 
-class _RopeWorkload:
-    """Minimal :class:`ShapeDtypeWorkload` for the RoPE family.
+class RopeWorkload:
+    """Minimal shape/dtype descriptor for the RoPE family.
 
     Holds ``shape`` and ``dtype`` so :class:`ManifestBenchmark` can call
     ``op.eval_roofline()`` after ``forward()`` has bound the dynamic vars.
@@ -112,15 +112,11 @@ def _profile_rope(op, bm: ManifestBenchmark, shape: tuple[int, ...],
     x = torch.randn(shape, device="cuda", dtype=dtype)
     params = {"shape": shape, "dtype": dtype, "layout": layout}
 
-    result = bm.profile(op, x)
-    BenchmarkReport.record(op, params, result, tag="tileops")
-
     seq_len = shape[0] if layout == "1d" else shape[1]
     cos, sin = _rope_tables(seq_len, shape[-1], dtype)
     if layout != "1d":
         cos, sin = (t.view(1, seq_len, 1, shape[-1]) for t in (cos, sin))
-    result_bl = bm.profile(lambda t: _rotate(t, cos, sin), x)
-    BenchmarkReport.record(op, params, result_bl, tag="torch-ref")
+    bm.compare({"tileops": op, "torch-ref": lambda t: _rotate(t, cos, sin)}, x, record_as=op, params=params)
 
 
 # Per-op tests — one block per manifest entry.
@@ -135,7 +131,7 @@ def test_rope_neox_bench(
     shape: tuple[int, ...], dtype: torch.dtype, layout: str,
 ) -> None:
     op = RopeNeoxOp(layout=layout, base=_BASE)
-    bm = ManifestBenchmark(_NEOX_OP, op, _RopeWorkload(shape, dtype))
+    bm = ManifestBenchmark(_NEOX_OP, op, RopeWorkload(shape, dtype))
     _profile_rope(op, bm, shape, dtype, layout)
 
 
@@ -149,7 +145,7 @@ def test_rope_non_neox_bench(
     shape: tuple[int, ...], dtype: torch.dtype, layout: str,
 ) -> None:
     op = RopeNonNeoxOp(layout=layout, base=_BASE)
-    bm = ManifestBenchmark(_NON_NEOX_OP, op, _RopeWorkload(shape, dtype))
+    bm = ManifestBenchmark(_NON_NEOX_OP, op, RopeWorkload(shape, dtype))
     _profile_rope(op, bm, shape, dtype, layout)
 
 
@@ -163,7 +159,7 @@ def test_rope_llama31_bench(
     shape: tuple[int, ...], dtype: torch.dtype, layout: str,
 ) -> None:
     op = RopeLlama31Op(layout=layout, base=_BASE)
-    bm = ManifestBenchmark(_LLAMA31_OP, op, _RopeWorkload(shape, dtype))
+    bm = ManifestBenchmark(_LLAMA31_OP, op, RopeWorkload(shape, dtype))
     _profile_rope(op, bm, shape, dtype, layout)
 
 
@@ -177,7 +173,7 @@ def test_rope_yarn_bench(
     shape: tuple[int, ...], dtype: torch.dtype, layout: str,
 ) -> None:
     op = RopeYarnOp(layout=layout, base=_BASE)
-    bm = ManifestBenchmark(_YARN_OP, op, _RopeWorkload(shape, dtype))
+    bm = ManifestBenchmark(_YARN_OP, op, RopeWorkload(shape, dtype))
     _profile_rope(op, bm, shape, dtype, layout)
 
 
@@ -191,7 +187,7 @@ def test_rope_longrope_bench(
     shape: tuple[int, ...], dtype: torch.dtype, layout: str,
 ) -> None:
     op = RopeLongRopeOp(layout=layout, base=_BASE)
-    bm = ManifestBenchmark(_LONGROPE_OP, op, _RopeWorkload(shape, dtype))
+    bm = ManifestBenchmark(_LONGROPE_OP, op, RopeWorkload(shape, dtype))
     _profile_rope(op, bm, shape, dtype, layout)
 
 
@@ -212,11 +208,8 @@ def test_rope_neox_position_ids_bench(
     ) % max_position
 
     op = RopeNeoxPositionIdsOp(max_position=max_position, base=_BASE)
-    bm = ManifestBenchmark(_POSITION_IDS_OP, op, _RopeWorkload(shape, dtype))
+    bm = ManifestBenchmark(_POSITION_IDS_OP, op, RopeWorkload(shape, dtype))
     params = {"shape": shape, "dtype": dtype, "max_position": max_position}
-
-    result = bm.profile(op, x, position_ids)
-    BenchmarkReport.record(op, params, result, tag="tileops")
 
     cos, sin = _rope_tables(max_position, head_dim, dtype)
 
@@ -224,9 +217,4 @@ def test_rope_neox_position_ids_bench(
         idx = pos.long()
         return _rotate(t, cos[idx].unsqueeze(1), sin[idx].unsqueeze(1))
 
-    result_bl = bm.profile(baseline_fn, x, position_ids)
-    BenchmarkReport.record(op, params, result_bl, tag="torch-ref")
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-vvs"])
+    bm.compare({"tileops": op, "torch-ref": baseline_fn}, x, position_ids, record_as=op, params=params)

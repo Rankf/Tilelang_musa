@@ -118,8 +118,7 @@ def test_da_cumsum_fwd_bench(batch, num_chunks, chunk_len, n_heads, has_dt_bias,
         dtype=dtype,
         tune=tune,
     )
-    result = bm.profile(op, *inputs)
-    BenchmarkReport.record(op, locals(), result, tag="tileops")
+    functors = {"tileops": op}
 
     # ── Mamba-2 Triton baseline ──
     # _chunk_cumsum_fwd(dt, A, chunk_size, dt_bias=None, dt_softplus=False, dt_limit=...)
@@ -136,8 +135,7 @@ def test_da_cumsum_fwd_bench(batch, num_chunks, chunk_len, n_heads, has_dt_bias,
                 dt_softplus=dt_softplus,
             )
 
-        result_mamba = bm.profile(mamba_fwd)
-        BenchmarkReport.record(op, locals(), result_mamba, tag="mamba")
+        functors["mamba"] = (mamba_fwd, ())
     else:
         def baseline(dt_raw, A, dt_bias):
             return da_cumsum_fwd_ref(
@@ -145,19 +143,22 @@ def test_da_cumsum_fwd_bench(batch, num_chunks, chunk_len, n_heads, has_dt_bias,
                 dt_bias=dt_bias if has_dt_bias else None,
                 dt_softplus=dt_softplus,
             )
-        result_bl = bm.profile(baseline, *inputs)
-        BenchmarkReport.record(op, locals(), result_bl, tag="torch-ref")
+        functors["torch-ref"] = baseline
+
+    bm.compare(functors, *inputs, record_as=op, params=locals())
+
+
 
 
 def ssd_chunk_scan_fwd_ref(x, cb, dA_cumsum, C, prev_states, dt, n_groups):
-    """Official-aligned PyTorch reference for chunk scan.
+    """PyTorch reference for ssd_chunk_scan_fwd (benchmark-local copy).
 
     Inputs (official layouts):
       x:           [B, S, H, P]        dtype
       cb:          [B, C, G, L, L]     dtype    group-owned
       dA_cumsum:   [B, H, C, L]        float32
       C:           [B, S, G, N]        dtype    group-owned
-      prev_states: [B, C, H, P, N]     dtype    P before N
+      prev_states: [B, C, H, P, N]     float32  P before N
       dt:          [B, H, C, L]        dtype
 
     Output: [B, S, H, P]  float32
@@ -302,8 +303,7 @@ def test_ssd_chunk_scan_fwd_bench(
 
     # ── TileOPs kernel ──
     op = SSDChunkScanFwdOp(tune=tune)
-    result = bm.profile(op, *inputs)
-    BenchmarkReport.record(op, locals(), result, tag="tileops")
+    functors = {"tileops": op}
 
     # ── Mamba-2 Triton baseline ──
     if _mamba_chunk_scan_fwd is not None:
@@ -313,14 +313,14 @@ def test_ssd_chunk_scan_fwd_bench(
         def mamba_fwd():
             return _mamba_chunk_scan_fwd(cb, x, dt, dA_cumsum, C, prev_states)
 
-        result_mamba = bm.profile(mamba_fwd)
-        BenchmarkReport.record(op, locals(), result_mamba, tag="mamba")
+        functors["mamba"] = (mamba_fwd, ())
     else:
         def torch_ref(x, cb, dA_cumsum, C, prev_states, dt):
             return ssd_chunk_scan_fwd_ref(x, cb, dA_cumsum, C, prev_states, dt, n_groups)
 
-        result_bl = bm.profile(torch_ref, *inputs)
-        BenchmarkReport.record(op, locals(), result_bl, tag="torch-ref")
+        functors["torch-ref"] = torch_ref
+
+    bm.compare(functors, *inputs, record_as=op, params=locals())
 
 
 def ssd_chunk_state_fwd_ref(
@@ -440,8 +440,7 @@ def test_ssd_chunk_state_fwd_bench(
     inputs = test.gen_inputs()
 
     op = SSDChunkStateFwdOp(has_seq_idx=has_seq_idx, tune=tune)
-    result = bm.profile(op, *inputs)
-    BenchmarkReport.record(op, locals(), result, tag="tileops")
+    functors = {"tileops": op}
 
     if _mamba_chunk_state_fwd is not None:
         x, Bmat, dt, dA_cumsum, seq_idx = inputs
@@ -457,13 +456,13 @@ def test_ssd_chunk_state_fwd_bench(
                 seq_idx=seq_idx,
             )
 
-        result_mamba = bm.profile(mamba_fwd)
-        BenchmarkReport.record(op, locals(), result_mamba, tag="mamba")
+        functors["mamba"] = (mamba_fwd, ())
     else:
         def baseline(x, Bmat, dt, dA_cumsum, seq_idx):
             return ssd_chunk_state_fwd_ref(x, Bmat, dt, dA_cumsum, n_groups=n_groups, seq_idx=seq_idx)
-        result_bl = bm.profile(baseline, *inputs)
-        BenchmarkReport.record(op, locals(), result_bl, tag="torch-ref")
+        functors["torch-ref"] = baseline
+
+    bm.compare(functors, *inputs, record_as=op, params=locals())
 
 
 def ssd_state_passing_fwd_ref(
@@ -554,8 +553,7 @@ def test_ssd_state_passing_fwd_bench(
     states, dA_chunk_cumsum, initial_states = inputs
 
     op = SSDStatePassingFwdOp(tune=tune)
-    result = bm.profile(op, *inputs)
-    BenchmarkReport.record(op, locals(), result, tag="tileops")
+    functors = {"tileops": op}
 
     if _mamba_state_passing_fwd is not None:
         def mamba_fwd():
@@ -574,13 +572,13 @@ def test_ssd_state_passing_fwd_bench(
         mamba_fwd()
         torch.cuda.synchronize()
 
-        result_mamba = bm.profile(mamba_fwd)
-        BenchmarkReport.record(op, locals(), result_mamba, tag="mamba")
+        functors["mamba"] = (mamba_fwd, ())
     else:
         def baseline(states, dA_chunk_cumsum, initial_states):
             return ssd_state_passing_fwd_ref(states, dA_chunk_cumsum, initial_states)
-        result_bl = bm.profile(baseline, *inputs)
-        BenchmarkReport.record(op, locals(), result_bl, tag="torch-ref")
+        functors["torch-ref"] = baseline
+
+    bm.compare(functors, *inputs, record_as=op, params=locals())
 
 
 def ssd_decode_ref(
@@ -691,11 +689,10 @@ def test_ssd_decode_bench(
     state_bl = state.clone()
 
     op = SSDDecodeOp(tune=tune)
-    result = bm.profile(op, A, dt, x, B_in, C_in, state_for_op)
-    BenchmarkReport.record(op, locals(), result, tag="tileops")
+    functors = {"tileops": op}
 
     def baseline(A, dt, x, B_in, C_in, state):
         return ssd_decode_ref(A, dt, x, B_in, C_in, state)
 
-    result_bl = bm.profile(baseline, A, dt, x, B_in, C_in, state_bl)
-    BenchmarkReport.record(op, locals(), result_bl, tag="torch-ref")
+    functors["torch-ref"] = (baseline, (A, dt, x, B_in, C_in, state_bl, ))
+    bm.compare(functors, A, dt, x, B_in, C_in, state_for_op, record_as=op, params=locals())

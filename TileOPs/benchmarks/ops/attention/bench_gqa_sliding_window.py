@@ -11,7 +11,7 @@ from benchmarks.ops.attention.manifest_params import (
 )
 from tileops.manifest import load_workloads
 from tileops.ops import GroupedQueryAttentionSlidingWindowFwdOp
-from workloads.attention.gqa import GroupedQueryAttentionSlidingWindowFwdTest
+from workloads.attention.gqa import GroupedQueryAttentionSlidingWindowFwdWorkload
 
 _OP_NAME = "GroupedQueryAttentionSlidingWindowFwdOp"
 
@@ -119,7 +119,7 @@ def test_gqa_sliding_window_fwd_bench(
     dtype: torch.dtype,
     tune: bool,
 ) -> None:
-    test = GroupedQueryAttentionSlidingWindowFwdTest(
+    test = GroupedQueryAttentionSlidingWindowFwdWorkload(
         batch, seq, heads, heads_kv, dim, is_causal, wl, wr, dtype
     )
     inputs = test.gen_inputs()
@@ -133,7 +133,6 @@ def test_gqa_sliding_window_fwd_bench(
         is_causal=is_causal,
         window_size_left=wl,
         window_size_right=wr,
-        dtype=dtype,
         tune=tune,
     )
     bm = ManifestBenchmark(_OP_NAME, op, test)
@@ -142,25 +141,19 @@ def test_gqa_sliding_window_fwd_bench(
     op(*inputs)
     torch.cuda.synchronize()
 
-    result = bm.profile(op, *inputs)
-    BenchmarkReport.record(op, locals(), result, tag="tileops")
+    functors = {"tileops": op}
 
     # FA3 baseline
     fa3_fn = _fa3_baseline(is_causal, wl, wr)
     if fa3_fn is not None:
-        result_bl = bm.profile(fa3_fn, *inputs)
-        BenchmarkReport.record(op, locals(), result_bl, tag="fa3")
+        functors["fa3"] = fa3_fn
 
     # FlashInfer baseline
     fi_fn = _flashinfer_sliding_window_fwd(test, *inputs)
     if fi_fn is not None:
-        result_fi = bm.profile(fi_fn, *inputs)
-        BenchmarkReport.record(op, locals(), result_fi, tag="flashinfer")
+        functors["flashinfer"] = fi_fn
 
     if fa3_fn is None and fi_fn is None:
-        result_bl = bm.profile(_torch_sliding_window_fwd(test), *inputs)
-        BenchmarkReport.record(op, locals(), result_bl, tag="torch")
+        functors["torch"] = _torch_sliding_window_fwd(test)
 
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-vvs"])
+    bm.compare(functors, *inputs, record_as=op, params=locals())

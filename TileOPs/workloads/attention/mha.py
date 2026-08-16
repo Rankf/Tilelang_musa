@@ -1,13 +1,17 @@
 """Workload definitions for the MHA attention ops."""
 
+import math
+
 import torch
+import torch.nn.functional as F
+from torch.nn.attention import SDPBackend, sdpa_kernel
 
 from tileops.ops import MultiHeadAttentionFwdOp
 from workloads.attention.gqa import _compute_gqa_square_lse
 from workloads.workload_base import WorkloadBase
 
 
-class MhaBwdTest(WorkloadBase):
+class MhaBwdWorkload(WorkloadBase):
 
     def __init__(self, batch: int, heads: int, seq_len: int, dim: int, is_causal: bool,
                  dtype: torch.dtype):
@@ -49,10 +53,9 @@ class MhaBwdTest(WorkloadBase):
             self.batch, self.seq_len, self.heads, self.dim, dtype=self.dtype, device='cuda')
 
         fwd_op = MultiHeadAttentionFwdOp(self.batch, self.heads, self.seq_len, self.dim,
-                                         self.is_causal, self.dtype)
+                                         self.is_causal)
         with torch.no_grad():
-            result = fwd_op(q, k, v)
-            o = result[0] if isinstance(result, tuple) else result
+            o = fwd_op(q, k, v)
             lse = _compute_gqa_square_lse(
                 q,
                 k,
@@ -64,8 +67,22 @@ class MhaBwdTest(WorkloadBase):
 
         return q, k, v, o, grad_output, lse
 
+    def ref_program(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, o: torch.Tensor,
+                    grad_output: torch.Tensor,
+                    lse: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        q_bhsd = q.transpose(1, 2)  # [B, H, S, D]
+        k_bhsd = k.transpose(1, 2)
+        v_bhsd = v.transpose(1, 2)
+        with sdpa_kernel(backends=[SDPBackend.FLASH_ATTENTION]):
+            output_bhsd = F.scaled_dot_product_attention(
+                q_bhsd, k_bhsd, v_bhsd, is_causal=self.is_causal)
+        output = output_bhsd.transpose(1, 2).contiguous()
 
-class MhaFwdTest(WorkloadBase):
+        output.backward(grad_output)
+        return q.grad, k.grad, v.grad
+
+
+class MhaFwdWorkload(WorkloadBase):
 
     def __init__(self, batch: int, heads: int, seq_len: int, dim: int, is_causal: bool,
                  dtype: torch.dtype):
@@ -85,8 +102,19 @@ class MhaFwdTest(WorkloadBase):
             self.batch, self.seq_len, self.heads, self.dim, device='cuda', dtype=self.dtype)
         return q, k, v
 
+    def ref_program(self, q: torch.Tensor, k: torch.Tensor,
+                    v: torch.Tensor) -> torch.Tensor:
+        q_bhsd = q.transpose(1, 2)  # [B, H, S, D]
+        k_bhsd = k.transpose(1, 2)
+        v_bhsd = v.transpose(1, 2)
+        with sdpa_kernel(backends=[SDPBackend.FLASH_ATTENTION]):
+            output_bhsd = F.scaled_dot_product_attention(
+                q_bhsd, k_bhsd, v_bhsd, is_causal=self.is_causal)
+        output = output_bhsd.transpose(1, 2).contiguous()
+        return output
 
-class MhaDecodeTest(WorkloadBase):
+
+class MhaDecodeWorkload(WorkloadBase):
 
     def __init__(self, batch: int, heads: int, seq_len_q: int, seq_len_kv: int, dim: int,
                  dtype: torch.dtype) -> None:
@@ -106,8 +134,17 @@ class MhaDecodeTest(WorkloadBase):
             self.batch, self.seq_len_kv, self.heads, self.dim, device='cuda', dtype=self.dtype)
         return Q, K, V
 
+    def ref_program(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
+        q_bhsd = q.transpose(1, 2)  # [B, H, S_q, D]
+        k_bhsd = k.transpose(1, 2)  # [B, H, S_kv, D]
+        v_bhsd = v.transpose(1, 2)  # [B, H, S_kv, D]
+        with sdpa_kernel(backends=[SDPBackend.FLASH_ATTENTION]):
+            output_bhsd = F.scaled_dot_product_attention(q_bhsd, k_bhsd, v_bhsd)
+        output = output_bhsd.transpose(1, 2).contiguous()
+        return output
 
-class MhaDecodePagedTest(WorkloadBase):
+
+class MhaDecodePagedWorkload(WorkloadBase):
 
     def __init__(self, batch: int, heads: int, seqlen_q: int, seqlen_kv: int, dim: int,
                  page_size: int, is_causal: bool, dtype: torch.dtype) -> None:
@@ -140,3 +177,34 @@ class MhaDecodePagedTest(WorkloadBase):
         real_seqlen_kv = real_seqlen_kv.contiguous()
 
         return q, k, v, real_seqlen_kv, block_table
+
+    def ref_program(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor,
+                    real_seqlen_kv: torch.Tensor, block_table: torch.Tensor) -> torch.Tensor:
+        """Reassemble paged K/V to logical layout per batch, then SDPA."""
+        batch, seqlen_q, heads, dim = q.shape
+        seqlen_kv = k.shape[0]
+        out_list = []
+        for i_b in range(batch):
+            q_b = q[i_b:i_b + 1, :, :, :]
+            k_logical = torch.zeros(seqlen_kv, heads, dim, dtype=q.dtype, device=q.device)
+            v_logical = torch.zeros(seqlen_kv, heads, dim, dtype=q.dtype, device=q.device)
+            num_pages = math.ceil(real_seqlen_kv[i_b].item() / self.page_size)
+            for i_paged in range(num_pages):
+                start_pos = block_table[i_b, i_paged].item() * self.page_size
+                end_pos = min(start_pos + self.page_size, seqlen_kv)
+                page_len = end_pos - start_pos
+                k_logical[i_paged * self.page_size:i_paged * self.page_size +
+                          page_len, :, :] = k[start_pos:end_pos, :, :]
+                v_logical[i_paged * self.page_size:i_paged * self.page_size +
+                          page_len, :, :] = v[start_pos:end_pos, :, :]
+            k_logical = k_logical[:real_seqlen_kv[i_b].item(), :, :]
+            v_logical = v_logical[:real_seqlen_kv[i_b].item(), :, :]
+            k_b = k_logical.unsqueeze(0)
+            v_b = v_logical.unsqueeze(0)
+            q_bhsd = q_b.transpose(1, 2)
+            k_bhsd = k_b.transpose(1, 2)
+            v_bhsd = v_b.transpose(1, 2)
+            out_b = F.scaled_dot_product_attention(q_bhsd, k_bhsd, v_bhsd)
+            out_b = out_b.transpose(1, 2).contiguous()
+            out_list.append(out_b)
+        return torch.cat(out_list, dim=0)

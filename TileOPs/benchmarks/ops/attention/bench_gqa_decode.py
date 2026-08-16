@@ -6,25 +6,9 @@ from benchmarks.benchmark_base import BenchmarkReport, ManifestBenchmark
 from benchmarks.ops.attention.manifest_params import gqa_decode_args, manifest_params
 from tileops.manifest import load_workloads
 from tileops.ops import GroupedQueryAttentionDecodeWithKVCacheFwdOp
-from workloads.attention.gqa import GroupedQueryAttentionDecodeTest
+from workloads.attention.gqa import GroupedQueryAttentionDecodeWorkload
 
 _OP_NAME = "GroupedQueryAttentionDecodeWithKVCacheFwdOp"
-
-
-class _GroupedQueryAttentionDecodeTestBaseline(GroupedQueryAttentionDecodeTest):
-    """Adds baseline ref_program for benchmark profiling."""
-
-    def ref_program(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
-        q_bhsd = q.unsqueeze(1).transpose(1, 2)  # [B, H, 1, D]
-        groups = self.heads // self.heads_kv
-        k_bhsd = k.repeat_interleave(groups, dim=2).transpose(1, 2).float()
-        v_bhsd = v.repeat_interleave(groups, dim=2).transpose(1, 2).float()
-        scores = torch.matmul(q_bhsd.float(), k_bhsd.transpose(-2, -1)) * self.sm_scale
-        if self.softcap > 0:
-            scores = self.softcap * torch.tanh(scores / self.softcap)
-        probs = torch.softmax(scores, dim=-1)
-        output_bhsd = torch.matmul(probs, v_bhsd)
-        return output_bhsd.transpose(1, 2).squeeze(1).to(q.dtype).contiguous()
 
 
 def _fa3_gqa_decode_fwd(test):
@@ -135,7 +119,7 @@ _GQA_DECODE_BENCH_PARAMS = manifest_params(load_workloads(_OP_NAME), gqa_decode_
 def test_gqa_decode_bench(batch: int, heads: int, heads_kv: int, seq_len_kv: int, dim: int,
                           sm_scale: float | None, softcap: float | None, dtype: torch.dtype,
                           tune: bool) -> None:
-    test = _GroupedQueryAttentionDecodeTestBaseline(
+    test = GroupedQueryAttentionDecodeWorkload(
         batch, heads, heads_kv, seq_len_kv, dim, dtype, sm_scale=sm_scale, softcap=softcap)
     inputs = test.gen_inputs()
 
@@ -145,29 +129,22 @@ def test_gqa_decode_bench(batch: int, heads: int, heads_kv: int, seq_len_kv: int
         heads_kv,
         seq_len_kv,
         dim,
-        dtype,
         sm_scale=sm_scale,
         softcap=softcap,
         tune=tune,
     )
     bm = ManifestBenchmark(_OP_NAME, op, test)
-    result = bm.profile(op, *inputs)
-    BenchmarkReport.record(op, locals(), result, tag="tileops")
+    functors = {"tileops": op}
 
     fa3_fn = _fa3_gqa_decode_fwd(test)
     if fa3_fn is not None:
-        result_bl = bm.profile(fa3_fn, *inputs)
-        BenchmarkReport.record(op, locals(), result_bl, tag="fa3")
+        functors["fa3"] = fa3_fn
 
     fi_fn = _flashinfer_gqa_decode_fwd(test, *inputs)
     if fi_fn is not None:
-        result_fi = bm.profile(fi_fn, *inputs)
-        BenchmarkReport.record(op, locals(), result_fi, tag="flashinfer")
+        functors["flashinfer"] = fi_fn
 
     if fa3_fn is None and fi_fn is None:
-        result_bl = bm.profile(test.ref_program, *inputs)
-        BenchmarkReport.record(op, locals(), result_bl, tag="torch-sdpa")
+        functors["torch-sdpa"] = test.ref_program
 
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-vvs"])
+    bm.compare(functors, *inputs, record_as=op, params=locals())

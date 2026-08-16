@@ -5,41 +5,12 @@ import torch
 
 from tests.test_base import FixtureBase, TestBase
 from tileops.ops import MeanPoolingForwardOp
-from workloads.mean_pooling import MeanPoolingTest as _MeanPoolingTestWorkload
 from workloads.nsa_utils import prepare_chunk_indices
+from workloads.pool import MeanPoolingWorkload
 
 
-class MeanPoolingTest(_MeanPoolingTestWorkload, TestBase):
-    def ref_program(self, x: torch.Tensor, offsets: torch.Tensor,
-                    indices: torch.Tensor) -> torch.Tensor:
-        _ = indices
-        batch_size, seq_len, heads, dim = x.shape
-
-        if self.use_offsets == 0:
-            output = torch.empty(
-                batch_size, self.chunks_per_bacth, heads, dim, dtype=x.dtype, device=x.device)
-            for chunk_id in range(self.chunks_per_bacth):
-                start_token = chunk_id * self.chunk_size
-                end_token = min(start_token + self.chunk_size, seq_len)
-                output[:, chunk_id] = x[:, start_token:end_token].mean(dim=1)
-        else:
-            offsets = offsets.to(x.device)
-            lengths = offsets[1:] - offsets[:-1]
-            chunk_counts = ((lengths + self.chunk_size - 1) // self.chunk_size).tolist()
-            total_chunks = sum(chunk_counts)
-            output = torch.empty(
-                batch_size, total_chunks, heads, dim, dtype=x.dtype, device=x.device)
-            chunk_idx = 0
-            for b in range(batch_size):
-                for seq_id, chunks_i in enumerate(chunk_counts):
-                    seq_start = offsets[seq_id].item()
-                    seq_end = offsets[seq_id + 1].item()
-                    for local_chunk_id in range(chunks_i):
-                        chunk_start = seq_start + local_chunk_id * self.chunk_size
-                        chunk_end = min(chunk_start + self.chunk_size, seq_end)
-                        output[b, chunk_idx] = x[b, chunk_start:chunk_end].mean(dim=0)
-                        chunk_idx += 1
-        return output
+class MeanPoolingTest(MeanPoolingWorkload, TestBase):
+    pass
 
 
 class MeanPoolingFixture(FixtureBase):
@@ -88,7 +59,7 @@ def test_mean_pooling_op(batch_size: int, seq_len: int, heads: int, dim: int, ch
         assert batch_size == 1
         assert offsets[-1] == seq_len
         indices = prepare_chunk_indices(offsets, chunk_size)
-        chunks_per_bacth = indices.shape[0]
+        chunks_per_batch = indices.shape[0]
         seq_num = offsets.shape[0] - 1
         use_offsets = 1
     else:
@@ -98,8 +69,8 @@ def test_mean_pooling_op(batch_size: int, seq_len: int, heads: int, dim: int, ch
             dtype=torch.int32,
             device='cuda',
             requires_grad=False)
-        chunks_per_bacth = (seq_len + chunk_size - 1) // chunk_size  # integer ceil
-        indices = torch.randint(0, seq_len, (chunks_per_bacth, 2), dtype=torch.int32, device='cuda')
+        chunks_per_batch = (seq_len + chunk_size - 1) // chunk_size  # integer ceil
+        indices = torch.randint(0, seq_len, (chunks_per_batch, 2), dtype=torch.int32, device='cuda')
         seq_num = batch_size
         use_offsets = 0
 
@@ -109,17 +80,16 @@ def test_mean_pooling_op(batch_size: int, seq_len: int, heads: int, dim: int, ch
         "heads": heads,
         "dim": dim,
         "chunk_size": chunk_size,
-        "chunks_per_bacth": chunks_per_bacth,
+        "chunks_per_batch": chunks_per_batch,
         "seq_num": seq_num,
         "use_offsets": use_offsets,
-        "dtype": dtype,
         "accum_dtype": accum_dtype,
         "tune": tune,
     }
 
     test = MeanPoolingTest(
         batch_size=batch_size, seq_len=seq_len, heads=heads, dim=dim,
-        chunk_size=chunk_size, chunks_per_bacth=chunks_per_bacth,
+        chunk_size=chunk_size, chunks_per_batch=chunks_per_batch,
         seq_num=seq_num, use_offsets=use_offsets,
         dtype=dtype, accum_dtype=accum_dtype,
         offsets=offsets, indices=indices)

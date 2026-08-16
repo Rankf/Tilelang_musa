@@ -56,8 +56,9 @@ def exact_compare(output: torch.Tensor, output_ref: torch.Tensor) -> None:
 class TestBase(WorkloadBase):
     """Abstract base class for op correctness testing.
 
-    Inherits gen_inputs() from WorkloadBase.
-    Subclasses must implement ref_program() for correctness checking.
+    Inherits gen_inputs() from WorkloadBase, and ref_program() too when the
+    workload is named for one op; a test on a shape-only workload defines
+    ref_program itself.
     Provides check() for comparing op output against reference.
     """
     __test__ = False
@@ -66,9 +67,9 @@ class TestBase(WorkloadBase):
     def ref_program(self, *inputs: Any) -> Any:
         """Reference implementation for correctness checking.
 
-        Must be overridden by every concrete test subclass.
-        Should return the same outputs as the op under test, using a
-        simpler/trusted implementation (e.g. PyTorch built-ins).
+        Supplied by the workload for ops whose workload names them, otherwise
+        by the test subclass. Returns the same outputs as the op under test,
+        using a simpler/trusted implementation (e.g. PyTorch built-ins).
         """
         raise NotImplementedError
 
@@ -116,7 +117,11 @@ class TestBase(WorkloadBase):
         max_abs_err = 0.0
         for output, output_ref in zip(outputs, outputs_ref, strict=True):
             if output_ref is not None:
-                err = (output.float() - output_ref.float()).abs().max().item()
+                # Widen before subtracting so narrow dtypes do not lose the
+                # error to rounding. .float() alone would drop the imaginary
+                # part of a complex output and under-report it.
+                wide = torch.complex64 if output.is_complex() else torch.float32
+                err = (output.to(wide) - output_ref.to(wide)).abs().max().item()
                 max_abs_err = max(max_abs_err, err)
 
         # Store for conftest hook to attach to pytest report.

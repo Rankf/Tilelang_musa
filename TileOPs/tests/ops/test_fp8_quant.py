@@ -6,17 +6,11 @@ import torch.nn.functional as F
 
 from tests.test_base import FixtureBase, TestBase
 from tileops.ops import FP8QuantOp
-from workloads.fp8_quant import FP8QuantTest as _FP8QuantTestWorkload
+from workloads.fp8_quant import FP8QuantWorkload
 
 
-class FP8QuantTest(_FP8QuantTestWorkload, TestBase):
-    def ref_program(self, input_tensor: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        # input_tensor: (batch, seq_len_kv, kv_group, index_dim)
-        amax_value = torch.abs(input_tensor).amax(dim=-1, keepdim=True).clamp(min=1e-4)
-        scale_tensor = amax_value / 448.0
-        output_tensor = torch.clamp(input_tensor / scale_tensor, min=-448.0, max=448.0)
-        output_tensor = output_tensor.to(torch.float8_e4m3fn)
-        return scale_tensor.squeeze(dim=-1), output_tensor
+class FP8QuantTest(FP8QuantWorkload, TestBase):
+    pass
 
 
 class FP8QuantFixture(FixtureBase):

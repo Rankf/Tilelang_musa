@@ -8,23 +8,11 @@ from tileops.kernels.norm.ada_layer_norm import (
     _should_use_cp_async,
 )
 from tileops.ops.norm.ada_layer_norm import AdaLayerNormFwdOp
-from workloads.normalization import AdaLayerNormTest as _AdaLayerNormTestWorkload
+from workloads.normalization import AdaLayerNormWorkload
 
 
-class AdaLayerNormTest(_AdaLayerNormTestWorkload, TestBase):
-    def ref_program(
-        self, x: torch.Tensor, scale: torch.Tensor, shift: torch.Tensor
-    ) -> torch.Tensor:
-        # AdaLN: y = scale * LayerNorm(x) + shift
-        normed = F.layer_norm(
-            x.float(),
-            (self.n,),
-            weight=None,
-            bias=None,
-            eps=self.eps,
-        )
-        y = scale.float() * normed + shift.float()
-        return y.to(x.dtype)
+class AdaLayerNormTest(AdaLayerNormWorkload, TestBase):
+    pass
 
 
 class AdaLayerNormFixture(FixtureBase):
@@ -65,7 +53,7 @@ def _get_tolerances(dtype: torch.dtype) -> tuple[float, float]:
 @AdaLayerNormFixture
 def test_ada_layer_norm_op(m: int, n: int, dtype: torch.dtype) -> None:
     test = AdaLayerNormTest(m, n, dtype)
-    op = AdaLayerNormFwdOp(dtype=dtype)
+    op = AdaLayerNormFwdOp()
     atol, rtol = _get_tolerances(dtype)
     test.check(op, *test.gen_inputs(), atol=atol, rtol=rtol)
 
@@ -183,7 +171,7 @@ def test_ada_layer_norm_3d(batch: int, seq: int, hidden: int, dtype: torch.dtype
     scale = torch.randn(batch, seq, hidden, dtype=dtype, device="cuda")
     shift = torch.randn(batch, seq, hidden, dtype=dtype, device="cuda")
 
-    op = AdaLayerNormFwdOp(dtype=dtype)
+    op = AdaLayerNormFwdOp()
 
     # Reference: scale * LayerNorm(x) + shift
     eps = 1e-5

@@ -2,7 +2,7 @@
 
 Verifies that the manifest validator correctly implements schema/signature/shape/dtype/bench checks.
 Uses synthetic manifest data to test individual check functions,
-plus an integration test against the real ops manifest (tileops/manifest/).
+plus an integration test against the real ops manifest (src/tileops/manifest/).
 """
 
 import contextlib
@@ -12,6 +12,7 @@ import textwrap
 from pathlib import Path
 
 import pytest
+import torch
 
 pytestmark = pytest.mark.smoke
 
@@ -549,8 +550,10 @@ class TestSourcePathExistence:
         assert not any("not a file" in e for e in errors), errors
 
     def test_existing_source_files_pass(self, validator, tmp_path):
-        for name in ("k.py", "o.py", "t.py", "b.py"):
-            (tmp_path / name).write_text("# placeholder\n")
+        # kernel/op resolve under src/; test/bench against the repo root.
+        (tmp_path / "src").mkdir()
+        for rel in ("src/k.py", "src/o.py", "t.py", "b.py"):
+            (tmp_path / rel).write_text("# placeholder\n")
         manifest_file = _write_manifest(
             tmp_path, {"my_op": _make_entry(status="implemented", kernel_map={})},
         )
@@ -2050,7 +2053,7 @@ class TestBench:
                 workloads = load_workloads('test_op')
                 op.eval_roofline()
             """, None),
-            ("indirect benchmark_base helpers pass", """\
+            ("indirect base helpers pass", """\
                 from benchmarks.benchmark_base import workloads_to_params, ManifestBenchmark
                 params = workloads_to_params('test_op')
                 ManifestBenchmark('test_op', op, params[0])
@@ -2573,31 +2576,45 @@ class TestCtorSignatureParity:
         }}
         assert validator.check_c3_ctor_signature_parity("Op1", entry, cls) == []
 
-        # compat_default: required manifest param with a ctor-only default.
+    def test_dtype_default_compared_as_dtype(self, validator):
+        """A ``torch.dtype`` default is spelled by name in YAML.
+
+        ``torch.float16 != "float16"``, so comparing the spellings would make
+        every dtype default a mismatch and leave the manifest unable to declare
+        one at all.
+        """
         cls = _strict_op(
-            "OpCompat", init=lambda self, num_experts=None, kernel_map=None: None,
+            "OpDtypeDefault",
+            init=lambda self, dtype=torch.float16, kernel_map=None: None,
         )
         entry = {"signature": {
-            "params": {
-                "num_experts": {"type": "int", "compat_default": None},
-            },
+            "params": {"dtype": {"type": "torch.dtype", "default": "float16"}},
         }}
         assert validator.check_c3_ctor_signature_parity(
-            "OpCompat", entry, cls
+            "OpDtypeDefault", entry, cls,
         ) == []
 
+        # A genuinely different dtype still fails.
+        entry_bad = {"signature": {
+            "params": {"dtype": {"type": "torch.dtype", "default": "bfloat16"}},
+        }}
+        errs = validator.check_c3_ctor_signature_parity(
+            "OpDtypeDefault", entry_bad, cls,
+        )
+        assert any("default mismatch" in e for e in errs), errs
+
     def test_ctor_mismatches_fail(self, validator):
-        """Case table: missing default, compat_default mismatch, kw-only."""
+        """Case table: missing default, undeclared ctor default, kw-only."""
         cases = [
             ("param default missing on __init__",
              _strict_op("OpNoDefault",
                         init=lambda self, dim, kernel_map=None: None),
              {"dim": {"type": "int", "default": -1}},
              "no default on __init__"),
-            ("compat_default value mismatch",
-             _strict_op("OpCompatMismatch",
+            ("ctor default the manifest does not declare",
+             _strict_op("OpUndeclaredDefault",
                         init=lambda self, num_experts=0, kernel_map=None: None),
-             {"num_experts": {"type": "int", "compat_default": None}},
+             {"num_experts": {"type": "int"}},
              "no manifest default"),
             ("kw_only mismatch",
              _strict_op("OpKwOnly",

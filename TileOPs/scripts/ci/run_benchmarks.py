@@ -5,6 +5,11 @@ A native failure (hang, segfault, OOM kill) costs one file: other fragments
 survive into the merged report and a hung child leaves a py-spy stack dump.
 Upcoming children import while the current file owns the GPU, hiding startup
 cost. This parent must never import torch: children need fresh processes.
+
+Two limits, because a stuck file and an expensive one call for opposite
+responses. ``--stall-timeout`` kills a child that stopped starting tests,
+however long its individual tests take. ``--total-budget`` stops launching
+files and writes the report, killing nothing for being slow.
 """
 
 from __future__ import annotations
@@ -31,17 +36,35 @@ TEARDOWN_TIMEOUT_S = 120
 # = the bench file. prctl(PR_SET_PTRACER, parent) lets py-spy attach under
 # yama ptrace_scope=1. The collect-only pass runs while another file owns
 # the GPU, so it must stay GPU-silent; CUDA init happens after the stdin
-# grant. The exit code leaves via the pipe before interpreter teardown.
+# grant. TILEOPS_COLLECT_STATUS holds "started", then the collect exit code,
+# so a child that dies mid-collect stays distinguishable from a clean one.
+# TILEOPS_HEARTBEAT is rewritten at every test start: its mtime is the
+# parent's progress signal, its contents name the test to blame for a stall.
+# stdout is a file, so it is block-buffered; without the flush the parent
+# prints the log while pytest's FAILURES section is still in the buffer.
+# The run exit code leaves via the pipe before interpreter teardown.
 _CHILD = """\
 import ctypes, os, sys
+
+status = os.environ["TILEOPS_COLLECT_STATUS"]
+open(status, "w").write("started")
+beat = os.environ["TILEOPS_HEARTBEAT"]
 
 ctypes.CDLL(None).prctl(0x59616D61, os.getppid(), 0, 0, 0)
 
 import pytest
 
-pytest.main(["--collect-only", "-q", sys.argv[3]])
+class Heartbeat:
+    def pytest_runtest_logstart(self, nodeid, location):
+        with open(beat, "w") as fh:
+            fh.write(nodeid)
+
+rc_collect = int(pytest.main(["--collect-only", "-q", sys.argv[3]]))
+open(status, "w").write(str(rc_collect))
 sys.stdin.readline()
-rc = int(pytest.main(sys.argv[2:]))
+open(beat, "w").write("")
+rc = int(pytest.main(sys.argv[2:], plugins=[Heartbeat()]))
+sys.stdout.flush()
 os.write(int(sys.argv[1]), str(rc).encode())
 sys.exit(rc)
 """
@@ -49,7 +72,14 @@ sys.exit(rc)
 class Child:
     """One bench child process plus its status pipe."""
 
-    def __init__(self, code: str, argv: list[str], log_path: Path):
+    def __init__(
+        self,
+        code: str,
+        argv: list[str],
+        log_path: Path,
+        status_path: Path,
+        beat_path: Path,
+    ):
         read_fd, write_fd = os.pipe()
         log_fd = os.open(log_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o644)
         try:
@@ -60,11 +90,25 @@ class Child:
                 stderr=subprocess.STDOUT,
                 start_new_session=True,
                 pass_fds=(write_fd,),
+                env={
+                    **os.environ,
+                    "TILEOPS_COLLECT_STATUS": str(status_path),
+                    "TILEOPS_HEARTBEAT": str(beat_path),
+                },
             )
         finally:
             os.close(log_fd)
             os.close(write_fd)
         self.status_fd = read_fd
+        self.beat_path = beat_path
+
+    def beat(self) -> tuple[float, str]:
+        """Return (mtime, running nodeid) of the heartbeat; (0.0, "") if absent."""
+        try:
+            mtime = self.beat_path.stat().st_mtime
+            return mtime, self.beat_path.read_text(errors="replace").strip()
+        except OSError:
+            return 0.0, ""
 
     def release(self) -> None:
         """Unblock the child waiting on stdin; a child already dead is fine."""
@@ -92,23 +136,6 @@ class Child:
         # EOF without a status report: the child died; reap the reason.
         return self.proc.wait()
 
-    def poll_teardown(self, deadline: float) -> str | None:
-        """Return the teardown outcome once the child is gone, else None.
-
-        Outcomes: "" for a normal exit, otherwise a message describing a
-        teardown crash (unexpected signal) or a deadline kill.
-        """
-        rc = self.proc.poll()
-        if rc is not None:
-            if rc < 0:
-                sig = signal.Signals(-rc)
-                return f"died in teardown: signal {sig.value} ({sig.name})"
-            return ""
-        if time.monotonic() < deadline:
-            return None
-        self.kill()
-        return "stuck in teardown; killed at deadline"
-
     def kill(self) -> None:
         """Kill the child's whole process group and reap it."""
         with contextlib.suppress(ProcessLookupError):
@@ -118,27 +145,17 @@ class Child:
             os.close(self.status_fd)
 
 
-def _reap_lingering(
-    lingering: list[tuple[Child, float, str]], block: bool
-) -> list[tuple[str, str]]:
-    """Drop finished children, killing any past its teardown deadline.
-
-    Returns (bench_file, message) for every abnormal teardown. With
-    block=True, waits out the remaining deadlines (end of run).
-    """
-    anomalies: list[tuple[str, str]] = []
-    while True:
-        remaining = []
-        for child, deadline, bench_file in lingering:
-            outcome = child.poll_teardown(deadline)
-            if outcome is None:
-                remaining.append((child, deadline, bench_file))
-            elif outcome:
-                anomalies.append((bench_file, outcome))
-        lingering[:] = remaining
-        if not lingering or not block:
-            return anomalies
-        time.sleep(1.0)
+def _reap_teardown(child: Child, timeout_s: float) -> str:
+    """Wait out a reported child's teardown; "" if normal, else an anomaly message."""
+    try:
+        rc = child.proc.wait(timeout=timeout_s)
+    except subprocess.TimeoutExpired:
+        child.kill()
+        return "stuck in teardown; killed at deadline"
+    if rc < 0:
+        sig = signal.Signals(-rc)
+        return f"died in teardown: signal {sig.value} ({sig.name})"
+    return ""
 
 
 def _dump_stack(pid: int, dump_path: Path) -> None:
@@ -187,6 +204,18 @@ def _discover_bench_files(targets: list[str]) -> list[str]:
     return list(files)
 
 
+def _unrun_suite(rel: str) -> ET.Element:
+    """Build a one-entry junit testsuite marking a file the budget never reached."""
+    suite = ET.Element(
+        "testsuite",
+        {"name": "pytest", "tests": "1", "errors": "0", "failures": "0", "skipped": "1"},
+    )
+    classname = rel[: -len(".py")].replace(os.sep, ".")
+    case = ET.SubElement(suite, "testcase", {"classname": classname, "name": "whole_file"})
+    ET.SubElement(case, "skipped", {"message": f"{rel}: not run, sweep budget spent"})
+    return suite
+
+
 def _synthetic_suite(bench_file: str, message: str, log_tail: str) -> ET.Element:
     """Build a one-entry junit testsuite standing in for a dead child's results."""
     suite = ET.Element(
@@ -203,6 +232,19 @@ def _synthetic_suite(bench_file: str, message: str, log_tail: str) -> ET.Element
 def _fragment_suites(fragment: Path) -> list[ET.Element]:
     root = ET.parse(fragment).getroot()
     return list(root) if root.tag == "testsuites" else [root]
+
+
+def _collect_outcome(status_path: Path) -> str | None:
+    """Describe the collect-only pass, or None if it exited 0 or 5 (nothing collected)."""
+    try:
+        raw = status_path.read_text().strip()
+    except OSError:
+        return "no status written; the child died before collection"
+    if raw == "started":
+        return "died during collection"
+    if raw.isdigit() and int(raw) not in (0, 5):
+        return f"collect-only exited with {raw}"
+    return None
 
 
 def _log_tail(log_path: Path) -> str:
@@ -223,10 +265,24 @@ def main() -> int:
     )
     parser.add_argument("--junit-xml", required=True, help="merged junit report path")
     parser.add_argument(
-        "--timeout-per-file",
+        "--stall-timeout",
         type=float,
-        default=1800.0,
-        help="seconds before a bench file's process is dumped and killed",
+        default=900.0,
+        help=(
+            "seconds a bench file may spend without starting a new test before "
+            "its process is dumped and killed; this catches a hung or wedged "
+            "child, and is not a cap on how long a file may legitimately run"
+        ),
+    )
+    parser.add_argument(
+        "--total-budget",
+        type=float,
+        default=None,
+        help=(
+            "seconds the whole sweep may run; the runner stops launching files "
+            "once it is spent and reports the rest as not run, so the report is "
+            "written instead of the CI job being cancelled mid-sweep"
+        ),
     )
     parser.add_argument("--dump-dir", default="bench_stack_dumps", help="stack dump directory")
     parser.add_argument(
@@ -247,14 +303,17 @@ def main() -> int:
     suites: list[ET.Element] = []
     profile_parts: list[str] = []
     failed: list[str] = []
-    lingering: list[tuple[Child, float, str]] = []
 
-    def note_anomalies(anomalies: list[tuple[str, str]]) -> None:
-        for anomaly_file, message in anomalies:
-            rel_a = os.path.relpath(anomaly_file)
-            print(f"TEARDOWN: {rel_a}: {message}", flush=True)
-            suites.append(_synthetic_suite(anomaly_file, message, ""))
-            failed.append(rel_a)
+    def mark_failed(rel: str) -> None:
+        """Record a file once: it can both fail its tests and crash in teardown."""
+        if rel not in failed:
+            failed.append(rel)
+
+    def note_teardown_anomaly(bench_file: str, message: str) -> None:
+        rel_a = os.path.relpath(bench_file)
+        print(f"TEARDOWN: {rel_a}: {message}", flush=True)
+        suites.append(_synthetic_suite(bench_file, message, ""))
+        mark_failed(rel_a)
 
     with tempfile.TemporaryDirectory(prefix="bench_runner_") as work:
         work_dir = Path(work)
@@ -266,9 +325,17 @@ def main() -> int:
         def spawn_at(index: int) -> Child:
             fragment = work_dir / f"{index:03d}.xml"
             argv = ["-q", bench_files[index], f"--junit-xml={fragment}"]
-            return Child(_CHILD, argv, work_dir / f"{index:03d}.log")
+            return Child(
+                _CHILD,
+                argv,
+                work_dir / f"{index:03d}.log",
+                work_dir / f"{index:03d}.collect",
+                work_dir / f"{index:03d}.beat",
+            )
 
         pending: deque[Child] = deque()
+        current: Child | None = None
+        collect_failed: list[tuple[str, str]] = []
         spawned = 0
 
         def top_up() -> None:
@@ -277,10 +344,21 @@ def main() -> int:
                 pending.append(spawn_at(spawned))
                 spawned += 1
 
+        run_deadline = (
+            time.monotonic() + args.total_budget if args.total_budget is not None else None
+        )
+        unrun: list[str] = []
+
+        def budget_spent() -> bool:
+            return run_deadline is not None and time.monotonic() >= run_deadline
+
         top_up()
         try:
             for index, bench_file in enumerate(bench_files):
-                child = pending.popleft()
+                if budget_spent():
+                    unrun.extend(os.path.relpath(f) for f in bench_files[index:])
+                    break
+                child = current = pending.popleft()
                 top_up()
                 rel = os.path.relpath(bench_file)
                 print(f"\n=== [{index + 1}/{len(bench_files)}] {rel} ===", flush=True)
@@ -289,59 +367,96 @@ def main() -> int:
 
                 start = time.monotonic()
                 child.release()
-                # Poll in short steps so lingering teardown deadlines are
-                # enforced while this file runs, not after it.
-                file_deadline = start + args.timeout_per_file
+                # The deadline tracks the last test start, not the file start:
+                # a file of many slow tests is progressing, not stuck.
+                stall_deadline = start + args.stall_timeout
+                last_beat = 0.0
+                out_of_budget = False
                 while True:
-                    rc = child.wait_result(min(1.0, max(0.0, file_deadline - time.monotonic())))
-                    note_anomalies(_reap_lingering(lingering, block=False))
-                    if rc is not None or time.monotonic() >= file_deadline:
+                    limit = stall_deadline if run_deadline is None else min(
+                        stall_deadline, run_deadline
+                    )
+                    rc = child.wait_result(min(1.0, max(0.0, limit - time.monotonic())))
+                    if rc is not None:
+                        break
+                    beat_mtime, _ = child.beat()
+                    if beat_mtime > last_beat:
+                        last_beat = beat_mtime
+                        stall_deadline = time.monotonic() + args.stall_timeout
+                    if time.monotonic() >= stall_deadline:
+                        break
+                    if budget_spent():
+                        out_of_budget = True
                         break
                 elapsed = time.monotonic() - start
 
+                if out_of_budget:
+                    child.kill()
+                    sys.stdout.write(log_path.read_text(errors="replace"))
+                    print(
+                        f"BUDGET: {rel}: stopped after {elapsed:.0f}s; "
+                        f"the {args.total_budget:.0f}s sweep budget is spent",
+                        flush=True,
+                    )
+                    unrun.extend(os.path.relpath(f) for f in bench_files[index:])
+                    break
+
                 if rc is None:
+                    _, stalled_on = child.beat()
                     dump_dir.mkdir(parents=True, exist_ok=True)
                     dump_path = dump_dir / f"{Path(bench_file).stem}.txt"
                     _dump_stack(child.proc.pid, dump_path)
                     child.kill()
                     sys.stdout.write(log_path.read_text(errors="replace"))
+                    where = stalled_on or "startup (no test reached)"
                     message = (
-                        f"timed out after {args.timeout_per_file:.0f}s; "
+                        f"no test started for {args.stall_timeout:.0f}s at {where}; "
                         f"killed, stack dump at {dump_path}"
                     )
-                    print(f"TIMEOUT: {rel}: {message}", flush=True)
+                    print(f"STALLED: {rel}: {message}", flush=True)
                     suites.append(_synthetic_suite(bench_file, message, _log_tail(log_path)))
-                    failed.append(rel)
+                    mark_failed(rel)
                 else:
-                    if rc >= 0:
-                        # A pre-status signal death (rc < 0) is already reaped
-                        # and recorded below; enqueue only status-reported
-                        # children so post-status deaths stay observable.
-                        lingering.append(
-                            (child, time.monotonic() + args.teardown_timeout, bench_file)
-                        )
                     sys.stdout.write(log_path.read_text(errors="replace"))
+                    if rc >= 0:
+                        # A status-reported child still holds its CUDA context,
+                        # and the card is in EXCLUSIVE_PROCESS mode: the next
+                        # file's first allocation is refused until this process
+                        # is gone. A pre-status signal death (rc < 0) is already
+                        # reaped by wait_result.
+                        teardown = _reap_teardown(child, args.teardown_timeout)
+                        current = None
+                        if teardown:
+                            note_teardown_anomaly(bench_file, teardown)
                     if rc < 0:
                         sig = signal.Signals(-rc)
                         message = f"killed by signal {sig.value} ({sig.name})"
                         print(f"CRASH: {rel}: {message}", flush=True)
                         suites.append(_synthetic_suite(bench_file, message, _log_tail(log_path)))
-                        failed.append(rel)
+                        mark_failed(rel)
                     elif fragment.exists():
                         suites.extend(_fragment_suites(fragment))
                         # 0 = all passed, 5 = nothing collected (e.g. all skipped).
                         if rc not in (0, 5):
-                            failed.append(rel)
+                            mark_failed(rel)
                     else:
                         message = f"pytest exited with {rc} without writing results"
                         suites.append(_synthetic_suite(bench_file, message, _log_tail(log_path)))
-                        failed.append(rel)
+                        mark_failed(rel)
+                outcome = _collect_outcome(work_dir / f"{index:03d}.collect")
+                if outcome is not None:
+                    collect_failed.append((rel, outcome))
                 print(f"--- {rel} finished in {elapsed:.0f}s ---", flush=True)
                 _absorb_profile_log(profile_parts)
         finally:
-            for leftover in pending:
+            # The file being run owns the card; an exception before its teardown
+            # was awaited would leave that process holding it.
+            for leftover in ([current] if current else []) + list(pending):
                 leftover.kill()
-            note_anomalies(_reap_lingering(lingering, block=True))
+
+    # Absent from the sweep, not passing: the report must show the gap.
+    for rel in unrun:
+        suites.append(_unrun_suite(rel))
 
     merged = ET.Element("testsuites")
     merged.extend(suites)
@@ -350,10 +465,39 @@ def main() -> int:
     if profile_parts:
         Path("profile_run.log").write_text("\n".join(profile_parts))
 
-    if failed:
-        print(f"\n{len(failed)} benchmark file(s) failed:", flush=True)
-        for rel in failed:
+    if collect_failed:
+        scope = (
+            "every file" if len(collect_failed) == len(bench_files)
+            else f"{len(collect_failed)} of {len(bench_files)} files"
+        )
+        print(f"\ncollection did not complete cleanly for {scope}:", flush=True)
+        for rel, outcome in collect_failed:
+            print(f"  {rel}: {outcome}", flush=True)
+        print(
+            "  Collection runs while another file owns the GPU; a broken import is the"
+            " usual cause, and one that initialises CUDA perturbs the measured file.",
+            flush=True,
+        )
+
+    if unrun:
+        print(
+            f"\nthe {args.total_budget:.0f}s sweep budget ran out with "
+            f"{len(unrun)} of {len(bench_files)} file(s) not benchmarked:",
+            flush=True,
+        )
+        for rel in unrun:
             print(f"  {rel}", flush=True)
+        print(
+            "  Coverage is the contract: either the sweep gets cheaper or the"
+            " budget grows. Results for the files that did run are in the report.",
+            flush=True,
+        )
+
+    if failed or unrun:
+        if failed:
+            print(f"\n{len(failed)} benchmark file(s) failed:", flush=True)
+            for rel in failed:
+                print(f"  {rel}", flush=True)
         return 1
     print("\nall benchmark files passed", flush=True)
     return 0

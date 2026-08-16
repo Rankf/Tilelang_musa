@@ -2,20 +2,20 @@ import pytest
 import torch
 from torch.nn import functional as F
 
-from benchmarks.benchmark_base import BenchmarkReport, ManifestBenchmark
+from benchmarks.benchmark_base import BenchmarkReport, ManifestBenchmark, backward_of
 from benchmarks.ops.attention.manifest_params import manifest_params, mha_qkv_args
 from tileops.manifest import load_workloads
 from tileops.ops import MultiHeadAttentionBwdOp, MultiHeadAttentionFwdOp
 from workloads.attention.mha import (
-    MhaBwdTest,
-    MhaFwdTest,
+    MhaBwdWorkload,
+    MhaFwdWorkload,
 )
 
 _MHA_FWD_OP = "MultiHeadAttentionFwdOp"
 _MHA_BWD_OP = "MultiHeadAttentionBwdOp"
 
 
-def _fa3_mha_fwd(test: MhaFwdTest):
+def _fa3_mha_fwd(test: MhaFwdWorkload):
     """Return FA3 forward baseline callable, or None if not installed."""
     try:
         from flash_attn_interface import flash_attn_func
@@ -29,7 +29,7 @@ def _fa3_mha_fwd(test: MhaFwdTest):
     return baseline_fn
 
 
-def _fa3_mha_bwd(test: MhaBwdTest):
+def _fa3_mha_bwd(test: MhaBwdWorkload):
     """Return FA3 backward baseline callable, or None if not installed."""
     try:
         from flash_attn_interface import flash_attn_func
@@ -41,15 +41,14 @@ def _fa3_mha_bwd(test: MhaBwdTest):
         q = q.detach().requires_grad_(True)
         k = k.detach().requires_grad_(True)
         v = v.detach().requires_grad_(True)
-        out = flash_attn_func(q, k, v, causal=test.is_causal)
-        out = out[0] if isinstance(out, tuple) else out
-        out.backward(grad_output)
-        return q.grad, k.grad, v.grad
+        raw = flash_attn_func(q, k, v, causal=test.is_causal)
+        outputs = raw if isinstance(raw, tuple) else (raw,)
+        return backward_of(outputs[0])(grad_output, *(None,) * (len(outputs) - 1))
 
     return baseline_fn
 
 
-def _flashinfer_mha_fwd(test: MhaFwdTest, q, k, v):
+def _flashinfer_mha_fwd(test: MhaFwdWorkload, q, k, v):
     """Set up FlashInfer batched prefill wrapper. Returns callable or None."""
     try:
         from flashinfer.prefill import BatchPrefillWithRaggedKVCacheWrapper
@@ -96,8 +95,9 @@ def _torch_mha_bwd(test):
         out = F.scaled_dot_product_attention(
             q.transpose(1, 2), k.transpose(1, 2), v.transpose(1, 2),
             is_causal=test.is_causal)
-        out.transpose(1, 2).contiguous().backward(grad_output)
-        return q.grad, k.grad, v.grad
+        # Transposing grad_output into SDPA's layout is a view, so the baseline
+        # measures SDPA's backward alone.
+        return backward_of(out)(grad_output.transpose(1, 2))
     return fn
 
 
@@ -107,27 +107,25 @@ _MHA_FWD_BENCH_PARAMS = manifest_params(load_workloads(_MHA_FWD_OP), mha_qkv_arg
 @pytest.mark.parametrize("batch, seq_len, heads, dim, causal, dtype, tune", _MHA_FWD_BENCH_PARAMS)
 def test_mha_fwd_bench(batch: int, seq_len: int, heads: int, dim: int, causal: bool,
                        dtype: torch.dtype, tune: bool) -> None:
-    test = MhaFwdTest(batch, heads, seq_len, dim, causal, dtype)
+    test = MhaFwdWorkload(batch, heads, seq_len, dim, causal, dtype)
     inputs = test.gen_inputs()
 
-    op = MultiHeadAttentionFwdOp(batch, heads, seq_len, dim, causal, dtype, tune=tune)
+    op = MultiHeadAttentionFwdOp(batch, heads, seq_len, dim, causal, tune=tune)
     bm = ManifestBenchmark(_MHA_FWD_OP, op, test)
-    result = bm.profile(op, *inputs)
-    BenchmarkReport.record(op, locals(), result, tag="tileops")
+    functors = {"tileops": op}
 
     fa3_fn = _fa3_mha_fwd(test)
     if fa3_fn is not None:
-        result_bl = bm.profile(fa3_fn, *inputs)
-        BenchmarkReport.record(op, locals(), result_bl, tag="fa3")
+        functors["fa3"] = fa3_fn
 
     fi_fn = _flashinfer_mha_fwd(test, *inputs)
     if fi_fn is not None:
-        result_fi = bm.profile(fi_fn, *inputs)
-        BenchmarkReport.record(op, locals(), result_fi, tag="flashinfer")
+        functors["flashinfer"] = fi_fn
 
     if fa3_fn is None and fi_fn is None:
-        result_bl = bm.profile(_torch_mha_fwd(test), *inputs)
-        BenchmarkReport.record(op, locals(), result_bl, tag="torch-sdpa")
+        functors["torch-sdpa"] = _torch_mha_fwd(test)
+
+    bm.compare(functors, *inputs, record_as=op, params=locals())
 
 
 _MHA_BWD_BENCH_PARAMS = manifest_params(load_workloads(_MHA_BWD_OP), mha_qkv_args)
@@ -136,22 +134,17 @@ _MHA_BWD_BENCH_PARAMS = manifest_params(load_workloads(_MHA_BWD_OP), mha_qkv_arg
 @pytest.mark.parametrize("batch, seq_len, heads, dim, causal, dtype, tune", _MHA_BWD_BENCH_PARAMS)
 def test_mha_bwd_bench(batch: int, seq_len: int, heads: int, dim: int, causal: bool,
                        dtype: torch.dtype, tune: bool) -> None:
-    test = MhaBwdTest(batch, heads, seq_len, dim, causal, dtype)
+    test = MhaBwdWorkload(batch, heads, seq_len, dim, causal, dtype)
     inputs = test.gen_inputs()
 
-    op = MultiHeadAttentionBwdOp(batch, heads, seq_len, dim, causal, dtype, tune=tune)
+    op = MultiHeadAttentionBwdOp(batch, heads, seq_len, dim, causal, tune=tune)
     bm = ManifestBenchmark(_MHA_BWD_OP, op, test)
-    result = bm.profile(op, *inputs)
-    BenchmarkReport.record(op, locals(), result, tag="tileops")
+    functors = {"tileops": op}
 
     fa3_fn = _fa3_mha_bwd(test)
     if fa3_fn is not None:
-        result_bl = bm.profile(fa3_fn, *inputs)
-        BenchmarkReport.record(op, locals(), result_bl, tag="fa3")
+        functors["fa3"] = fa3_fn
     else:
-        result_bl = bm.profile(_torch_mha_bwd(test), *inputs)
-        BenchmarkReport.record(op, locals(), result_bl, tag="torch-sdpa")
+        functors["torch-sdpa"] = _torch_mha_bwd(test)
 
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-vvs"])
+    bm.compare(functors, *inputs, record_as=op, params=locals())

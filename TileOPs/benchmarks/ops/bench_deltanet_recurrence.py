@@ -7,7 +7,7 @@ from benchmarks.benchmark_base import BenchmarkBase, BenchmarkReport, ManifestBe
 from benchmarks.ops.attention.manifest_params import manifest_params
 from tileops.manifest import load_workloads
 from tileops.ops import DeltaNetDecodeOp
-from workloads.linear_attention import DeltaNetDecodeTest
+from workloads.linear_attention import DeltaNetDecodeWorkload
 from workloads.workload_base import FixtureBase
 
 _OP_NAME = "DeltaNetDecodeOp"
@@ -39,22 +39,7 @@ def deltanet_decode_torch(
     return o, new_state
 
 
-class _DeltaNetDecodeTestBaseline(DeltaNetDecodeTest):
-    """Adds baseline ref_program for benchmark profiling."""
-
-    def ref_program(
-        self,
-        q: torch.Tensor,
-        k: torch.Tensor,
-        v: torch.Tensor,
-        beta: torch.Tensor,
-        state: torch.Tensor,
-    ) -> tuple[torch.Tensor, torch.Tensor]:
-        o, new_state = deltanet_decode_torch(q, k, v, beta, state)
-        return o.to(self.dtype), new_state.to(self.dtype)
-
-
-class DeltaNetDecodeBenchmark(BenchmarkBase[DeltaNetDecodeTest]):
+class DeltaNetDecodeBenchmark(BenchmarkBase[DeltaNetDecodeWorkload]):
 
     def calculate_flops(self) -> Optional[float]:
         t = self.workload
@@ -95,17 +80,10 @@ def test_deltanet_decode_bench(
     dtype: torch.dtype,
     tune: bool,
 ) -> None:
-    test = _DeltaNetDecodeTestBaseline(batch, heads, dim_k, dim_v, dtype)
+    test = DeltaNetDecodeWorkload(batch, heads, dim_k, dim_v, dtype)
     inputs = test.gen_inputs()
 
     op = DeltaNetDecodeOp(tune=tune)
     bm = ManifestBenchmark(_OP_NAME, op, test)
-    result = bm.profile(op, *inputs)
-    BenchmarkReport.record(op, locals(), result, tag="tileops")
 
-    result_bl = bm.profile(test.ref_program, *inputs)
-    BenchmarkReport.record(op, locals(), result_bl, tag="torch")
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-vvs"])
+    bm.compare({"tileops": op, "torch": test.ref_program}, *inputs, record_as=op, params=locals())

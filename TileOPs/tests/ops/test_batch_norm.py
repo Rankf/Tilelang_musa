@@ -14,42 +14,18 @@ import torch
 from tests.test_base import FixtureBase, TestBase
 from tileops.ops.norm.batch_norm import BatchNormBwdOp, BatchNormFwdOp
 from workloads.normalization import (
-    BatchNormBwdTest as _BatchNormBwdTestWorkload,
+    BatchNormBwdWorkload,
+    BatchNormFwdWorkload,
+    batch_norm_fwd_ref,
 )
-from workloads.normalization import (
-    BatchNormFwdTest as _BatchNormFwdTestWorkload,
-)
 
 
-def _ref_fwd(x, weight, bias, running_mean, running_var, training, momentum=0.1, eps=1e-5):
-    """Reference: torch.nn.functional.batch_norm (float32 upcast)."""
-    x32 = x.float()
-    rm = running_mean.clone()
-    rv = running_var.clone()
-    y32 = torch.nn.functional.batch_norm(
-        x32, rm, rv, weight.float(), bias.float(),
-        training=training, momentum=momentum, eps=eps)
-    return y32.to(x.dtype), rm, rv
+class BatchNormBwdTest(BatchNormBwdWorkload, TestBase):
+    pass
 
 
-class BatchNormBwdTest(_BatchNormBwdTestWorkload, TestBase):
-    def ref_program(self, grad_out, x, weight, mean, rstd):
-        """Reference via torch.autograd on a float32 graph."""
-        x32 = x.float().requires_grad_(True)
-        w32 = weight.float().requires_grad_(True)
-        b32 = torch.zeros(self.C, device=x.device, dtype=torch.float32, requires_grad=True)
-        rm = torch.zeros(self.C, device=x.device, dtype=torch.float32)
-        rv = torch.ones(self.C, device=x.device, dtype=torch.float32)
-        y32 = torch.nn.functional.batch_norm(
-            x32, rm, rv, w32, b32, training=True, momentum=0.1, eps=1e-5)
-        y32.backward(grad_out.float())
-        return x32.grad.to(x.dtype), w32.grad, b32.grad
-
-class BatchNormFwdTest(_BatchNormFwdTestWorkload, TestBase):
-    def ref_program(self, x, weight, bias, running_mean, running_var):
-        y, rm, rv = _ref_fwd(x, weight, bias, running_mean, running_var,
-                             training=self.training)
-        return (y,)
+class BatchNormFwdTest(BatchNormFwdWorkload, TestBase):
+    pass
 
 
 # Fixtures
@@ -115,8 +91,8 @@ def test_batch_norm_fwd(N, C, spatial, dtype, training):
     # Manifest input order: (x, running_mean, running_var, weight, bias).
     y = op(x, running_mean, running_var, weight, bias)
 
-    ref_y, ref_rm, ref_rv = _ref_fwd(x, weight, bias, running_mean_ref, running_var_ref,
-                                      training=training)
+    ref_y, ref_rm, ref_rv = batch_norm_fwd_ref(
+        x, weight, bias, running_mean_ref, running_var_ref, training=training)
 
     # float16 accumulates more error; use loose tolerances.
     atol, rtol = (1e-2, 1e-2) if dtype == torch.float16 else (2e-2, 2e-2)
