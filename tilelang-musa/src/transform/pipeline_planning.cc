@@ -1,30 +1,34 @@
-﻿#include "support/check.h"
+#include "support/check.h"
+#include <algorithm>
+#include <map>
+#include <numeric>
 #include <tvm/arith/analyzer.h>
 #include <tvm/ir/cast.h>
 #include <tvm/runtime/logging.h>
 #include <tvm/s_tir/stmt.h>
+#include <tvm/target/target.h>
 #include <tvm/tirx/builtin.h>
 #include <tvm/tirx/op.h>
 #include <tvm/tirx/stmt.h>
 #include <tvm/tirx/stmt_functor.h>
 #include <tvm/tirx/transform.h>
-
-#include "../op/builtin.h"
-#include "../op/copy.h"
-#include "../op/parallel.h"
-#include "../op/region.h"
-#include "../op/utils.h"
-#include "common/pipeline_utils.h"
-#include <algorithm>
+#include <functional>
 #include <limits>
-#include <map>
-#include <numeric>
 #include <queue>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
-#include "../target/utils.h"
+#include "../op/builtin.h"
+#include "../op/copy.h"
+#include "../op/operator.h"
+#include "../op/parallel.h"
+#include "../op/region.h"
+#include "../op/utils.h"
+#include "backend/common/target_utils.h"
+#include "common/bind_utils.h"
+#include "common/pipeline_utils.h"
 #include "tvm/ir/expr.h"
 
 namespace tvm {
@@ -33,13 +37,36 @@ namespace tl {
 using namespace tirx;
 using namespace ffi;
 
-using BufferSet = std::unordered_set<Buffer, ObjectPtrHash, ObjectPtrEqual>;
-using BufferRegionMap = std::unordered_map<Buffer, Array<BufferRegion>,
-                                           ObjectPtrHash, ObjectPtrEqual>;
+class BufferRegionCollector : public StmtExprVisitor {
+public:
+  BufferRegionCollector(Map<Var, Buffer> buffer_data_to_buffer, Target target);
 
-using BufferSet = std::unordered_set<Buffer, ObjectPtrHash, ObjectPtrEqual>;
-using BufferRegionMap = std::unordered_map<Buffer, Array<BufferRegion>,
-                                           ObjectPtrHash, ObjectPtrEqual>;
+  Array<BufferRegion> GetReads() const;
+  Array<BufferRegion> GetWrites() const;
+  bool GetGlobalCopyPattern() const;
+  bool GetTmaCopyPattern() const;
+  bool HasNonCopyTileOp() const;
+
+private:
+  static bool IsGlobalLikeBuffer(const Buffer &buffer);
+  Optional<Buffer> TryGetBufFromAccessPtr(const PrimExpr &expr) const;
+
+  void HandleTileOp(const TileOperator &tile_op);
+  void VisitStmt_(const BufferStoreNode *op) final;
+  void VisitExpr_(const BufferLoadNode *op) final;
+  void VisitExpr_(const CallNode *op) final;
+  void VisitStmt_(const IfThenElseNode *op) final;
+
+  Map<Var, Buffer> buffer_data_to_buffer_;
+  Target target_;
+  Array<BufferRegion> reads_;
+  Array<BufferRegion> writes_;
+  bool is_global_read_ = false;
+  bool is_global_copy_pattern_ = false;
+  bool is_tma_copy_ = false;
+  bool has_non_copy_tile_op_ = false;
+  bool within_condition_expr_ = false;
+};
 
 /*!
  * \brief Check whether two regions have intersections.
@@ -61,526 +88,411 @@ bool MayConflict(const Region &region1, const Region &region2) {
   return true;
 }
 
-class TmemLoadCollector : public StmtExprVisitor {
-public:
-  TmemLoadCollector() {}
+BufferRegionCollector::BufferRegionCollector(
+    Map<Var, Buffer> buffer_data_to_buffer, Target target)
+    : buffer_data_to_buffer_(buffer_data_to_buffer), target_(target) {}
 
-  Buffer result;
+Array<BufferRegion> BufferRegionCollector::GetReads() const { return reads_; }
 
-private:
-  void VisitExpr_(const BufferLoadNode *op) {
-    Buffer buf = op->buffer;
-    if (buf->data->type_annotation.as<PointerTypeNode>()->storage_scope ==
-        "shared") {
-      // We only care about shared.tmem buffers
-      ICHECK(!result.defined())
-          << "TmemLoadCollector: More than one shared buffer visited";
-      result = buf;
-    }
-  }
-};
+Array<BufferRegion> BufferRegionCollector::GetWrites() const { return writes_; }
 
-/*!
- * \brief Build the dependency chain between async operations and their
- *        corresponding buffers & synchronizations.
- *
- *        Example:
- *        If we encounter the following pattern:
- *
- *        tcgen5mma_gemm_ts(..., mbar, ...)
- *        mbarrier_wait_parity(mbar)
- *
- *        The builder will link the mbarrier to the buffers used in the
- * TCGEN5MMA
- */
-class AsyncDependencyChainBuilder : public StmtExprVisitor {
-public:
-  AsyncDependencyChainBuilder(Map<Var, Buffer> buffer_data_to_buffer)
-      : buffer_data_to_buffer_(buffer_data_to_buffer) {}
+bool BufferRegionCollector::GetGlobalCopyPattern() const {
+  return is_global_copy_pattern_;
+}
 
-  BufferRegionMap mbar_to_buffer_reads_;
+bool BufferRegionCollector::GetTmaCopyPattern() const { return is_tma_copy_; }
 
-  BufferRegionMap mbar_to_buffer_writes_;
+bool BufferRegionCollector::HasNonCopyTileOp() const {
+  return has_non_copy_tile_op_;
+}
 
-private:
-  Map<Var, Buffer> buffer_data_to_buffer_;
+bool BufferRegionCollector::IsGlobalLikeBuffer(const Buffer &buffer) {
+  return IsGlobalBuffer(buffer) || (buffer.defined() && buffer.scope().empty());
+}
 
-  // Shared memory buffers referenced by initialize_tcgen05_descriptor calls,
-  // accumulated during traversal and linked to mbar on tcgen05_mma_arrive.
-  std::vector<BufferRegion> pending_tcgen05_smem_reads_;
-
-  // C_tmem buffer from ptx_tcgen05_mma_ss, accumulated during traversal.
-  Optional<Buffer> pending_tcgen05_c_buf_;
-
-  // Helper to extract a Buffer from a tvm_access_ptr call expression.
-  Optional<Buffer> TryGetBufFromAccessPtr(const PrimExpr &expr) {
-    auto call = expr.as<CallNode>();
-    if (!call || !call->op.same_as(builtin::tvm_access_ptr()))
-      return Optional<Buffer>();
-    auto var = call->args[1].as<VarNode>();
-    if (!var)
-      return Optional<Buffer>();
-    auto it = buffer_data_to_buffer_.find(GetRef<Var>(var));
-    if (it == buffer_data_to_buffer_.end())
-      return Optional<Buffer>();
-    return (*it).second;
-  }
-
-  void VisitExpr_(const CallNode *op) final {
-    auto args = op->args;
-    if (op->op.same_as(builtin::call_extern())) {
-      std::string func_name_with_template = args[0].as<StringImmNode>()->value;
-      std::size_t le_pos = func_name_with_template.find_first_of('<');
-      std::string func_name = le_pos == std::string::npos
-                                  ? func_name_with_template
-                                  : func_name_with_template.substr(0, le_pos);
-      // TODO(lei): refactor to use identical ops.
-      if (func_name == "tl::tcgen5mma_gemm_ts" ||
-          func_name == "tl::tcgen5mma_gemm_ss") {
-        // TCGEN5MMA (high-level, before LowerTileOp)
-        auto get_buf_from_access_ptr_call =
-            [&](const PrimExpr &expr) -> Buffer {
-          auto call = expr.as<CallNode>();
-          ICHECK(call);
-          ICHECK(call->op.same_as(builtin::tvm_access_ptr()));
-          auto var = call->args[1].as<VarNode>();
-          ICHECK(var);
-          auto it = buffer_data_to_buffer_.find(GetRef<Var>(var));
-          ICHECK(it != buffer_data_to_buffer_.end());
-          return (*it).second;
-        };
-        Buffer a_buf = get_buf_from_access_ptr_call(args[1]);
-        Buffer b_buf = get_buf_from_access_ptr_call(args[2]);
-        Buffer mbar_buf = get_buf_from_access_ptr_call(args[4]);
-
-        TmemLoadCollector tmem_collector;
-        tmem_collector(args[3]);
-        ICHECK(tmem_collector.result.defined())
-            << "TmemLoadCollector: No tmem buffer load found in the TCGEN5MMA "
-               "call";
-        Buffer c_buf = tmem_collector.result;
-
-        PrimExpr clear_accum = args[5];
-        mbar_to_buffer_reads_[mbar_buf].push_back(
-            BufferRegion::FullRegion(a_buf));
-        mbar_to_buffer_reads_[mbar_buf].push_back(
-            BufferRegion::FullRegion(b_buf));
-        mbar_to_buffer_writes_[mbar_buf].push_back(
-            BufferRegion::FullRegion(c_buf));
-        auto analyzer = std::make_shared<arith::Analyzer>();
-        if (!analyzer->CanProveEqual(clear_accum, Bool(true))) {
-          mbar_to_buffer_reads_[mbar_buf].push_back(
-              BufferRegion::FullRegion(c_buf));
-        }
-      }
-      // TODO (lei) Link wgmma to buffers and tl.wait_wgmma
-    } else if (op->op.same_as(initialize_tcgen05_descriptor())) {
-      // Lowered form: initialize_tcgen05_descriptor(desc, start_addr, ...)
-      // args[1] is a tvm_access_ptr to the shared memory buffer (A or B).
-      if (args.size() >= 2) {
-        if (auto buf = TryGetBufFromAccessPtr(args[1])) {
-          pending_tcgen05_smem_reads_.push_back(
-              BufferRegion::FullRegion(buf.value()));
-        }
-      }
-      StmtExprVisitor::VisitExpr_(op);
-    } else if (op->op.same_as(ptx_tcgen05_mma_ss()) ||
-               op->op.same_as(ptx_tcgen05_mma_ts())) {
-      // Lowered form: ptx_tcgen05_mma_ss(kind, desc_a, off_a, desc_b, off_b,
-      //                                  c_tmem, c_off, desc_val, scale, ...)
-      // args[5] is C_tmem.data (a Var, not tvm_access_ptr).
-      if (args.size() > 5) {
-        auto var = args[5].as<VarNode>();
-        if (var) {
-          auto it = buffer_data_to_buffer_.find(GetRef<Var>(var));
-          if (it != buffer_data_to_buffer_.end()) {
-            pending_tcgen05_c_buf_ = (*it).second;
-          }
-        }
-      }
-      StmtExprVisitor::VisitExpr_(op);
-    } else if (op->op.same_as(tcgen05_mma_arrive())) {
-      // Lowered form: tcgen05_mma_arrive(mbar_access_ptr)
-      // Link accumulated shared memory reads to mbar.
-      if (!args.empty()) {
-        if (auto mbar_buf = TryGetBufFromAccessPtr(args[0])) {
-          for (const auto &region : pending_tcgen05_smem_reads_) {
-            mbar_to_buffer_reads_[mbar_buf.value()].push_back(region);
-          }
-          if (pending_tcgen05_c_buf_.defined()) {
-            mbar_to_buffer_writes_[mbar_buf.value()].push_back(
-                BufferRegion::FullRegion(pending_tcgen05_c_buf_.value()));
-          }
-        } else if (!pending_tcgen05_smem_reads_.empty() ||
-                   pending_tcgen05_c_buf_.defined()) {
-          LOG(WARNING) << "tcgen05_mma_arrive: could not resolve mbar buffer "
-                       << "from args[0]; discarding pending state";
-        }
-      } else if (!pending_tcgen05_smem_reads_.empty() ||
-                 pending_tcgen05_c_buf_.defined()) {
-        LOG(WARNING) << "tcgen05_mma_arrive: empty args; discarding "
-                     << "pending state";
-      }
-      // Always clear pending state after an arrive, whether successful or not,
-      // to prevent stale entries from being misattributed to a future arrive.
-      pending_tcgen05_smem_reads_.clear();
-      pending_tcgen05_c_buf_ = Optional<Buffer>();
-      StmtExprVisitor::VisitExpr_(op);
-    } else if (op->op.same_as(tirx::builtin::if_then_else())) {
-      const PrimExpr &then_expr = args[1];
-      const PrimExpr &else_expr = args[2];
-      this->VisitExpr(then_expr);
-      this->VisitExpr(else_expr);
-    } else {
-      StmtExprVisitor::VisitExpr_(op);
-    }
-  }
-};
-
-/*!
- * \brief Detect if a statement follows the global memory copy pattern:
- *        1. Contains exactly one buffer store operation
- *        2. Source buffer must be in global memory scope
- *        3. Destination buffer must be in local or shared memory scope
- */
-class BufferRegionCollector : public StmtExprVisitor {
-public:
-  BufferRegionCollector(Map<Var, Buffer> buffer_data_to_buffer,
-                        const AsyncDependencyChainBuilder &chain_builder,
-                        Target target)
-      : buffer_data_to_buffer_(buffer_data_to_buffer),
-        chain_builder_(chain_builder), target_(target) {}
-
-  Array<BufferRegion> GetReads() const { return reads_; }
-
-  Array<BufferRegion> GetWrites() const { return writes_; }
-
-  bool GetGlobalCopyPattern() const { return is_global_copy_pattern_; }
-
-  bool GetTmaCopyPattern() const { return is_tma_copy_; }
-
-  bool HasNonCopyTileOp() const { return has_non_copy_tile_op_; }
-
-private:
-  static bool IsGlobalLikeBuffer(const Buffer &buffer) {
-    return IsGlobalBuffer(buffer) ||
-           (buffer.defined() && buffer.scope().empty());
-  }
-
-  void HandleTileOp(const TileOperator &tile_op) {
-    if (tile_op.as<RegionOpNode>()) {
-      return;
-    }
-    if (const auto *parallel = tile_op.as<ParallelOpNode>()) {
-      BufferRegionCollector nested(buffer_data_to_buffer_, chain_builder_,
-                                   target_);
-      nested(parallel->GetRoot());
-      reads_.insert(reads_.end(), nested.GetReads().begin(),
-                    nested.GetReads().end());
-      writes_.insert(writes_.end(), nested.GetWrites().begin(),
-                     nested.GetWrites().end());
-      is_global_copy_pattern_ =
-          is_global_copy_pattern_ || nested.GetGlobalCopyPattern();
-      is_tma_copy_ = is_tma_copy_ || nested.GetTmaCopyPattern();
-      has_non_copy_tile_op_ =
-          has_non_copy_tile_op_ || nested.HasNonCopyTileOp();
-      return;
-    }
-    AccessRegions access = tile_op->GetAccessRegions();
-    reads_.insert(reads_.end(), access.reads.begin(), access.reads.end());
-    writes_.insert(writes_.end(), access.writes.begin(), access.writes.end());
-    if (const auto *copy = tile_op.as<CopyNode>()) {
-      if (IsGlobalLikeBuffer(copy->src) && IsSharedBuffer(copy->dst)) {
-        is_global_copy_pattern_ = true;
-      }
-    }
-    // Im2Col always uses TMA on Hopper.
-    if (const auto *im2col = tile_op.as<Im2ColOpNode>()) {
-      if (IsGlobalLikeBuffer(im2col->src_) && IsSharedBuffer(im2col->dst_)) {
-        is_global_copy_pattern_ = true;
-        if (TargetIsHopper(target_)) {
-          is_tma_copy_ = true;
-        }
-      }
-      return;
-    }
-    if (!tile_op.as<CopyNode>()) {
-      has_non_copy_tile_op_ = true;
-    }
-  }
-
-  Optional<Buffer> TryGetBufFromAccessPtr(const PrimExpr &expr) const {
-    auto call = expr.as<CallNode>();
-    if (!call)
-      return Optional<Buffer>();
-    if (call->op.same_as(builtin::tvm_access_ptr())) {
-      if (call->args.size() <= 1)
-        return Optional<Buffer>();
-      auto *var = call->args[1].as<VarNode>();
-      if (!var)
-        return Optional<Buffer>();
-      auto it = buffer_data_to_buffer_.find(GetRef<Var>(var));
-      if (it == buffer_data_to_buffer_.end())
-        return Optional<Buffer>();
-      return (*it).second;
-    }
-    if (call->op.same_as(tl::access_ptr())) {
-      if (call->args.empty())
-        return Optional<Buffer>();
-      auto *load = call->args[0].as<BufferLoadNode>();
-      if (!load)
-        return Optional<Buffer>();
-      return load->buffer;
-    }
+Optional<Buffer>
+BufferRegionCollector::TryGetBufFromAccessPtr(const PrimExpr &expr) const {
+  const auto *call = expr.as<CallNode>();
+  if (!call) {
     return Optional<Buffer>();
   }
-
-  void VisitStmt_(const BufferStoreNode *op) final {
-    Buffer store_buffer = op->buffer;
-    Array<PrimExpr> indices = op->indices;
-    // convert indices to region
-    Array<Range> region;
-    for (const auto &index : indices) {
-      region.push_back(Range::FromMinExtent(index, 1));
+  if (call->op.same_as(builtin::tvm_access_ptr())) {
+    if (call->args.size() <= 1) {
+      return Optional<Buffer>();
     }
-    auto store_region = BufferRegion(store_buffer, region);
-    writes_.push_back(store_region);
+    const auto *var = call->args[1].as<VarNode>();
+    if (!var) {
+      return Optional<Buffer>();
+    }
+    auto it = buffer_data_to_buffer_.find(GetRef<Var>(var));
+    return it == buffer_data_to_buffer_.end() ? Optional<Buffer>()
+                                               : Optional<Buffer>((*it).second);
+  }
+  if (call->op.same_as(tl::access_ptr()) && !call->args.empty()) {
+    if (const auto *load = call->args[0].as<BufferLoadNode>()) {
+      return load->buffer;
+    }
+  }
+  return Optional<Buffer>();
+}
 
-    is_global_read_ = false;
-    this->VisitExpr(op->value);
-    if (is_global_read_ && IsSharedBuffer(store_buffer)) {
+void BufferRegionCollector::HandleTileOp(const TileOperator &tile_op) {
+  if (tile_op.as<RegionOpNode>()) {
+    return;
+  }
+  if (const auto *parallel = tile_op.as<ParallelOpNode>()) {
+    BufferRegionCollector nested(buffer_data_to_buffer_, target_);
+    nested(parallel->GetRoot());
+    reads_.insert(reads_.end(), nested.GetReads().begin(),
+                  nested.GetReads().end());
+    writes_.insert(writes_.end(), nested.GetWrites().begin(),
+                   nested.GetWrites().end());
+    is_global_copy_pattern_ =
+        is_global_copy_pattern_ || nested.GetGlobalCopyPattern();
+    is_tma_copy_ = is_tma_copy_ || nested.GetTmaCopyPattern();
+    has_non_copy_tile_op_ = has_non_copy_tile_op_ || nested.HasNonCopyTileOp();
+    return;
+  }
+  AccessRegions access = tile_op->GetAccessRegions();
+  reads_.insert(reads_.end(), access.reads.begin(), access.reads.end());
+  writes_.insert(writes_.end(), access.writes.begin(), access.writes.end());
+  if (const auto *copy = tile_op.as<CopyNode>()) {
+    if (IsGlobalLikeBuffer(copy->src) && IsSharedBuffer(copy->dst)) {
       is_global_copy_pattern_ = true;
     }
-    is_global_read_ = false;
   }
-
-  void VisitExpr_(const BufferLoadNode *op) final {
-    auto load_buffer = op->buffer;
-    Array<PrimExpr> indices = op->indices;
-    // convert indices to region
-    Array<Range> region;
-    for (const auto &index : indices) {
-      region.push_back(Range::FromMinExtent(index, 1));
+  // Im2Col always uses TMA on Hopper.
+  if (const auto *im2col = tile_op.as<Im2ColOpNode>()) {
+    if (IsGlobalLikeBuffer(im2col->src_) && IsSharedBuffer(im2col->dst_)) {
+      is_global_copy_pattern_ = true;
+      if (TargetIsHopper(target_)) {
+        is_tma_copy_ = true;
+      }
     }
-    auto load_region = BufferRegion(load_buffer, region);
-    reads_.push_back(load_region);
-
-    if (IsGlobalLikeBuffer(op->buffer) && !within_condition_expr_) {
-      // skip condition expr of if_then_else node
-      // shared[i] = T.if_then_else(global[i] < n, register_a[i], register_b[i])
-      // is not a global read shared[i] = T.if_then_else(global[i] < n,
-      // global_a[i], global_b[i]) is a global read
-      is_global_read_ = true;
-    }
+    return;
   }
+  if (!tile_op.as<CopyNode>()) {
+    has_non_copy_tile_op_ = true;
+  }
+}
 
-  void VisitExpr_(const CallNode *op) final {
-    auto args = op->args;
-    if (auto tile_op = ParseOperator(GetRef<Call>(op)); tile_op.defined()) {
-      HandleTileOp(tile_op);
-      StmtExprVisitor::VisitExpr_(op);
-      return;
-    }
-    if (op->op.same_as(builtin::address_of())) {
-      BufferRegion buffer_region;
-      if (const auto *load = op->args[0].as<BufferLoadNode>()) {
-        buffer_region = BufferRegion::FullRegion(load->buffer);
-      } else if (const auto *var_node = op->args[0].as<VarNode>()) {
-        Var data_var = GetRef<Var>(var_node);
-        auto it = buffer_data_to_buffer_.find(data_var);
-        if (it != buffer_data_to_buffer_.end()) {
-          buffer_region = BufferRegion::FullRegion((*it).second);
-        }
-      }
-      if (buffer_region.defined()) {
-        // because we only care about the buffer itself instead of indices
-        reads_.push_back(buffer_region);
-      }
-    } else if (op->op.same_as(builtin::tvm_access_ptr())) {
-      const VarNode *buffer_var = op->args[1].as<VarNode>();
-      ICHECK(buffer_var);
-      auto it = buffer_data_to_buffer_.find(GetRef<Var>(buffer_var));
+void BufferRegionCollector::VisitStmt_(const BufferStoreNode *op) {
+  Buffer store_buffer = op->buffer;
+  Array<PrimExpr> indices = op->indices;
+  // convert indices to region
+  Array<Range> region;
+  for (const auto &index : indices) {
+    region.push_back(Range::FromMinExtent(index, 1));
+  }
+  auto store_region = BufferRegion(store_buffer, region);
+  writes_.push_back(store_region);
+
+  is_global_read_ = false;
+  this->VisitExpr(op->value);
+  if (is_global_read_ && IsSharedBuffer(store_buffer)) {
+    is_global_copy_pattern_ = true;
+  }
+  is_global_read_ = false;
+}
+
+void BufferRegionCollector::VisitExpr_(const BufferLoadNode *op) {
+  auto load_buffer = op->buffer;
+  Array<PrimExpr> indices = op->indices;
+  // convert indices to region
+  Array<Range> region;
+  for (const auto &index : indices) {
+    region.push_back(Range::FromMinExtent(index, 1));
+  }
+  auto load_region = BufferRegion(load_buffer, region);
+  reads_.push_back(load_region);
+
+  if (IsGlobalLikeBuffer(op->buffer) && !within_condition_expr_) {
+    // skip condition expr of if_then_else node
+    // shared[i] = T.if_then_else(global[i] < n, register_a[i], register_b[i])
+    // is not a global read shared[i] = T.if_then_else(global[i] < n,
+    // global_a[i], global_b[i]) is a global read
+    is_global_read_ = true;
+  }
+}
+
+void BufferRegionCollector::VisitExpr_(const CallNode *op) {
+  if (auto tile_op = ParseOperator(GetRef<Call>(op)); tile_op.defined()) {
+    HandleTileOp(tile_op);
+    StmtExprVisitor::VisitExpr_(op);
+    return;
+  }
+  if (op->op.same_as(builtin::address_of())) {
+    BufferRegion buffer_region;
+    if (const auto *load = op->args[0].as<BufferLoadNode>()) {
+      buffer_region = BufferRegion::FullRegion(load->buffer);
+    } else if (const auto *var_node = op->args[0].as<VarNode>()) {
+      Var data_var = GetRef<Var>(var_node);
+      auto it = buffer_data_to_buffer_.find(data_var);
       if (it != buffer_data_to_buffer_.end()) {
-        const Buffer &buffer = (*it).second;
-        const BufferRegion buffer_region = BufferRegion::FullRegion(buffer);
-        // because we only care about the buffer itself instead of indices
-        reads_.push_back(buffer_region);
+        buffer_region = BufferRegion::FullRegion((*it).second);
       }
-    } else if (op->op.same_as(builtin::ptx_cp_async()) ||
-               op->op.same_as(tl::ptx_cp_async())) {
-      // Explicit cp.async call: args[0] = dst access ptr, args[1] = src access
-      // ptr. Treat as a global->shared copy candidate in pipeline planning.
-      if (args.size() >= 2) {
-        auto dst_buf = TryGetBufFromAccessPtr(args[0]);
-        auto src_buf = TryGetBufFromAccessPtr(args[1]);
-        if (src_buf.defined()) {
-          reads_.push_back(BufferRegion::FullRegion(src_buf.value()));
-        }
-        if (dst_buf.defined()) {
-          writes_.push_back(BufferRegion::FullRegion(dst_buf.value()));
-        }
-        if (src_buf.defined() && dst_buf.defined() &&
-            IsGlobalLikeBuffer(src_buf.value()) &&
-            IsSharedBuffer(dst_buf.value())) {
-          is_global_copy_pattern_ = true;
-        }
+    }
+    if (buffer_region.defined()) {
+      // because we only care about the buffer itself instead of indices
+      reads_.push_back(buffer_region);
+    }
+  } else if (op->op.same_as(builtin::tvm_access_ptr())) {
+    const VarNode *buffer_var = op->args[1].as<VarNode>();
+    ICHECK(buffer_var);
+    auto it = buffer_data_to_buffer_.find(GetRef<Var>(buffer_var));
+    if (it != buffer_data_to_buffer_.end()) {
+      const Buffer &buffer = (*it).second;
+      const BufferRegion buffer_region = BufferRegion::FullRegion(buffer);
+      // because we only care about the buffer itself instead of indices
+      reads_.push_back(buffer_region);
+    }
+  } else if (op->op.same_as(builtin::ptx_cp_async()) ||
+             op->op.same_as(tl::ptx_cp_async())) {
+    if (op->args.size() >= 2) {
+      auto dst_buf = TryGetBufFromAccessPtr(op->args[0]);
+      auto src_buf = TryGetBufFromAccessPtr(op->args[1]);
+      if (src_buf.defined()) {
+        reads_.push_back(BufferRegion::FullRegion(src_buf.value()));
       }
-      if (args.size() == 4) {
-        // Predicated cp.async should not be treated as a proven full
-        // overwrite of the destination buffer at pipeline-planning
-        // granularity. Model a conservative dependence on the destination so
-        // required initialization or other producer-side writes are not moved
-        // across the async copy.
-        if (auto dst_buf = TryGetBufFromAccessPtr(args[0])) {
-          reads_.push_back(BufferRegion::FullRegion(dst_buf.value()));
-        }
-        // Preserve dependence from a predicated guard expression.
-        this->VisitExpr(args[3]);
+      if (dst_buf.defined()) {
+        writes_.push_back(BufferRegion::FullRegion(dst_buf.value()));
       }
-      return;
-    } else if (op->op.same_as(builtin::if_then_else())) {
-      within_condition_expr_ = true;
-      this->VisitExpr(op->args[0]);
-      within_condition_expr_ = false;
-      for (auto i = 1; i < op->args.size(); i++) {
-        this->VisitExpr(op->args[i]);
+      if (src_buf.defined() && dst_buf.defined() &&
+          IsGlobalLikeBuffer(src_buf.value()) &&
+          IsSharedBuffer(dst_buf.value())) {
+        is_global_copy_pattern_ = true;
       }
-    } else if (op->op.same_as(tl::mbarrier_wait_parity())) {
-      // The mbarrier argument is a BufferLoad on a shared.barrier scope
-      // buffer.  Only track mbarrier→buffer dependencies for user-allocated
-      // barriers.
-      if (auto *buf_load = args[0].as<BufferLoadNode>()) {
-        Buffer mbar_buf = buf_load->buffer;
-        auto buffer_reads = chain_builder_.mbar_to_buffer_reads_.find(mbar_buf);
-        auto buffer_writes =
-            chain_builder_.mbar_to_buffer_writes_.find(mbar_buf);
-        if (buffer_reads != chain_builder_.mbar_to_buffer_reads_.end()) {
-          reads_.insert(reads_.end(), buffer_reads->second.begin(),
-                        buffer_reads->second.end());
-        }
-        if (buffer_writes != chain_builder_.mbar_to_buffer_writes_.end()) {
-          writes_.insert(writes_.end(), buffer_writes->second.begin(),
-                         buffer_writes->second.end());
-        }
-      } else {
-        // Handle-based mbarrier (e.g. get_mbarrier(id)): cannot resolve to a
-        // concrete Buffer.  Conservatively attach all known async buffer
-        // dependencies so the wait is not treated as dependency-free.
-        for (const auto &[_, regions] : chain_builder_.mbar_to_buffer_reads_) {
-          reads_.insert(reads_.end(), regions.begin(), regions.end());
-        }
-        for (const auto &[_, regions] : chain_builder_.mbar_to_buffer_writes_) {
-          writes_.insert(writes_.end(), regions.begin(), regions.end());
-        }
+    }
+    if (op->args.size() == 4) {
+      if (auto dst_buf = TryGetBufFromAccessPtr(op->args[0])) {
+        reads_.push_back(BufferRegion::FullRegion(dst_buf.value()));
+      }
+      this->VisitExpr(op->args[3]);
+    }
+    return;
+  } else if (op->op.same_as(builtin::if_then_else())) {
+    within_condition_expr_ = true;
+    this->VisitExpr(op->args[0]);
+    within_condition_expr_ = false;
+    for (auto i = 1; i < op->args.size(); i++) {
+      this->VisitExpr(op->args[i]);
+    }
+  } else {
+    StmtExprVisitor::VisitExpr_(op);
+  }
+}
+
+void BufferRegionCollector::VisitStmt_(const IfThenElseNode *op) {
+  within_condition_expr_ = true;
+  this->VisitExpr(op->condition);
+  within_condition_expr_ = false;
+  this->VisitStmt(op->then_case);
+  if (op->else_case.defined()) {
+    within_condition_expr_ = true;
+    this->VisitStmt(op->else_case.value());
+    within_condition_expr_ = false;
+  }
+}
+
+class PipelinePlanningBodyAnalyzer {
+public:
+  PipelinePlanningBodyAnalyzer(Map<Var, Buffer> buffer_data_to_buffer,
+                               Target target)
+      : buffer_data_to_buffer_(std::move(buffer_data_to_buffer)),
+        target_(std::move(target)) {}
+
+  std::pair<Array<BufferRegion>, Array<BufferRegion>>
+  CollectStmtAccessRegions(const Stmt &stmt) const {
+    SBlock block(/*iter_vars=*/{}, /*reads=*/{}, /*writes=*/{},
+                 /*name_hint=*/"", /*body*/ stmt);
+    auto collector = BufferRegionCollector(buffer_data_to_buffer_, target_);
+    collector(block);
+    return {collector.GetReads(), collector.GetWrites()};
+  }
+
+  BufferSet CollectPipelineWriteBuffers(const Array<Stmt> &stmts) const {
+    BufferSet write_buffers;
+    for (const Stmt &stmt : stmts) {
+      auto [_, writes] = CollectStmtAccessRegions(stmt);
+      for (const BufferRegion &write : writes) {
+        write_buffers.insert(write->buffer);
+      }
+    }
+    return write_buffers;
+  }
+
+  bool
+  IsReplayableScalarBindStmt(const Stmt &stmt,
+                             const BufferSet &pipeline_write_buffers) const {
+    auto [reads, _] = CollectStmtAccessRegions(stmt);
+    return IsReplayableScalarBind(stmt, reads, pipeline_write_buffers);
+  }
+
+  struct ScheduledStmtAnalysis {
+    size_t original_stmt_count{0};
+    size_t stage_stmt_count{0};
+    Array<Stmt> scheduled_stmts;
+    std::vector<size_t> scheduled_indices;
+    std::vector<size_t> scheduled_stage_indices;
+    Array<Integer> replayable_bind_mask;
+    bool has_bind_stmt{false};
+  };
+
+  ScheduledStmtAnalysis AnalyzeScheduledStmts(const Array<Stmt> &stmts) const {
+    BufferSet pipeline_write_buffers = CollectPipelineWriteBuffers(stmts);
+    ScheduledStmtAnalysis analysis;
+    analysis.original_stmt_count = stmts.size();
+    analysis.replayable_bind_mask.reserve(stmts.size());
+    size_t stage_stmt_index = 0;
+    for (size_t i = 0; i < stmts.size(); ++i) {
+      const Stmt &stmt = stmts[i];
+      if (IsPipelineDeclarationStmt(stmt)) {
+        continue;
+      }
+      analysis.has_bind_stmt = analysis.has_bind_stmt || stmt.as<BindNode>();
+      bool replayable =
+          IsReplayableScalarBindStmt(stmt, pipeline_write_buffers);
+      analysis.replayable_bind_mask.push_back(Integer(replayable ? 1 : 0));
+      if (replayable) {
+        ++stage_stmt_index;
+        continue;
+      }
+      analysis.scheduled_indices.push_back(i);
+      analysis.scheduled_stage_indices.push_back(stage_stmt_index);
+      analysis.scheduled_stmts.push_back(stmt);
+      ++stage_stmt_index;
+    }
+    analysis.stage_stmt_count = stage_stmt_index;
+    return analysis;
+  }
+
+  Array<Integer> FilterAnnotationsForScheduledStmts(
+      const Array<Integer> &annotations,
+      const ScheduledStmtAnalysis &analysis) const {
+    if (annotations.size() == analysis.scheduled_stmts.size()) {
+      return annotations;
+    }
+
+    Array<Integer> filtered;
+    if (annotations.size() == analysis.stage_stmt_count) {
+      for (size_t index : analysis.scheduled_stage_indices) {
+        filtered.push_back(annotations[index]);
       }
     } else {
-      StmtExprVisitor::VisitExpr_(op);
+      ICHECK_EQ(annotations.size(), analysis.original_stmt_count)
+          << "PipelinePlanning: expected pipeline annotation size to match "
+             "the scheduled statement count, executable statement count, or "
+             "original statement count";
+      for (size_t index : analysis.scheduled_indices) {
+        filtered.push_back(annotations[index]);
+      }
     }
+    ICHECK_EQ(filtered.size(), analysis.scheduled_stmts.size());
+    return filtered;
   }
 
-  void VisitStmt_(const IfThenElseNode *op) final {
-    within_condition_expr_ = true;
-    this->VisitExpr(op->condition);
-    within_condition_expr_ = false;
-    this->VisitStmt(op->then_case);
-    if (op->else_case.defined()) {
-      within_condition_expr_ = true;
-      this->VisitStmt(op->else_case.value());
-      within_condition_expr_ = false;
-    }
-  }
-
-private:
-  AsyncDependencyChainBuilder chain_builder_;
-  Map<Var, Buffer> buffer_data_to_buffer_;
-  Target target_;
-  Array<BufferRegion> reads_;
-  Array<BufferRegion> writes_;
-  bool is_global_read_ = false;
-  bool under_buffer_store_ = false;
-  bool is_global_copy_pattern_ = false;
-  bool is_tma_copy_ = false;
-  bool has_non_copy_tile_op_ = false;
-  bool within_condition_expr_ = false;
-};
-
-class PipelinePlanner : public StmtExprMutator {
-public:
-  static Stmt Substitute(const PrimFunc &f, bool use_async_copy = true) {
-    PipelinePlanner substituter(use_async_copy);
-    for (const auto &[_, buffer] : f->buffer_map) {
-      substituter.buffer_data_to_buffer_.Set(buffer->data, buffer);
-    }
-    auto target = f->GetAttr<Target>(tvm::attr::kTarget);
-    ICHECK(target.defined())
-        << "Pipeline_Planning: Require the target attribute";
-    substituter.target_ = target.value();
-    return substituter.VisitStmt(f->body);
-  }
-
-private:
-  PipelinePlanner() = default;
-  PipelinePlanner(bool use_async_copy) : use_async_copy_(use_async_copy) {}
-
-  /*! \brief Information about a pipeline stage
-   *
-   * \param reads Array of buffer regions read by this stage
-   * \param writes Array of buffer regions written by this stage
-   * \param original_stmt_index Original position of this stage in the pipeline
-   * before reordering \param order Current position of this stage in the
-   * pipeline after reordering (-1 if not yet assigned) \param stage Pipeline
-   * stage number this operation belongs to (-1 if not yet assigned) \param
-   * copy_stage Whether this stage is a memory copy operation \param
-   * last_use_stmt_index Index of the last statement (in original order) that
-   * uses the results of this stage (-1 if not yet determined). This field is
-   * crucial for pipeline optimization:
-   * - For copy stages: indicates the index of the last statement that reads
-   * from the copied data, helping determine optimal placement of copy
-   * operations
-   * - Used to ensure copy operations are scheduled before their consumers
-   * - A value of -1 means no subsequent statement uses this stage's output
-   * - This information enables better pipeline scheduling by minimizing data
-   *   dependencies and maximizing parallelism
-   */
-  struct PipelineStageInfo {
-    Array<BufferRegion> reads, writes;
-    std::unordered_set<const VarNode *> scalar_defs;
-    std::unordered_set<const VarNode *> scalar_uses;
-    int original_stmt_index{};
-    int order = -1, stage = -1;
-    bool copy_stage = false;
-    bool tma_copy = false; // true if this copy stage uses TMA (not cp.async)
-    bool conditional_execution = false;
-    bool producer_for_copy = false;
-    // Commit statements have no buffer writes, but they must be scheduled as a
-    // part of their cp.async producer group (after the cp.async calls).
-    bool cp_async_commit_stage = false;
-    int cp_async_call_count = 0;
-    int cp_async_commit_count = 0;
-    int cp_async_wait_count = 0;
-    // Minimal static wait_group(n) value in this stmt.
-    // numeric_limits<int>::max() means no static wait value is observed.
-    int cp_async_wait_min_inflight = std::numeric_limits<int>::max();
-    bool cp_async_wait_has_dynamic = false;
-    int cp_async_group = -1;
-    int last_use_stmt_index =
-        -1; // Initialized to -1, indicating no consumers found yet
-
+  class SeqStmtFlattener : public StmtFunctor<Array<Stmt>(const Stmt &)> {
   public:
-    bool is_first_stage() const {
-      return copy_stage || producer_for_copy || cp_async_commit_stage;
+    using Base = StmtFunctor<Array<Stmt>(const Stmt &)>;
+
+    static Array<Stmt> Flatten(const Array<Stmt> &stmts) {
+      SeqStmtFlattener flattener;
+      Array<Stmt> flattened;
+      for (const Stmt &stmt : stmts) {
+        Array<Stmt> nested = flattener(stmt);
+        flattened.insert(flattened.end(), nested.begin(), nested.end());
+      }
+      return flattened;
     }
-    bool is_copy_stage() const { return copy_stage; }
-    bool is_tma_copy() const { return tma_copy; }
-    bool is_producer_for_copy() const { return producer_for_copy; }
-    bool is_cp_async_commit_stage() const { return cp_async_commit_stage; }
-    bool has_cp_async_call() const { return cp_async_call_count > 0; }
-    bool has_cp_async_commit() const { return cp_async_commit_count > 0; }
-    bool has_cp_async_wait() const { return cp_async_wait_count > 0; }
-    bool is_last_use_stmt_index_valid() const {
-      return last_use_stmt_index != -1;
+
+    Array<Stmt> VisitStmt(const Stmt &stmt) final {
+      if (!stmt.as<SeqStmtNode>()) {
+        return Array<Stmt>{stmt};
+      }
+      return Base::VisitStmt(stmt);
+    }
+
+    Array<Stmt> VisitStmt_(const SeqStmtNode *op) final {
+      Array<Stmt> flattened;
+      for (const Stmt &stmt : op->seq) {
+        Array<Stmt> nested = VisitStmt(stmt);
+        flattened.insert(flattened.end(), nested.begin(), nested.end());
+      }
+      return flattened;
+    }
+
+    Array<Stmt> VisitStmtDefault_(const Object *) final {
+      return Array<Stmt>();
     }
   };
+
+private:
+  Map<Var, Buffer> buffer_data_to_buffer_;
+  Target target_;
+};
+
+/*! \brief Information about a pipeline stage
+ *
+ * \param reads Array of buffer regions read by this stage
+ * \param writes Array of buffer regions written by this stage
+ * \param original_stmt_index Original position of this stage in the pipeline
+ * before reordering \param order Current position of this stage in the
+ * pipeline after reordering (-1 if not yet assigned) \param stage Pipeline
+ * stage number this operation belongs to (-1 if not yet assigned) \param
+ * copy_stage Whether this stage is a memory copy operation \param
+ * last_use_stmt_index Index of the last statement (in original order) that
+ * uses the results of this stage (-1 if not yet determined). This field is
+ * crucial for pipeline optimization:
+ * - For copy stages: indicates the index of the last statement that reads
+ * from the copied data, helping determine optimal placement of copy
+ * operations
+ * - Used to ensure copy operations are scheduled before their consumers
+ * - A value of -1 means no subsequent statement uses this stage's output
+ * - This information enables better pipeline scheduling by minimizing data
+ *   dependencies and maximizing parallelism
+ */
+struct PipelineStageInfo {
+  Array<BufferRegion> reads, writes;
+  std::unordered_set<const VarNode *> scalar_defs;
+  std::unordered_set<const VarNode *> scalar_uses;
+  int original_stmt_index{};
+  int order = -1, stage = -1;
+  bool copy_stage = false;
+  bool tma_copy = false; // true if this copy stage uses TMA (not cp.async)
+  bool conditional_execution = false;
+  bool producer_for_copy = false;
+  bool cp_async_commit_stage = false;
+  int cp_async_call_count = 0;
+  int cp_async_commit_count = 0;
+  int cp_async_wait_count = 0;
+  int cp_async_wait_min_inflight = std::numeric_limits<int>::max();
+  bool cp_async_wait_has_dynamic = false;
+  int cp_async_group = -1;
+  int last_use_stmt_index =
+      -1; // Initialized to -1, indicating no consumers found yet
+
+public:
+  bool IsFirstStage() const {
+    return copy_stage || producer_for_copy || cp_async_commit_stage;
+  }
+  bool IsCopyStage() const { return copy_stage; }
+  bool IsTmaCopy() const { return tma_copy; }
+  bool IsProducerForCopy() const { return producer_for_copy; }
+  bool IsCpAsyncCommitStage() const { return cp_async_commit_stage; }
+  bool HasCpAsyncCall() const { return cp_async_call_count > 0; }
+  bool HasCpAsyncCommit() const { return cp_async_commit_count > 0; }
+  bool HasCpAsyncWait() const { return cp_async_wait_count > 0; }
+  bool IsLastUseStmtIndexValid() const {
+    return last_use_stmt_index != -1;
+  }
+};
+
+class PipelineStageAnalyzer {
+public:
+  PipelineStageAnalyzer(Map<Var, Buffer> buffer_data_to_buffer, Target target,
+                        bool use_async_copy)
+      : buffer_data_to_buffer_(std::move(buffer_data_to_buffer)),
+        target_(std::move(target)), use_async_copy_(use_async_copy) {}
 
   class ScalarUseDefCollector : public StmtExprVisitor {
   public:
@@ -617,7 +529,7 @@ private:
     AsyncIntrinInfo info;
     PostOrderVisit(stmt, [&](const ObjectRef &node) {
       const auto *call = node.as<CallNode>();
-      if (call == nullptr) {
+      if (!call) {
         return;
       }
       if (call->op.same_as(builtin::ptx_cp_async()) ||
@@ -665,16 +577,16 @@ private:
     if (pinfo.conditional_execution) {
       return false;
     }
-    if (pinfo.is_tma_copy()) {
+    if (pinfo.IsTmaCopy()) {
       return false;
     }
-    if (pinfo.has_cp_async_wait()) {
+    if (pinfo.HasCpAsyncWait()) {
       return false;
     }
-    if (pinfo.has_cp_async_commit() && !pinfo.has_cp_async_call()) {
+    if (pinfo.HasCpAsyncCommit() && !pinfo.HasCpAsyncCall()) {
       return false;
     }
-    return pinfo.is_copy_stage() || pinfo.has_cp_async_call();
+    return pinfo.IsCopyStage() || pinfo.HasCpAsyncCall();
   }
 
   bool IsPureCopyStmt(const Stmt &stmt) const {
@@ -785,14 +697,12 @@ private:
       return;
     }
 
-    // Explicit cp.async producer statements participate in the synthetic
-    // stage-0 producer schedule just like ordinary global->shared copies.
-    if (pinfo->has_cp_async_call()) {
-      pinfo->copy_stage = true;
+    if (pinfo->copy_stage) {
       return;
     }
 
-    if (pinfo->copy_stage) {
+    if (pinfo->HasCpAsyncCall()) {
+      pinfo->copy_stage = true;
       return;
     }
 
@@ -821,7 +731,7 @@ private:
   void AnalyzeCopyLastUse(
       std::vector<PipelineStageInfo> *pipeline_stage_infos) const {
     for (auto &pinfo : *pipeline_stage_infos) {
-      if (!pinfo.is_first_stage()) {
+      if (!pinfo.IsFirstStage()) {
         continue;
       }
 
@@ -837,10 +747,9 @@ private:
           }
         }
 
-        if (!pinfo.is_copy_stage() ||
+        if (!pinfo.IsCopyStage() ||
             (pinfo.cp_async_group >= 0 &&
-             pinfo.cp_async_group ==
-                 (*pipeline_stage_infos)[i].cp_async_group)) {
+             pinfo.cp_async_group == (*pipeline_stage_infos)[i].cp_async_group)) {
           continue;
         }
 
@@ -858,6 +767,93 @@ private:
                        << "' with overlapping regions. This is not supported "
                           "in pipeline planning.";
           }
+        }
+      }
+    }
+  }
+
+  void PropagateBufferProducersForCopy(
+      std::vector<PipelineStageInfo> *pipeline_stage_infos) const {
+    struct CopyStageDependencyReadsManager {
+      std::vector<BufferRegion> regions;
+
+      void AddUnique(const BufferRegion &region) {
+        for (const BufferRegion &copy_read : regions) {
+          if (region->buffer.same_as(copy_read->buffer)) {
+            return;
+          }
+        }
+        regions.push_back(region);
+      }
+
+      bool Contains(const BufferRegion &region) const {
+        for (const BufferRegion &copy_read : regions) {
+          if (region->buffer.same_as(copy_read->buffer)) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      size_t Size() const { return regions.size(); }
+    };
+
+    CopyStageDependencyReadsManager copy_stage_dependency_reads_mgr;
+
+    for (const auto &pinfo : *pipeline_stage_infos) {
+      if (pinfo.IsCopyStage()) {
+        for (const BufferRegion &read : pinfo.reads) {
+          copy_stage_dependency_reads_mgr.AddUnique(read);
+        }
+      }
+    }
+
+    const size_t max_iterations = (pipeline_stage_infos->size() * 4) + 16;
+    size_t iter_count = 0;
+
+    for (auto &pinfo : *pipeline_stage_infos) {
+      if (!pinfo.IsCopyStage()) {
+        continue;
+      }
+      auto original_copy_stmt_index = pinfo.original_stmt_index;
+      bool updated = true;
+      while (updated) {
+        updated = false;
+        for (auto &pinfo_inner : *pipeline_stage_infos) {
+          if (pinfo_inner.IsCopyStage()) {
+            continue;
+          }
+          if (pinfo_inner.original_stmt_index >= original_copy_stmt_index) {
+            break;
+          }
+
+          bool should_prepare = false;
+          for (const BufferRegion &write : pinfo_inner.writes) {
+            if (copy_stage_dependency_reads_mgr.Contains(write)) {
+              should_prepare = true;
+              break;
+            }
+          }
+          if (should_prepare && !pinfo_inner.IsProducerForCopy()) {
+            pinfo_inner.producer_for_copy = true;
+            updated = true;
+          }
+          if (should_prepare) {
+            for (const BufferRegion &read : pinfo_inner.reads) {
+              size_t before = copy_stage_dependency_reads_mgr.Size();
+              copy_stage_dependency_reads_mgr.AddUnique(read);
+              if (copy_stage_dependency_reads_mgr.Size() > before) {
+                updated = true;
+              }
+            }
+          }
+        }
+        iter_count++;
+        if (iter_count > max_iterations) {
+          LOG(FATAL)
+              << "Pipeline planning: Exceeded maximum iterations ("
+              << max_iterations << ") in copy stage dependency propagation. "
+              << "This may indicate a cyclic or pathological dependency graph.";
         }
       }
     }
@@ -891,7 +887,7 @@ private:
         producer->producer_for_copy = true;
         producer->last_use_stmt_index = consumer_last_use;
         changed = true;
-      } else if (!producer->is_last_use_stmt_index_valid() ||
+      } else if (!producer->IsLastUseStmtIndexValid() ||
                  consumer_last_use < producer->last_use_stmt_index) {
         producer->last_use_stmt_index = consumer_last_use;
         changed = true;
@@ -905,8 +901,7 @@ private:
            consumer_idx < static_cast<int>(pipeline_stage_infos->size());
            ++consumer_idx) {
         const auto &consumer = (*pipeline_stage_infos)[consumer_idx];
-        if (!(consumer.is_first_stage() &&
-              consumer.is_last_use_stmt_index_valid())) {
+        if (!(consumer.IsFirstStage() && consumer.IsLastUseStmtIndexValid())) {
           continue;
         }
         for (const VarNode *var : consumer.scalar_uses) {
@@ -915,7 +910,7 @@ private:
             continue;
           }
           auto &producer = (*pipeline_stage_infos)[it->second];
-          if (producer.is_copy_stage() || producer.is_cp_async_commit_stage()) {
+          if (producer.IsCopyStage() || producer.IsCpAsyncCommitStage()) {
             continue;
           }
           updated |= update_producer(&producer, consumer.last_use_stmt_index);
@@ -957,8 +952,9 @@ private:
     }
   }
 
-  bool EmitImplicitAsyncAnnotations(
+  bool EmitAsyncAnnotations(
       const std::vector<PipelineStageInfo> &pipeline_stage_infos,
+      const std::vector<std::vector<int>> &explicit_async_groups,
       Map<String, Any> *annotations) const {
     if (!TargetHasAsyncCopy(target_) || !use_async_copy_) {
       return false;
@@ -978,10 +974,25 @@ private:
                      });
 
     int next_async_group_id = 0;
+    for (const auto &group_stmt_indices : explicit_async_groups) {
+      bool emitted_group = false;
+      for (int stmt_idx : group_stmt_indices) {
+        if (stmt_idx < 0 ||
+            stmt_idx >= static_cast<int>(pipeline_stage_infos.size()) ||
+            !IsAsyncProducerCandidate(pipeline_stage_infos[stmt_idx])) {
+          continue;
+        }
+        async_group_ids[stmt_idx] = next_async_group_id;
+        emitted_group = true;
+      }
+      if (emitted_group) {
+        ++next_async_group_id;
+      }
+    }
     std::map<std::pair<int, int>, int> implicit_group_ids;
     for (int stmt_idx : stmt_indices_by_order) {
       const auto &pinfo = pipeline_stage_infos[stmt_idx];
-      if (!IsAsyncProducerCandidate(pinfo)) {
+      if (!IsAsyncProducerCandidate(pinfo) || async_group_ids[stmt_idx] != -1) {
         continue;
       }
       auto key = std::make_pair(pinfo.stage, pinfo.last_use_stmt_index);
@@ -1028,8 +1039,13 @@ private:
     return true;
   }
 
-  void MaybeAnnotateLegacyAsyncPipelineLoop(const Stmt &pipeline_body_root,
-                                            const Array<Stmt> &pipeline_stmts,
+  bool EmitImplicitAsyncAnnotations(
+      const std::vector<PipelineStageInfo> &pipeline_stage_infos,
+      Map<String, Any> *annotations) const {
+    return EmitAsyncAnnotations(pipeline_stage_infos, {}, annotations);
+  }
+
+  void MaybeAnnotateLegacyAsyncPipelineLoop(const Array<Stmt> &pipeline_stmts,
                                             const Array<Integer> &order_array,
                                             const Array<Integer> &stage_array,
                                             Map<String, Any> *annotations) {
@@ -1039,17 +1055,14 @@ private:
     ICHECK_EQ(pipeline_stmts.size(), order_array.size());
     ICHECK_EQ(pipeline_stmts.size(), stage_array.size());
 
-    AsyncDependencyChainBuilder chain_builder(buffer_data_to_buffer_);
-    chain_builder(pipeline_body_root);
-
     std::vector<PipelineStageInfo> pipeline_stage_infos;
     pipeline_stage_infos.reserve(pipeline_stmts.size());
     for (size_t i = 0; i < pipeline_stmts.size(); ++i) {
-      auto pinfo = MakePipelineStageInfo(pipeline_stmts[i], i, chain_builder);
+      auto pinfo = MakePipelineStageInfo(pipeline_stmts[i], i);
       ClassifyCopyLikeStage(pipeline_stmts[i], &pinfo);
       pinfo.order = static_cast<int>(order_array[i]->value);
       pinfo.stage = static_cast<int>(stage_array[i]->value);
-      if (!pinfo.is_copy_stage() && !pinfo.conditional_execution &&
+      if (!pinfo.IsCopyStage() && !pinfo.conditional_execution &&
           pinfo.stage == 0) {
         bool reads_global = false;
         bool writes_shared = false;
@@ -1076,14 +1089,11 @@ private:
     EmitImplicitAsyncAnnotations(pipeline_stage_infos, annotations);
   }
 
-  PipelineStageInfo
-  MakePipelineStageInfo(Stmt stmt, int idx,
-                        AsyncDependencyChainBuilder &chain_builder) {
+  PipelineStageInfo MakePipelineStageInfo(Stmt stmt, int idx) {
     SBlock block(/*iter_vars=*/{}, /*reads=*/{}, /*writes=*/{},
                  /*name_hint=*/"",
                  /*body*/ std::move(stmt));
-    auto collector =
-        BufferRegionCollector(buffer_data_to_buffer_, chain_builder, target_);
+    auto collector = BufferRegionCollector(buffer_data_to_buffer_, target_);
     collector(block);
     PipelineStageInfo pinfo;
     pinfo.reads = std::move(collector.GetReads());
@@ -1092,6 +1102,12 @@ private:
         ScalarUseDefCollector::Collect(block->body);
     pinfo.scalar_defs = std::move(scalar_defs);
     pinfo.scalar_uses = std::move(scalar_uses);
+    auto async_info = AnalyzeAsyncIntrinsics(block->body);
+    pinfo.cp_async_call_count = async_info.cp_async_call_count;
+    pinfo.cp_async_commit_count = async_info.cp_async_commit_count;
+    pinfo.cp_async_wait_count = async_info.cp_async_wait_count;
+    pinfo.cp_async_wait_min_inflight = async_info.cp_async_wait_min_inflight;
+    pinfo.cp_async_wait_has_dynamic = async_info.cp_async_wait_has_dynamic;
     pinfo.original_stmt_index = idx;
     pinfo.conditional_execution = MayBeConditionallyExecuted(block->body);
     bool pure_copy_stage =
@@ -1099,238 +1115,112 @@ private:
     pinfo.copy_stage = pure_copy_stage;
     pinfo.tma_copy = pure_copy_stage && !pinfo.conditional_execution &&
                      collector.GetTmaCopyPattern();
-    auto async_info = AnalyzeAsyncIntrinsics(block->body);
-    pinfo.cp_async_call_count = async_info.cp_async_call_count;
-    pinfo.cp_async_commit_count = async_info.cp_async_commit_count;
-    pinfo.cp_async_wait_count = async_info.cp_async_wait_count;
-    pinfo.cp_async_wait_min_inflight = async_info.cp_async_wait_min_inflight;
-    pinfo.cp_async_wait_has_dynamic = async_info.cp_async_wait_has_dynamic;
     ClassifyCopyLikeStage(block->body, &pinfo);
     return pinfo;
   }
 
-  std::pair<Array<BufferRegion>, Array<BufferRegion>> CollectStmtAccessRegions(
-      const Stmt &stmt,
-      const AsyncDependencyChainBuilder &chain_builder) const {
-    SBlock block(/*iter_vars=*/{}, /*reads=*/{}, /*writes=*/{},
-                 /*name_hint=*/"", /*body*/ stmt);
-    auto collector =
-        BufferRegionCollector(buffer_data_to_buffer_, chain_builder, target_);
-    collector(block);
-    return {collector.GetReads(), collector.GetWrites()};
+private:
+  Map<Var, Buffer> buffer_data_to_buffer_;
+  Target target_;
+  bool use_async_copy_{};
+};
+
+class PipelinePlanner : public StmtExprMutator {
+public:
+  static Stmt Substitute(const PrimFunc &f, bool use_async_copy = true) {
+    PipelinePlanner substituter(use_async_copy);
+    for (const auto &[_, buffer] : f->buffer_map) {
+      substituter.buffer_data_to_buffer_.Set(buffer->data, buffer);
+    }
+    auto target = f->GetAttr<Target>(tvm::attr::kTarget);
+    ICHECK(target.defined())
+        << "Pipeline_Planning: Require the target attribute";
+    substituter.target_ = target.value();
+    return substituter.VisitStmt(f->body);
   }
 
-  BufferSet CollectPipelineWriteBuffers(
-      const Array<Stmt> &stmts,
-      const AsyncDependencyChainBuilder &chain_builder) const {
-    BufferSet write_buffers;
-    for (const Stmt &stmt : stmts) {
-      auto [_, writes] = CollectStmtAccessRegions(stmt, chain_builder);
-      for (const BufferRegion &write : writes) {
-        write_buffers.insert(write->buffer);
-      }
-    }
-    return write_buffers;
+private:
+  PipelinePlanner() = default;
+  PipelinePlanner(bool use_async_copy) : use_async_copy_(use_async_copy) {}
+
+  PipelineStageAnalyzer MakeStageAnalyzer() const {
+    return PipelineStageAnalyzer(buffer_data_to_buffer_, target_,
+                                 use_async_copy_);
   }
 
-  bool IsReplayableScalarBindStmt(
-      const Stmt &stmt, const BufferSet &pipeline_write_buffers,
-      const AsyncDependencyChainBuilder &chain_builder) const {
-    if (stmt.as<BindNode>() == nullptr) {
-      return false;
-    }
-    auto [reads, _] = CollectStmtAccessRegions(stmt, chain_builder);
-    for (const BufferRegion &read : reads) {
-      if (pipeline_write_buffers.count(read->buffer)) {
-        return false;
-      }
-    }
-    return true;
+  void AnalyzeCopyLastUse(
+      std::vector<PipelineStageInfo> *pipeline_stage_infos) const {
+    MakeStageAnalyzer().AnalyzeCopyLastUse(pipeline_stage_infos);
   }
 
-  struct ScheduledStmtAnalysis {
-    size_t original_stmt_count{0};
-    Array<Stmt> scheduled_stmts;
-    std::vector<size_t> scheduled_indices;
-    Array<Integer> replayable_bind_mask;
-  };
+  void PropagateBufferProducersForCopy(
+      std::vector<PipelineStageInfo> *pipeline_stage_infos) const {
+    MakeStageAnalyzer().PropagateBufferProducersForCopy(pipeline_stage_infos);
+  }
 
-  ScheduledStmtAnalysis AnalyzeScheduledStmts(
-      const Array<Stmt> &stmts,
-      const AsyncDependencyChainBuilder &chain_builder) const {
-    BufferSet pipeline_write_buffers =
-        CollectPipelineWriteBuffers(stmts, chain_builder);
-    ScheduledStmtAnalysis analysis;
-    analysis.original_stmt_count = stmts.size();
-    analysis.replayable_bind_mask.reserve(stmts.size());
-    for (size_t i = 0; i < stmts.size(); ++i) {
-      const Stmt &stmt = stmts[i];
-      bool replayable = IsReplayableScalarBindStmt(stmt, pipeline_write_buffers,
-                                                   chain_builder);
-      analysis.replayable_bind_mask.push_back(Integer(replayable ? 1 : 0));
-      if (replayable) {
-        continue;
-      }
-      analysis.scheduled_indices.push_back(i);
-      analysis.scheduled_stmts.push_back(stmt);
-    }
-    return analysis;
+  void PropagateScalarProducersForCopy(
+      std::vector<PipelineStageInfo> *pipeline_stage_infos) const {
+    MakeStageAnalyzer().PropagateScalarProducersForCopy(pipeline_stage_infos);
+  }
+
+  void ValidateScalarDependencies(
+      const std::vector<PipelineStageInfo> &pipeline_stage_infos) const {
+    MakeStageAnalyzer().ValidateScalarDependencies(pipeline_stage_infos);
+  }
+
+  void MaybeAnnotateLegacyAsyncPipelineLoop(const Array<Stmt> &pipeline_stmts,
+                                            const Array<Integer> &order_array,
+                                            const Array<Integer> &stage_array,
+                                            Map<String, Any> *annotations) {
+    MakeStageAnalyzer().MaybeAnnotateLegacyAsyncPipelineLoop(
+        pipeline_stmts, order_array, stage_array, annotations);
+  }
+
+  void EmitImplicitAsyncAnnotations(
+      const std::vector<PipelineStageInfo> &pipeline_stage_infos,
+      Map<String, Any> *annotations) const {
+    MakeStageAnalyzer().EmitImplicitAsyncAnnotations(pipeline_stage_infos,
+                                                     annotations);
+  }
+
+  void EmitAsyncAnnotations(
+      const std::vector<PipelineStageInfo> &pipeline_stage_infos,
+      const std::vector<std::vector<int>> &explicit_async_groups,
+      Map<String, Any> *annotations) const {
+    MakeStageAnalyzer().EmitAsyncAnnotations(
+        pipeline_stage_infos, explicit_async_groups, annotations);
+  }
+
+  PipelineStageInfo MakePipelineStageInfo(Stmt stmt, int idx) {
+    return MakeStageAnalyzer().MakePipelineStageInfo(std::move(stmt), idx);
+  }
+
+  using ScheduledStmtAnalysis =
+      PipelinePlanningBodyAnalyzer::ScheduledStmtAnalysis;
+  using SeqStmtFlattener = PipelinePlanningBodyAnalyzer::SeqStmtFlattener;
+
+  PipelinePlanningBodyAnalyzer MakeBodyAnalyzer() const {
+    return PipelinePlanningBodyAnalyzer(buffer_data_to_buffer_, target_);
+  }
+
+  ScheduledStmtAnalysis AnalyzeScheduledStmts(const Array<Stmt> &stmts) const {
+    return MakeBodyAnalyzer().AnalyzeScheduledStmts(stmts);
   }
 
   Array<Integer> FilterAnnotationsForScheduledStmts(
       const Array<Integer> &annotations,
       const ScheduledStmtAnalysis &analysis) const {
-    if (annotations.size() == analysis.scheduled_stmts.size()) {
-      return annotations;
-    }
-
-    ICHECK_EQ(annotations.size(), analysis.original_stmt_count)
-        << "PipelinePlanning: expected pipeline annotation size to match "
-           "either the scheduled statement count or the original statement "
-           "count";
-
-    Array<Integer> filtered;
-    for (size_t index : analysis.scheduled_indices) {
-      filtered.push_back(annotations[index]);
-    }
-    ICHECK_EQ(filtered.size(), analysis.scheduled_stmts.size());
-    return filtered;
+    return MakeBodyAnalyzer().FilterAnnotationsForScheduledStmts(annotations,
+                                                                 analysis);
   }
-
-  class PipelineBodySeqFinder
-      : public StmtFunctor<Optional<SeqStmt>(const Stmt &)> {
-  public:
-    static SeqStmt FindOrFatal(const Stmt &stmt) {
-      PipelineBodySeqFinder finder;
-      Optional<SeqStmt> seq = finder(stmt);
-      ICHECK(seq.defined());
-      return seq.value();
-    }
-
-    Optional<SeqStmt> VisitStmt_(const SeqStmtNode *op) final {
-      return tvm::ffi::GetRef<SeqStmt>(op);
-    }
-
-    Optional<SeqStmt> VisitStmt_(const IfThenElseNode *op) final {
-      ICHECK(!op->else_case.defined())
-          << "Pipeline_Planning: Can't handle the body of the loop because "
-             "the IfThenElse node has an else branch";
-      return VisitStmt(op->then_case);
-    }
-
-    Optional<SeqStmt> VisitStmtDefault_(const Object *op) final {
-      LOG(FATAL) << "Pipeline_Planning: Can't handle the body of the loop "
-                 << "because it is not a SeqStmt, IfThenElse without else, "
-                 << "or supported tirx wrapper, but got " << op->GetTypeKey();
-      return Optional<SeqStmt>();
-    }
-  };
-
-  class SeqStmtFlattener : public StmtFunctor<Array<Stmt>(const Stmt &)> {
-  public:
-    using Base = StmtFunctor<Array<Stmt>(const Stmt &)>;
-
-    static Array<Stmt> Flatten(const Array<Stmt> &stmts) {
-      SeqStmtFlattener flattener;
-      Array<Stmt> flattened;
-      for (const Stmt &stmt : stmts) {
-        Array<Stmt> nested = flattener(stmt);
-        flattened.insert(flattened.end(), nested.begin(), nested.end());
-      }
-      return flattened;
-    }
-
-    Array<Stmt> VisitStmt(const Stmt &stmt) final {
-      if (!stmt.as<SeqStmtNode>()) {
-        return Array<Stmt>{stmt};
-      }
-      return Base::VisitStmt(stmt);
-    }
-
-    Array<Stmt> VisitStmt_(const SeqStmtNode *op) final {
-      Array<Stmt> flattened;
-      for (const Stmt &stmt : op->seq) {
-        Array<Stmt> nested = VisitStmt(stmt);
-        flattened.insert(flattened.end(), nested.begin(), nested.end());
-      }
-      return flattened;
-    }
-
-    Array<Stmt> VisitStmtDefault_(const Object *) final {
-      return Array<Stmt>();
-    }
-  };
-
-  class BodyWrapperRebuilder
-      : public StmtFunctor<Optional<Stmt>(const Stmt &)> {
-  public:
-    using Base = StmtFunctor<Optional<Stmt>(const Stmt &)>;
-
-    static Stmt ReplaceOrFatal(const Stmt &stmt, SeqStmt old_seq,
-                               Stmt new_seq) {
-      BodyWrapperRebuilder rebuilder(std::move(old_seq), std::move(new_seq));
-      Optional<Stmt> rebuilt = rebuilder(stmt);
-      ICHECK(rebuilt.defined());
-      return rebuilt.value();
-    }
-
-    BodyWrapperRebuilder(SeqStmt old_seq, Stmt new_seq)
-        : old_seq_(std::move(old_seq)), new_seq_(std::move(new_seq)) {}
-
-    Optional<Stmt> VisitStmt(const Stmt &stmt) final {
-      if (stmt.same_as(old_seq_)) {
-        return new_seq_;
-      }
-      return Base::VisitStmt(stmt);
-    }
-
-    Optional<Stmt> VisitStmt_(const IfThenElseNode *op) final {
-      Optional<Stmt> then_case = VisitStmt(op->then_case);
-      if (!then_case.defined()) {
-        return Optional<Stmt>();
-      }
-      return IfThenElse(op->condition, then_case.value(), op->else_case);
-    }
-
-    Optional<Stmt> VisitStmtDefault_(const Object *op) final {
-      LOG(FATAL) << "BodyWrapperRebuilder: unexpected node type "
-                 << op->GetTypeKey();
-      return Optional<Stmt>();
-    }
-
-  private:
-    SeqStmt old_seq_;
-    Stmt new_seq_;
-  };
 
   Stmt VisitStmt_(const ForNode *loop) final {
     auto order_anno = loop->annotations.Get("tl_pipeline_order");
     auto stage_anno = loop->annotations.Get("tl_pipeline_stage");
     auto num_stages_anno = loop->annotations.Get("num_stages");
     if (order_anno && stage_anno) {
-      // Check if order_anno or stage_anno contains -1, which means TMA+WS is
-      // enabled
-      bool ws_tma_enabled = false;
       auto order_array = Downcast<Array<Integer>>(order_anno.value());
       auto stage_array = Downcast<Array<Integer>>(stage_anno.value());
-      for (const auto &val : order_array) {
-        if (val->value == -1) {
-          ws_tma_enabled = true;
-          break;
-        }
-      }
-      if (!ws_tma_enabled) {
-        for (const auto &val : stage_array) {
-          if (val->value == -1) {
-            ws_tma_enabled = true;
-            break;
-          }
-        }
-      }
-
-      if (ws_tma_enabled) {
-        return StmtExprMutator::VisitStmt_(loop);
-      }
 
       Map<String, Any> annotations;
       for (const auto &[key, value] : loop->annotations) {
@@ -1345,24 +1235,42 @@ private:
         annotations.Set(s_tir::attr::software_pipeline_async_stages,
                         Array<Integer>{0});
       }
-      Stmt pipeline_body_root{nullptr};
-      if (const auto *realize = loop->body.as<SBlockRealizeNode>()) {
-        const auto &block = realize->block;
-        for (const auto &buffer : block->alloc_buffers) {
-          ICHECK(buffer->IsInstance<BufferNode>());
-          buffer_data_to_buffer_.Set(buffer->data, buffer);
+      Array<Stmt> pipeline_body_stmts = NormalizePipelineBody(loop->body);
+      Array<Stmt> pipeline_stmts =
+          SeqStmtFlattener::Flatten(pipeline_body_stmts);
+      ScheduledStmtAnalysis analysis = AnalyzeScheduledStmts(pipeline_stmts);
+      ICHECK(!analysis.scheduled_stmts.empty())
+          << "PipelinePlanning: explicit pipeline annotations have no "
+             "schedulable statements after removing replayable scalar Bind "
+             "statements";
+      Array<Integer> filtered_order_array =
+          FilterAnnotationsForScheduledStmts(order_array, analysis);
+      Array<Integer> filtered_stage_array =
+          FilterAnnotationsForScheduledStmts(stage_array, analysis);
+      annotations.Set(s_tir::attr::software_pipeline_order,
+                      filtered_order_array);
+      annotations.Set(s_tir::attr::software_pipeline_stage,
+                      filtered_stage_array);
+      if (pipeline_stmts.size() == pipeline_body_stmts.size()) {
+        bool flatten_preserved_original_order = true;
+        for (size_t i = 0; i < pipeline_stmts.size(); ++i) {
+          if (!pipeline_stmts[i].same_as(pipeline_body_stmts[i])) {
+            flatten_preserved_original_order = false;
+            break;
+          }
         }
-        pipeline_body_root = block->body;
-      } else {
-        pipeline_body_root = loop->body;
+        if (flatten_preserved_original_order && analysis.has_bind_stmt) {
+          annotations.Set(kPipelineReplayableScalarBinds,
+                          analysis.replayable_bind_mask);
+        }
       }
-      SeqStmt pipeline_body_seq =
-          PipelineBodySeqFinder::FindOrFatal(pipeline_body_root);
-      MaybeAnnotateLegacyAsyncPipelineLoop(pipeline_body_root,
-                                           pipeline_body_seq->seq, order_array,
-                                           stage_array, &annotations);
-      auto for_node = tvm::ffi::GetRef<For>(loop);
-      for_node.CopyOnWrite()->annotations = annotations;
+      MaybeAnnotateLegacyAsyncPipelineLoop(analysis.scheduled_stmts,
+                                           filtered_order_array,
+                                           filtered_stage_array, &annotations);
+      auto for_node = GetRef<For>(loop);
+      auto *n = for_node.CopyOnWrite();
+      n->annotations = annotations;
+      n->body = MakePipelineBody(pipeline_body_stmts);
       return for_node;
     }
 
@@ -1392,48 +1300,25 @@ private:
       stripped.CopyOnWrite()->annotations = annotations;
       return StmtExprMutator::VisitStmt_(stripped.get());
     }
-    Stmt pipeline_body_root{nullptr};
-    if (const auto *realize = loop->body.as<SBlockRealizeNode>()) {
-      const auto &block = realize->block;
-      for (const auto &buffer : block->alloc_buffers) {
-        ICHECK(buffer->IsInstance<BufferNode>());
-        buffer_data_to_buffer_.Set(buffer->data, buffer);
-      }
-      pipeline_body_root = block->body;
-    } else {
-      pipeline_body_root = loop->body;
-    }
-    SeqStmt pipeline_body_seq =
-        PipelineBodySeqFinder::FindOrFatal(pipeline_body_root);
+    Array<Stmt> pipeline_body_stmts = NormalizePipelineBody(loop->body);
 
     ICHECK(num_stages >= 1);
     ICHECK(loop->kind == ForKind::kSerial);
 
-    // Flatten nested SeqStmts. TMA copy lowering emits
-    // SeqStmt({produce, wait}) which creates nested SeqStmts when placed
-    // inside the loop body. Flatten them so pipeline planning can assign
-    // individual stages to the produce and wait statements.
-    Array<Stmt> flat_stmts = SeqStmtFlattener::Flatten(pipeline_body_seq->seq);
-
-    AsyncDependencyChainBuilder chain_builder(buffer_data_to_buffer_);
-    chain_builder(pipeline_body_root);
-    ScheduledStmtAnalysis analysis =
-        AnalyzeScheduledStmts(flat_stmts, chain_builder);
+    // Flatten nested SeqStmts so pipeline planning can assign stages to the
+    // normalized top-level statement list.
+    Array<Stmt> flat_stmts = SeqStmtFlattener::Flatten(pipeline_body_stmts);
+    ScheduledStmtAnalysis analysis = AnalyzeScheduledStmts(flat_stmts);
     ICHECK(!analysis.scheduled_stmts.empty())
         << "PipelinePlanning: loop has no schedulable statements after "
            "removing replayable scalar Bind statements";
 
     std::vector<PipelineStageInfo> pipeline_stage_infos;
     for (size_t i = 0; i < analysis.scheduled_stmts.size(); i++) {
-      auto pinfo =
-          MakePipelineStageInfo(analysis.scheduled_stmts[i], i, chain_builder);
+      auto pinfo = MakePipelineStageInfo(analysis.scheduled_stmts[i], i);
       pipeline_stage_infos.push_back(std::move(pinfo));
     }
 
-    // Build a formal cp.async synchronization model in original statement
-    // order:
-    //   group := cp_async* then commit
-    // and map wait_group(n) to the committed groups it must wait for.
     struct CPAsyncGroupInfo {
       int group_id = -1;
       int anchor_cp_async_stmt = -1;
@@ -1444,7 +1329,6 @@ private:
     };
     struct WaitDependencyInfo {
       int wait_stmt_index = -1;
-      // Committed groups that must be completed before this wait can pass.
       std::vector<int> required_group_ids;
     };
 
@@ -1452,7 +1336,7 @@ private:
     std::vector<WaitDependencyInfo> wait_dependencies;
     std::vector<int> committed_groups_in_order;
 
-    auto create_new_group = [&]() -> int {
+    auto create_new_cp_async_group = [&]() -> int {
       int group_id = static_cast<int>(cp_async_groups.size());
       CPAsyncGroupInfo group;
       group.group_id = group_id;
@@ -1460,15 +1344,15 @@ private:
       return group_id;
     };
 
-    int open_group = -1;
+    int open_cp_async_group = -1;
     for (size_t i = 0; i < pipeline_stage_infos.size(); ++i) {
       auto &pinfo = pipeline_stage_infos[i];
-      if (pinfo.has_cp_async_call()) {
-        if (open_group == -1) {
-          open_group = create_new_group();
+      if (pinfo.HasCpAsyncCall()) {
+        if (open_cp_async_group == -1) {
+          open_cp_async_group = create_new_cp_async_group();
         }
-        pinfo.cp_async_group = open_group;
-        auto &group = cp_async_groups[open_group];
+        pinfo.cp_async_group = open_cp_async_group;
+        auto &group = cp_async_groups[open_cp_async_group];
         group.cp_async_stmt_indices.push_back(static_cast<int>(i));
         if (group.anchor_cp_async_stmt == -1) {
           group.anchor_cp_async_stmt = static_cast<int>(i);
@@ -1477,18 +1361,17 @@ private:
           group.written_buffers.insert(write->buffer);
         }
       }
-      if (pinfo.has_cp_async_commit()) {
-        if (open_group == -1) {
-          open_group = create_new_group();
+      if (pinfo.HasCpAsyncCommit()) {
+        if (open_cp_async_group == -1) {
+          open_cp_async_group = create_new_cp_async_group();
         }
-        pinfo.cp_async_group = open_group;
-        cp_async_groups[open_group].commit_stmt_indices.push_back(
+        pinfo.cp_async_group = open_cp_async_group;
+        cp_async_groups[open_cp_async_group].commit_stmt_indices.push_back(
             static_cast<int>(i));
-        committed_groups_in_order.push_back(open_group);
-        // A commit closes the currently open cp.async group.
-        open_group = -1;
+        committed_groups_in_order.push_back(open_cp_async_group);
+        open_cp_async_group = -1;
       }
-      if (pinfo.has_cp_async_wait()) {
+      if (pinfo.HasCpAsyncWait()) {
         int committed_count =
             static_cast<int>(committed_groups_in_order.size());
         int retain_inflight = pinfo.cp_async_wait_has_dynamic
@@ -1523,8 +1406,6 @@ private:
       return false;
     };
 
-    // Record earliest consumers for each cp.async group, and track all
-    // cp.async-written buffers for wait remapping.
     BufferSet async_written_buffers;
     std::vector<int> cp_async_group_first_consumer(
         cp_async_groups.size(), std::numeric_limits<int>::max());
@@ -1533,7 +1414,7 @@ private:
       async_written_buffers.insert(group.written_buffers.begin(),
                                    group.written_buffers.end());
       for (int stmt_idx = 0; stmt_idx < pipeline_stmt_count; ++stmt_idx) {
-        if (pipeline_stage_infos[stmt_idx].is_first_stage()) {
+        if (pipeline_stage_infos[stmt_idx].IsFirstStage()) {
           continue;
         }
         if (stmt_reads_buffer_set(stmt_idx, group.written_buffers)) {
@@ -1543,12 +1424,6 @@ private:
       }
     }
 
-    // Heuristic for wait_group(0): bind each wait to the first unmatched
-    // downstream consumer of cp.async-written shared buffers, then derive the
-    // required groups from that consumer's read set.
-    //
-    // This keeps wait-group scheduling buffer-aware even when wait uses a full
-    // drain value, enabling patterns like "wait/decode B first, then wait A".
     int last_bound_consumer_stmt = -1;
     for (auto &wait_dep : wait_dependencies) {
       int wait_stmt_idx = wait_dep.wait_stmt_index;
@@ -1556,13 +1431,13 @@ private:
         continue;
       }
       const auto &wait_stmt_info = pipeline_stage_infos[wait_stmt_idx];
-      if (!wait_stmt_info.has_cp_async_wait() ||
+      if (!wait_stmt_info.HasCpAsyncWait() ||
           wait_stmt_info.cp_async_wait_has_dynamic ||
           wait_stmt_info.cp_async_wait_min_inflight != 0) {
         continue;
       }
-      if (wait_stmt_info.has_cp_async_call() ||
-          wait_stmt_info.has_cp_async_commit()) {
+      if (wait_stmt_info.HasCpAsyncCall() ||
+          wait_stmt_info.HasCpAsyncCommit()) {
         continue;
       }
 
@@ -1571,7 +1446,7 @@ private:
       int consumer_stmt_idx = -1;
       for (int stmt_idx = search_start; stmt_idx < pipeline_stmt_count;
            ++stmt_idx) {
-        if (pipeline_stage_infos[stmt_idx].is_first_stage()) {
+        if (pipeline_stage_infos[stmt_idx].IsFirstStage()) {
           continue;
         }
         if (stmt_reads_buffer_set(stmt_idx, async_written_buffers)) {
@@ -1604,100 +1479,20 @@ private:
       cp_async_group_schedule_order.push_back(static_cast<int>(group_id));
     }
 
-    // For every copy stage, mark all its dependency stages as producer_for_copy
-    // Helper struct to manage copy stage dependency reads
-    struct CopyStageDependencyReadsManager {
-      std::vector<BufferRegion> regions;
-
-      // Add a region if not already present (by structural equality)
-      void AddUnique(const BufferRegion &region) {
-        for (const BufferRegion &copy_read : regions) {
-          if (region->buffer.same_as(copy_read->buffer)) {
-            return;
-          }
-        }
-        regions.push_back(region);
-      }
-
-      // Check if a region is present (by structural equality)
-      bool Contains(const BufferRegion &region) const {
-        for (const BufferRegion &copy_read : regions) {
-          if (region->buffer.same_as(copy_read->buffer)) {
-            return true;
-          }
-        }
-        return false;
-      }
-
-      size_t Size() const { return regions.size(); }
-    };
-
-    CopyStageDependencyReadsManager copy_stage_dependency_reads_mgr;
-
-    // Step 1. Collect Copy reads
-    for (const auto &pinfo : pipeline_stage_infos) {
-      if (pinfo.is_copy_stage()) {
-        for (const BufferRegion &read : pinfo.reads) {
-          copy_stage_dependency_reads_mgr.AddUnique(read);
-        }
-      }
-    }
-
-    // Step 2. find if pinfo write the copy reads, then update the
-    // copy_stage_dependency_reads To prevent infinite loops, we set a maximum
-    // number of iterations. In theory, the number of possible updates is
-    // bounded by the number of pipeline stages, since each stage can only be
-    // marked as producer_for_copy once, and each read can only be added once.
-    // But for safety, we add a hard limit.
-    const size_t max_iterations = (pipeline_stage_infos.size() * 4) + 16;
-    size_t iter_count = 0;
-
-    for (auto &pinfo : pipeline_stage_infos) {
-      if (!pinfo.is_copy_stage()) {
-        continue;
-      }
-      auto original_copy_stmt_index = pinfo.original_stmt_index;
-      bool updated = true;
-      while (updated) {
-        updated = false;
-        for (auto &pinfo_inner : pipeline_stage_infos) {
-          if (pinfo_inner.is_copy_stage()) {
-            continue;
-          }
-          if (pinfo_inner.original_stmt_index >= original_copy_stmt_index) {
-            break;
-          }
-
-          bool should_prepare = false;
-          for (const BufferRegion &write : pinfo_inner.writes) {
-            if (copy_stage_dependency_reads_mgr.Contains(write)) {
-              should_prepare = true;
-              break;
-            }
-          }
-          if (should_prepare && !pinfo_inner.is_producer_for_copy()) {
-            pinfo_inner.producer_for_copy = true;
-            updated = true;
-          }
-          if (should_prepare) {
-            for (const BufferRegion &read : pinfo_inner.reads) {
-              size_t before = copy_stage_dependency_reads_mgr.Size();
-              copy_stage_dependency_reads_mgr.AddUnique(read);
-              if (copy_stage_dependency_reads_mgr.Size() > before) {
-                updated = true;
-              }
-            }
-          }
-        }
-        iter_count++;
-        if (iter_count > max_iterations) {
-          LOG(FATAL)
-              << "Pipeline planning: Exceeded maximum iterations ("
-              << max_iterations << ") in copy stage dependency propagation. "
-              << "This may indicate a cyclic or pathological dependency graph.";
-        }
-      }
-    }
+    // Some statements before a copy are not copy operations themselves, but
+    // they prepare buffers that the copy must read.  A common example is
+    // producer-side initialization before a conditional or partial copy:
+    //
+    //   fill(shared, 0)        // writes shared
+    //   copy(global, shared)   // may rely on the initialized values
+    //
+    // If the copy is moved to the producer side, the fill must move with it;
+    // otherwise the copy could observe an uninitialized or wrong shared-buffer
+    // value.  PropagateBufferProducersForCopy computes a buffer-level backward
+    // dependency closure from copy-stage reads to earlier non-copy writes and
+    // marks those statements as `producer_for_copy`.  They then participate in
+    // the producer-stage scheduling just like the copy stages they prepare.
+    PropagateBufferProducersForCopy(&pipeline_stage_infos);
 
     // Analysis use-def chain to determine last_use_stmt_index for copy
     // operations This step is critical for pipeline optimization as it
@@ -1706,11 +1501,6 @@ private:
     // pipeline schedule.
     AnalyzeCopyLastUse(&pipeline_stage_infos);
 
-    // Treat each explicit `cp_async* ; commit` producer group as a synthetic
-    // copy stage for scheduling. All statements in the group share the same
-    // last-use anchor, so stage assignment keeps the producer group together
-    // instead of scheduling individual cp.async members near different
-    // consumers.
     for (auto &group : cp_async_groups) {
       if (group.anchor_cp_async_stmt < 0) {
         continue;
@@ -1725,8 +1515,6 @@ private:
             pipeline_stage_infos[cp_async_stmt_idx].last_use_stmt_index);
       }
       if (group_last_use < 0) {
-        // Fallback to the latest cp.async statement when no consumer is found
-        // (rare, but keep local ordering correct).
         group_last_use = group_last_cp_async_stmt;
       }
       group.last_use_stmt_index = group_last_use;
@@ -1737,11 +1525,8 @@ private:
       for (int commit_stmt_idx : group.commit_stmt_indices) {
         auto &commit_info = pipeline_stage_infos[commit_stmt_idx];
         commit_info.last_use_stmt_index = group_last_use;
-        // Only mark commit-only statements. If commit is already fused with
-        // cp.async calls in the same statement, its local ordering is
-        // preserved by the statement itself.
-        if (commit_info.has_cp_async_commit() &&
-            !commit_info.has_cp_async_call()) {
+        if (commit_info.HasCpAsyncCommit() &&
+            !commit_info.HasCpAsyncCall()) {
           commit_info.cp_async_commit_stage = true;
         }
       }
@@ -1749,10 +1534,6 @@ private:
 
     PropagateScalarProducersForCopy(&pipeline_stage_infos);
 
-    // Order explicit cp.async producer groups by the lifetime of the data they
-    // introduce. Groups whose data dies earlier should be scheduled earlier in
-    // the synthetic stage-0 producer schedule, which also matches the desired
-    // wait rebinding behavior for wait_group(0) consumers.
     std::stable_sort(
         cp_async_group_schedule_order.begin(),
         cp_async_group_schedule_order.end(), [&](int lhs_group, int rhs_group) {
@@ -1779,7 +1560,7 @@ private:
       // handling
       //    because they have consumers that depend on their data
       // 2. All Producer stages for copy stages.
-      if (pinfo.is_first_stage() && pinfo.is_last_use_stmt_index_valid()) {
+      if (pinfo.IsFirstStage() && pinfo.IsLastUseStmtIndexValid()) {
         continue;
       }
 
@@ -1793,7 +1574,7 @@ private:
       // This ensures copy operations are placed right before their final
       // consumer for optimal pipeline efficiency
       for (auto &pinfo_1 : pipeline_stage_infos) {
-        if ((pinfo_1.is_first_stage() &&
+        if ((pinfo_1.IsFirstStage() &&
              pinfo_1.last_use_stmt_index == pinfo.original_stmt_index)) {
           pinfo_1.order = order_idx++;
           pinfo_1.stage = 0; // Copy stages are typically assigned to stage 0
@@ -1814,7 +1595,7 @@ private:
       int copy_order_min = pipeline_stage_infos.size();
       int non_copy_order_max = 0;
       for (auto &pinfo : pipeline_stage_infos) {
-        if (pinfo.is_first_stage()) {
+        if (pinfo.IsFirstStage()) {
           copy_stage_cnt++;
           copy_order_min = std::min(copy_order_min, pinfo.order);
         } else {
@@ -1829,13 +1610,12 @@ private:
       for (auto &pinfo : pipeline_stage_infos) { // move copy to the beginning
         pinfo.order =
             (pinfo.order + copy_stage_at_end) % pipeline_stage_infos.size();
-        if (!pinfo.is_copy_stage() && !pinfo.is_producer_for_copy() &&
-            !pinfo.is_cp_async_commit_stage())
+        if (!pinfo.IsCopyStage() && !pinfo.IsProducerForCopy() &&
+            !pinfo.IsCpAsyncCommitStage())
           pinfo.stage--;
       }
     }
 
-    // Enforce stage(commit) == stage(cp_async anchor) per group.
     for (const auto &group : cp_async_groups) {
       if (group.anchor_cp_async_stmt < 0) {
         continue;
@@ -1846,8 +1626,6 @@ private:
       }
     }
 
-    // Sanity check: within a cp.async group, commit statements must appear
-    // after all cp.async calls in the same stage order.
     for (const auto &group : cp_async_groups) {
       if (group.anchor_cp_async_stmt < 0) {
         continue;
@@ -1863,10 +1641,7 @@ private:
       }
       for (int commit_stmt_idx : group.commit_stmt_indices) {
         if (pipeline_stage_infos[commit_stmt_idx].stage == anchor_stage) {
-          // If commit is fused with cp.async calls in the same statement, the
-          // statement-local order is preserved and we cannot enforce an
-          // inter-statement order relation.
-          if (pipeline_stage_infos[commit_stmt_idx].has_cp_async_call()) {
+          if (pipeline_stage_infos[commit_stmt_idx].HasCpAsyncCall()) {
             continue;
           }
           ICHECK_GT(pipeline_stage_infos[commit_stmt_idx].order,
@@ -1881,11 +1656,7 @@ private:
       }
     }
 
-    // Enforce wait placement based on the formal group dependency model.
-    // For static wait_group(n), it depends on committed groups except the
-    // latest n groups. For dynamic wait args, we conservatively treat it as
-    // wait_group(0), i.e. draining all committed groups.
-    auto get_group_stage = [&](int group_id) -> int {
+    auto get_cp_async_group_stage = [&](int group_id) -> int {
       if (group_id < 0 ||
           group_id >= static_cast<int>(cp_async_groups.size())) {
         return 0;
@@ -1908,11 +1679,8 @@ private:
       }
       const auto &wait_stmt_info =
           pipeline_stage_infos[wait_dep.wait_stmt_index];
-      // If wait is fused with cp.async/commit in the same statement, we cannot
-      // place it independently at stage granularity. Keep the statement stage
-      // unchanged and rely on the statement's explicit local ordering.
-      if (wait_stmt_info.has_cp_async_call() ||
-          wait_stmt_info.has_cp_async_commit()) {
+      if (wait_stmt_info.HasCpAsyncCall() ||
+          wait_stmt_info.HasCpAsyncCommit()) {
         continue;
       }
       if (wait_dep.required_group_ids.empty()) {
@@ -1922,7 +1690,8 @@ private:
       int required_stage = pipeline_stage_infos[wait_dep.wait_stmt_index].stage;
       BufferSet waited_buffers;
       for (int group_id : wait_dep.required_group_ids) {
-        required_stage = std::max(required_stage, get_group_stage(group_id));
+        required_stage =
+            std::max(required_stage, get_cp_async_group_stage(group_id));
         if (group_id >= 0 &&
             group_id < static_cast<int>(cp_async_groups.size())) {
           const auto &group = cp_async_groups[group_id];
@@ -1936,7 +1705,7 @@ private:
         for (int stmt_idx = wait_dep.wait_stmt_index + 1;
              stmt_idx < static_cast<int>(pipeline_stage_infos.size());
              ++stmt_idx) {
-          if (pipeline_stage_infos[stmt_idx].is_first_stage()) {
+          if (pipeline_stage_infos[stmt_idx].IsFirstStage()) {
             continue;
           }
           bool dependent_read = false;
@@ -1967,18 +1736,6 @@ private:
       }
     }
 
-    // Enforce cp.async ordering constraints.
-    //
-    // PipelinePlanning's scheduling heuristic may float pure control intrinsics
-    // like `ptx_commit_group` earlier because they have no buffer read/write
-    // regions. This can break cp.async group semantics and generate illegal
-    // code patterns such as:
-    //   cp_async_commit();
-    //   cp_async_gs<...>(...);
-    //
-    // We fix this by building a small control-dependency graph among pipeline
-    // body statements and doing a stable topological sort with the existing
-    // `order` as the tie-breaker.
     {
       int n = static_cast<int>(pipeline_stage_infos.size());
       std::vector<int> order_rank(n, 0);
@@ -1999,7 +1756,8 @@ private:
       };
 
       {
-        auto scalar_def_to_stmt = BuildScalarDefMap(pipeline_stage_infos);
+        auto scalar_def_to_stmt =
+            MakeStageAnalyzer().BuildScalarDefMap(pipeline_stage_infos);
         for (int consumer_idx = 0; consumer_idx < n; ++consumer_idx) {
           const auto &consumer = pipeline_stage_infos[consumer_idx];
           for (const VarNode *var : consumer.scalar_uses) {
@@ -2029,17 +1787,13 @@ private:
         return key;
       };
 
-      // Respect the synthetic producer-group order computed above. The control
-      // dependencies below only preserve cp.async group boundaries; they must
-      // not re-prioritize groups using a different heuristic.
-      std::vector<int> cp_async_group_schedule_order;
-      cp_async_group_schedule_order.reserve(cp_async_groups.size());
+      std::vector<int> ordered_cp_async_groups;
+      ordered_cp_async_groups.reserve(cp_async_groups.size());
       for (size_t group_id = 0; group_id < cp_async_groups.size(); ++group_id) {
-        cp_async_group_schedule_order.push_back(static_cast<int>(group_id));
+        ordered_cp_async_groups.push_back(static_cast<int>(group_id));
       }
       std::stable_sort(
-          cp_async_group_schedule_order.begin(),
-          cp_async_group_schedule_order.end(),
+          ordered_cp_async_groups.begin(), ordered_cp_async_groups.end(),
           [&](int lhs_group, int rhs_group) {
             int lhs_key = group_schedule_key(cp_async_groups[lhs_group]);
             int rhs_key = group_schedule_key(cp_async_groups[rhs_group]);
@@ -2050,15 +1804,10 @@ private:
                    cp_async_groups[rhs_group].anchor_cp_async_stmt;
           });
 
-      // (1) cp.async group semantics:
-      //   group := cp_async* ; commit
-      // and group boundaries must be preserved:
-      //   commit(group_i) happens before cp_async(group_{i+1}).
       for (size_t g = 0; g < cp_async_groups.size(); ++g) {
         const auto &group = cp_async_groups[g];
         for (int cp_stmt_idx : group.cp_async_stmt_indices) {
           for (int commit_stmt_idx : group.commit_stmt_indices) {
-            // Only enforce intra-iteration order (same stage).
             if (pipeline_stage_infos[cp_stmt_idx].stage ==
                 pipeline_stage_infos[commit_stmt_idx].stage) {
               add_edge(cp_stmt_idx, commit_stmt_idx);
@@ -2066,13 +1815,13 @@ private:
           }
         }
       }
-      for (size_t i = 0; i + 1 < cp_async_group_schedule_order.size(); ++i) {
-        const auto &group = cp_async_groups[cp_async_group_schedule_order[i]];
+      for (size_t i = 0; i + 1 < ordered_cp_async_groups.size(); ++i) {
+        const auto &group = cp_async_groups[ordered_cp_async_groups[i]];
         if (group.commit_stmt_indices.empty()) {
           continue;
         }
         const auto &next_group =
-            cp_async_groups[cp_async_group_schedule_order[i + 1]];
+            cp_async_groups[ordered_cp_async_groups[i + 1]];
         for (int commit_stmt_idx : group.commit_stmt_indices) {
           for (int next_cp_stmt_idx : next_group.cp_async_stmt_indices) {
             if (pipeline_stage_infos[commit_stmt_idx].stage ==
@@ -2083,13 +1832,6 @@ private:
         }
       }
 
-      // (2) wait_group ordering:
-      //   - wait must stay before dependent same-stage consumers;
-      //   - if wait is in the same stage as a required commit, it must be
-      //     after that commit;
-      //   - when legal, delay wait to be as close as possible to its first
-      //     dependent consumer by placing independent same-stage statements
-      //     before wait (without crossing async/control-only boundaries).
       for (const auto &wait_dep : wait_dependencies) {
         int wait_stmt_idx = wait_dep.wait_stmt_index;
         if (wait_stmt_idx < 0 || wait_stmt_idx >= n) {
@@ -2097,9 +1839,8 @@ private:
         }
 
         const auto &wait_stmt_info = pipeline_stage_infos[wait_stmt_idx];
-        // If wait is fused with cp.async/commit, rely on local statement order.
-        if (wait_stmt_info.has_cp_async_call() ||
-            wait_stmt_info.has_cp_async_commit()) {
+        if (wait_stmt_info.HasCpAsyncCall() ||
+            wait_stmt_info.HasCpAsyncCommit()) {
           continue;
         }
 
@@ -2113,8 +1854,6 @@ private:
           waited_buffers.insert(group.written_buffers.begin(),
                                 group.written_buffers.end());
 
-          // If wait shares the same stage with a required commit, it must be
-          // ordered after that commit for the same original iteration.
           for (int commit_stmt_idx : group.commit_stmt_indices) {
             if (pipeline_stage_infos[commit_stmt_idx].stage ==
                 wait_stmt_info.stage) {
@@ -2127,8 +1866,6 @@ private:
           continue;
         }
 
-        // Ensure wait happens before all same-stage consumers that read any of
-        // the waited buffers.
         int first_dependent_consumer_idx = -1;
         for (int consumer_stmt_idx = wait_stmt_idx + 1; consumer_stmt_idx < n;
              ++consumer_stmt_idx) {
@@ -2152,9 +1889,6 @@ private:
           }
         }
 
-        // Delay wait within the same stage until right before the first
-        // dependent consumer when possible, so independent prep work can run
-        // while async copies are still in flight.
         if (first_dependent_consumer_idx != -1) {
           for (int stmt_idx = wait_stmt_idx + 1;
                stmt_idx < first_dependent_consumer_idx; ++stmt_idx) {
@@ -2162,15 +1896,12 @@ private:
             if (mid_stmt_info.stage != wait_stmt_info.stage) {
               continue;
             }
-            // Do not move wait across pure control statements (e.g. barriers)
-            // because they are not represented in buffer read/write regions.
             if (mid_stmt_info.reads.empty() && mid_stmt_info.writes.empty()) {
               break;
             }
-            // Do not move wait across explicit async synchronization points.
-            if (mid_stmt_info.has_cp_async_call() ||
-                mid_stmt_info.has_cp_async_commit() ||
-                mid_stmt_info.has_cp_async_wait()) {
+            if (mid_stmt_info.HasCpAsyncCall() ||
+                mid_stmt_info.HasCpAsyncCommit() ||
+                mid_stmt_info.HasCpAsyncWait()) {
               break;
             }
             bool touches_waited_buffers = false;
@@ -2195,8 +1926,7 @@ private:
         }
       }
 
-      // Stable topological sort: pick the smallest existing order each time.
-      using Item = std::pair<int, int>; // (order_rank, stmt_idx)
+      using Item = std::pair<int, int>;
       std::priority_queue<Item, std::vector<Item>, std::greater<Item>> ready;
       for (int i = 0; i < n; ++i) {
         if (indeg[i] == 0) {
@@ -2237,7 +1967,7 @@ private:
       }
     }
     // Preserve the original TileLang pipelining depth for downstream scheduling
-    // (e.g. cp.async wait_group relaxation/splitting). We intentionally do NOT
+    // (e.g. generated async-copy wait placement). We intentionally do NOT
     // keep the legacy key "num_stages" here because multiple downstream passes
     // (e.g. internal buffer versioning / warp specialization) treat it as an
     // active pipeline marker and do not support nested pipelines.
@@ -2255,121 +1985,42 @@ private:
                     Array<Integer>(stages));
     annotations.Set(s_tir::attr::software_pipeline_order,
                     Array<Integer>(orders));
-    annotations.Set(kPipelineReplayableScalarBinds,
-                    analysis.replayable_bind_mask);
+    if (analysis.has_bind_stmt) {
+      annotations.Set(kPipelineReplayableScalarBinds,
+                      analysis.replayable_bind_mask);
+    }
 
     // Propagate per-statement TMA eligibility so InjectSoftwarePipeline can
     // rewrite TMA copies to use pipeline-level barrier management.
     {
       std::vector<Integer> tma_copies;
       tma_copies.reserve(pipeline_stage_infos.size());
+      bool has_tma_copy = false;
       for (auto &pinfo : pipeline_stage_infos) {
-        tma_copies.push_back(Integer(pinfo.is_tma_copy() ? 1 : 0));
+        bool IsTmaCopy = pinfo.IsTmaCopy();
+        has_tma_copy = has_tma_copy || IsTmaCopy;
+        tma_copies.push_back(Integer(IsTmaCopy ? 1 : 0));
       }
-      annotations.Set(kPipelineTmaCopies, Array<Integer>(tma_copies));
-    }
-
-    if (TargetHasAsyncCopy(target_) && use_async_copy_) {
-      std::vector<int> async_group_ids(pipeline_stage_infos.size(), -1);
-      int next_async_group_id = 0;
-
-      for (int scheduled_group_id : cp_async_group_schedule_order) {
-        const auto &group = cp_async_groups[scheduled_group_id];
-        bool emitted_group = false;
-        for (int stmt_idx : group.cp_async_stmt_indices) {
-          if (!IsAsyncProducerCandidate(pipeline_stage_infos[stmt_idx])) {
-            continue;
-          }
-          async_group_ids[stmt_idx] = next_async_group_id;
-          emitted_group = true;
-        }
-        if (emitted_group) {
-          ++next_async_group_id;
-        }
-      }
-
-      std::vector<int> stmt_indices_by_order(pipeline_stage_infos.size());
-      std::iota(stmt_indices_by_order.begin(), stmt_indices_by_order.end(), 0);
-      std::stable_sort(stmt_indices_by_order.begin(),
-                       stmt_indices_by_order.end(), [&](int lhs, int rhs) {
-                         if (pipeline_stage_infos[lhs].order !=
-                             pipeline_stage_infos[rhs].order) {
-                           return pipeline_stage_infos[lhs].order <
-                                  pipeline_stage_infos[rhs].order;
-                         }
-                         return lhs < rhs;
-                       });
-      std::map<std::pair<int, int>, int> implicit_group_ids;
-      for (int stmt_idx : stmt_indices_by_order) {
-        const auto &pinfo = pipeline_stage_infos[stmt_idx];
-        if (!IsAsyncProducerCandidate(pinfo) ||
-            async_group_ids[stmt_idx] != -1) {
-          continue;
-        }
-        auto key = std::make_pair(pinfo.stage, pinfo.last_use_stmt_index);
-        auto [it, inserted] =
-            implicit_group_ids.emplace(key, next_async_group_id);
-        if (inserted) {
-          ++next_async_group_id;
-        }
-        async_group_ids[stmt_idx] = it->second;
-      }
-
-      std::vector<Integer> async_producers;
-      std::vector<Integer> async_producer_groups;
-      async_producers.reserve(pipeline_stage_infos.size());
-      async_producer_groups.reserve(pipeline_stage_infos.size());
-      std::unordered_set<int> async_stage_ids;
-      for (size_t i = 0; i < pipeline_stage_infos.size(); ++i) {
-        bool is_async_producer = async_group_ids[i] != -1;
-        async_producers.push_back(Integer(is_async_producer ? 1 : 0));
-        async_producer_groups.push_back(Integer(async_group_ids[i]));
-        if (is_async_producer) {
-          async_stage_ids.insert(pipeline_stage_infos[i].stage);
-        }
-      }
-      annotations.Set(kPipelineAsyncProducers, Array<Integer>(async_producers));
-      annotations.Set(kPipelineAsyncProducerGroups,
-                      Array<Integer>(async_producer_groups));
-      if (!async_stage_ids.empty()) {
-        std::vector<int> sorted_async_stage_ids(async_stage_ids.begin(),
-                                                async_stage_ids.end());
-        std::sort(sorted_async_stage_ids.begin(), sorted_async_stage_ids.end());
-        std::vector<Integer> async_stages;
-        async_stages.reserve(sorted_async_stage_ids.size());
-        for (int stage_id : sorted_async_stage_ids) {
-          async_stages.push_back(Integer(stage_id));
-        }
-        annotations.Set(s_tir::attr::software_pipeline_async_stages,
-                        Array<Integer>(async_stages));
+      if (has_tma_copy) {
+        annotations.Set(kPipelineTmaCopies, Array<Integer>(tma_copies));
       }
     }
+
+    std::vector<std::vector<int>> explicit_async_groups;
+    explicit_async_groups.reserve(cp_async_group_schedule_order.size());
+    for (int group_id : cp_async_group_schedule_order) {
+      explicit_async_groups.push_back(
+          cp_async_groups[group_id].cp_async_stmt_indices);
+    }
+    EmitAsyncAnnotations(pipeline_stage_infos, explicit_async_groups,
+                         &annotations);
 
     // Reconstruct the loop body with the flattened SeqStmt so that
     // InjectSoftwarePipeline sees the correct number of pipeline stages.
-    Stmt new_body_seq = SeqStmt(flat_stmts);
-    // Rebuild any wrapper layers (IfThenElse, SBlockRealize)
-    // between the loop body and the SeqStmt.
-    Stmt new_loop_body;
-    if (const auto *realize = loop->body.as<SBlockRealizeNode>()) {
-      const auto &block = realize->block;
-      // Rebuild: body_root → ... → new_body_seq
-      // We need to reconstruct the chain from block->body to the SeqStmt.
-      Stmt rebuilt_inner = BodyWrapperRebuilder::ReplaceOrFatal(
-          block->body, pipeline_body_seq, new_body_seq);
-      SBlock new_block(block->iter_vars, block->reads, block->writes,
-                      block->name_hint, rebuilt_inner, block->init,
-                      block->alloc_buffers, block->match_buffers,
-                      block->annotations);
-      new_loop_body =
-          SBlockRealize(realize->iter_values, realize->predicate, new_block);
-    } else {
-      new_loop_body = BodyWrapperRebuilder::ReplaceOrFatal(
-          loop->body, pipeline_body_seq, new_body_seq);
-    }
+    Stmt new_body = MakePipelineBody(flat_stmts);
 
-    return For(loop->loop_var, loop->min, loop->extent, loop->kind,
-               new_loop_body, loop->thread_binding, annotations);
+    return For(loop->loop_var, loop->min, loop->extent, loop->kind, new_body,
+               loop->thread_binding, annotations);
   }
 
   Stmt VisitStmt_(const SBlockNode *op) final {
@@ -2380,7 +2031,7 @@ private:
     for (const auto &buffer : op->alloc_buffers) {
       buffer_data_to_buffer_.erase(buffer->data);
     }
-    return std::move(block);
+    return block;
   }
 
   Map<Var, Buffer> buffer_data_to_buffer_;

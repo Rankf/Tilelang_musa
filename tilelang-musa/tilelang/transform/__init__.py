@@ -104,7 +104,6 @@ def ProvenanceTraceInjection(
         selected_loop_ordinal, selected_iteration, selected_blocks_flat,
         trace_semantics)
 
-
 def LayoutInference():
     """LayoutInference
 
@@ -395,6 +394,28 @@ def MakePackedAPI():
     return _ffi_api.MakePackedAPI()  # type: ignore
 
 
+def MaterializeKernelLaunch(lower_thread_binding: bool = True):
+    """Materialize the target-neutral kernel launch nest (thread_binding
+    For loops emitted by T.Kernel) into a backend-specific form. Each
+    backend pipeline decides the mode for itself:
+
+    Parameters
+    ----------
+    lower_thread_binding : bool
+        If True (SIMT backends, e.g. CUDA/ROCm/Metal), lower the
+        blockIdx.*/threadIdx.* loops into thread_extent AttrStmts.
+        If False (backends without SIMT, e.g. CPU), lower blockIdx.*
+        loops into plain serial For loops and ignore threadIdx.* loops
+        (their extents are dropped; the loop vars are pinned to 0).
+
+    Returns
+    -------
+    fpass : tvm.transform.Pass
+        The result pass
+    """
+    return _ffi_api.MaterializeKernelLaunch(lower_thread_binding)  # type: ignore
+
+
 def AnnotateDeviceRegions():
     """AnnotateDeviceRegions
 
@@ -471,31 +492,12 @@ def LateVectorizePlanner():
     return lambda f: f
 
 
-def LowerPTXAsyncCopy():
-    """Lower eligible global->shared copies into PTX `cp.async` on CUDA.
-
-    When enabled (pass config `tl.enable_async_copy`, default True), this pass
-    may rewrite plain user-written global->shared `BufferStore` patterns (e.g.
-    SIMT copies in `T.Parallel`) into `tir.ptx_cp_async`, and insert
-    `tir.ptx_commit_group` + `tir.ptx_wait_group(0)` to preserve synchronous
-    semantics for normal stores. If explicit commit/wait intrinsics already
-    exist, the pass avoids duplicating them (and may insert a missing commit
-    immediately before an existing wait to cover injected `cp.async`).
-
-    Returns
-    -------
-    fpass : tvm.transform.Pass
-        The result pass
-    """
-    return _ffi_api.LowerPTXAsyncCopy()  # type: ignore
-
-
 def MergeAsyncCopy():
     """Merge narrow async-copy loops into a wider async-copy when legal.
 
-    This pass is intended to run after `LowerPTXAsyncCopy`, where async copies
-    have already been rewritten into `tl.ptx_cp_async` / `musa_cp_async_robust`
-    calls but may still appear as short unrolled loops.
+    This pass runs after tile-op lowering has rewritten eligible copies into
+    `tl.ptx_cp_async` / `musa_cp_async_robust` calls, which may still appear as
+    short unrolled loops.
 
     Returns
     -------
@@ -503,13 +505,6 @@ def MergeAsyncCopy():
         The result pass
     """
     return _ffi_api.MergeAsyncCopy()  # type: ignore
-
-
-def InjectPTXAsyncCopy():
-    """Deprecated alias of `LowerPTXAsyncCopy`."""
-    return LowerPTXAsyncCopy()
-
-
 def ConfigIndexBitwidth():
     """Config index bitwidth.
 
@@ -542,16 +537,6 @@ def MergeSharedMemoryAllocations(enable_aggressive_merge: bool = False, align_by
         The result pass
     """
     return _ffi_api.MergeSharedMemoryAllocations(enable_aggressive_merge, align_bytes, disable_reuse)  # type: ignore
-
-
-def MarkCudaSyncCalls(have_pdl: bool = False):
-    """MarkCudaSyncCalls"""
-    return _ffi_api.MarkCudaSyncCalls(have_pdl)  # type: ignore
-
-
-def LowerSharedBarrier():
-    """LowerSharedBarrier"""
-    return _ffi_api.LowerSharedBarrier()  # type: ignore
 
 
 def PlanAndUpdateBufferAllocationLocation():
@@ -619,11 +604,6 @@ def LowerDeviceKernelLaunch():
     return _ffi_api.LowerDeviceKernelLaunch()  # type: ignore
 
 
-def LowerSharedTmem():
-    """LowerSharedTmem"""
-    return _ffi_api.LowerSharedTmem()  # type: ignore
-
-
 def LayoutReducer():
     """
     Return a TVM transform pass that performs layout reduction/normalization.
@@ -652,35 +632,3 @@ def UnrollLoop():
         The result pass
     """
     return _ffi_api.UnrollLoop()  # type: ignore
-
-
-def LowerLDGSTG():
-    """Lower Ramp-based global memory load/store to ldg/stg intrinsics.
-
-    This pass transforms vectorized global memory loads and stores (using Ramp indices)
-    into explicit ldg32/64/128/256 and stg32/64/128/256 intrinsics for better codegen.
-
-    Key behaviors:
-    - Converts Ramp-based global BufferLoad to ldg intrinsics
-    - Converts Ramp-based global BufferStore to stg intrinsics
-    - Supports predicated loads (if_then_else with else=0)
-    - Supports predicated stores (if in then case)
-    - Skips loads in async scope (will be lowered to cp.async)
-    - Only enabled for CUDA targets
-
-    Returns
-    -------
-    fpass : tvm.transform.Pass
-        The result pass
-    """
-    return _ffi_api.LowerLDGSTG()  # type: ignore
-
-
-def LowerBlackwell2SM():
-    """Lower 2SM TCGEN5MMA and related on Blackwell target
-
-    Returns:
-        fpass : tvm.transform.Pass
-            The result pass
-    """
-    return _ffi_api.LowerBlackwell2SM()  # type: ignore

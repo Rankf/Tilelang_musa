@@ -60,20 +60,20 @@ public:
         .def_ro("n_warp", &GemmWarpPolicyNode::n_warp);
   }
 
-  std::pair<int, int> computeWarpPartition(int M, int N, int block_size,
+  std::pair<int, int> ComputeWarpPartition(int M, int N, int block_size,
                                            Target target,
                                            String gemm_inst) const;
 
-  bool isSquare() const {
+  bool IsSquare() const {
     return policy_type == int(GemmWarpPolicyType::kSquare);
   }
-  bool isFullRow() const {
+  bool IsFullRow() const {
     return policy_type == int(GemmWarpPolicyType::kFullRow);
   }
-  bool isFullCol() const {
+  bool IsFullCol() const {
     return policy_type == int(GemmWarpPolicyType::kFullCol);
   }
-  bool isFree() const { return policy_type == int(GemmWarpPolicyType::kFree); }
+  bool IsFree() const { return policy_type == int(GemmWarpPolicyType::kFree); }
 };
 
 class GemmWarpPolicy : public ObjectRef {
@@ -110,7 +110,8 @@ public:
   bool transA_, transB_;
   int m_, n_, k_;
   int strideA_, strideB_;
-  int offsetA_, offsetB_;
+  // Offsets may be symbolic (e.g. a sliced operand B[:, j*64:...] in a loop).
+  PrimExpr offsetA_, offsetB_;
   PrimExpr clearAccum_ = const_false();
   tirx::BufferLoad mbar_; // mbar is optional, only used for TCGEN5MMA
   Array<PrimExpr> cCoords_;
@@ -123,7 +124,7 @@ public:
   mutable GemmWarpPolicy policy_;
   Map<String, ObjectRef> annotations_;
   BufferRegion sfaRegion_, sfbRegion_;
-  PrimExpr sfAId_, sfBId_;
+  PrimExpr sfKStart_;
 
   TVM_FFI_DECLARE_OBJECT_INFO_FINAL("tl.Gemm", GemmNode, TileOperatorNode);
 
@@ -156,22 +157,21 @@ public:
         .def_ro("annotations", &GemmNode::annotations_)
         .def_ro("sfaRegion", &GemmNode::sfaRegion_)
         .def_ro("sfbRegion", &GemmNode::sfbRegion_)
-        .def_ro("sfAId", &GemmNode::sfAId_)
-        .def_ro("sfBId", &GemmNode::sfBId_);
+        .def_ro("sfKStart", &GemmNode::sfKStart_);
   }
 
-  Stmt Lower(const LowerArgs &T, arith::Analyzer *analyzer) const override;
-  LayoutMap InferLayout(const LayoutInferArgs &T,
+  Stmt Lower(const LowerArgs &lower_args,
+             arith::Analyzer *analyzer) const override;
+  LayoutMap InferLayout(const LayoutInferArgs &layout_args,
                         InferLevel level) const override;
   AccessRegions GetAccessRegions() const override;
 
   TileOperator Clone() const;
 
   // Target-specific GEMM instruction key.
-  String getGemmInstructionKey(int block_size, Target target) const;
-  String getGemmInstructionKind(int block_size, Target target) const;
+  String GetGemmInstructionKey(int block_size, Target target) const;
   std::optional<std::array<int, 3>>
-  getGemmInstructionShape(int block_size, Target target,
+  GetGemmInstructionShape(int block_size, Target target,
                           String gemm_inst) const;
 
 private:
@@ -191,8 +191,6 @@ struct GemmImpl {
       Target target, String gemm_inst);
 
   bool (*reuse_existing_shared_layout)(String gemm_inst);
-
-  String (*instruction_kind)(String gemm_inst);
 
   std::optional<std::array<int, 3>> (*select_inst_shape)(
       const GemmNode &op, int block_size, Target target,

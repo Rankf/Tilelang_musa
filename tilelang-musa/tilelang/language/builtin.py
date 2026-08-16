@@ -8,13 +8,10 @@ from tilelang import tvm as tvm
 from tilelang.language import ptx_arrive_barrier, evaluate
 from tilelang.language.eager.builder import macro
 from tilelang.language.kernel import get_thread_bindings, get_block_extents
-from tilelang.utils.target import check_hip_availability
 from tvm import DataType, tirx
 from tvm.runtime import convert
 from tvm.tirx import PrimExpr, Var, Call, BufferLoad, BufferRegion
 from tilelang.utils.language import retrieve_ptr, get_buffer_region_from_load, retrieve_buffer_and_offset
-
-_IS_HIP_AVAILABLE = check_hip_availability()
 
 
 def _normalize_index_arg(value: int | PrimExpr | None) -> PrimExpr | None:
@@ -77,6 +74,17 @@ def __ldg(load_or_buf: BufferLoad | tirx.Buffer, index: PrimExpr | int | None = 
         bl = BufferLoad(load_or_buf, [idx])
         return tirx.call_intrin(str(load_or_buf.dtype), tirx.op.Op.get("tl.__ldg"), bl)
     raise TypeError("T.__ldg expects a BufferLoad or a Buffer.")
+
+
+def __ffs(value: int | PrimExpr) -> PrimExpr:
+    """Find the position of the least significant set bit.
+
+    Lowers to CUDA ``__ffs`` for 32-bit integer inputs and ``__ffsll`` for
+    64-bit integer inputs. The return value follows CUDA semantics: one-based
+    bit position, or 0 when ``value`` is zero.
+    """
+    value = tirx.convert(value)
+    return tirx.call_intrin("int32", tirx.op.Op.get("tl.__ffs"), value)
 
 
 def access_ptr(
@@ -360,20 +368,23 @@ def tma_store_arrive():
     return tirx.call_intrin("handle", tirx.op.Op.get("tl.tma_store_arrive"))
 
 
-def tma_store_wait(count: int = 0):
+def tma_store_wait(count: int = 0, read: bool = True):
     """Wait for completion of TMA store operations.
 
     Waits until the number of outstanding TMA store groups is at most ``count``.
-    Maps to the PTX instruction ``cp.async.bulk.wait_group.read <count>``.
+    Maps to ``cp.async.bulk.wait_group.read <count>`` by default, or
+    ``cp.async.bulk.wait_group <count>`` when ``read`` is false.
 
     Args:
         count (int): The maximum number of outstanding store groups allowed
             to remain in flight. Defaults to 0 (wait for all stores to complete).
+        read (bool): Whether to use the PTX ``.read`` modifier, which only
+            waits for the source reads to complete. Defaults to True.
 
     Returns:
         tirx.Call: A handle to the store wait operation
     """
-    return tirx.call_intrin("handle", tirx.op.Op.get("tl.tma_store_wait"), count)
+    return tirx.call_intrin("handle", tirx.op.Op.get("tl.tma_store_wait"), count, read)
 
 
 def set_max_nreg(reg_count: int, is_inc: int):
@@ -521,7 +532,7 @@ def mbarrier_expect_tx(mbarrier: BarrierType, tx: int):
 
 def mbarrier_arrive_expect_tx(mbarrier: BarrierType, tx: int):
     """Arrive at a memory barrier and expect completion of async transactions."""
-    from tilelang.language.tirx.op import ptx_arrive_barrier_expect_tx
+    from tilelang.language.tir.op import ptx_arrive_barrier_expect_tx
 
     mbarrier = _mbar_to_buffer_load(mbarrier)
     return ptx_arrive_barrier_expect_tx(mbarrier, tx)
@@ -689,10 +700,9 @@ def shuffle_elect(thread_extent: int) -> PrimExpr:
 
     Implementation Notes
     --------------------
-    Lowered to the CUDA helper `tl::tl_shuffle_elect<thread_extent>()` defined in
-    `src/tl_templates/cuda/intrin.h`, which relies on
-    `cutlass::canonical_warp_idx_sync()` and `cute::elect_one_sync()` (or
-    `__shfl_sync`) to pick one lane per group.
+    Lowered to the backend helper `tl::tl_shuffle_elect<thread_extent>()`, which
+    uses a canonical warp index and a warp-local election primitive to pick one
+    lane per group.
     """
     return tirx.call_intrin("bool", tirx.op.Op.get("tl.tl_shuffle_elect"), thread_extent)
 
@@ -968,6 +978,35 @@ def sync_threads(barrier_id: int = None, arrive_count: int = None):
     if arrive_count is not None:
         args.append(arrive_count)
     return tirx.call_intrin("int32", "tirx.tvm_storage_sync", "shared", *args)
+
+
+def named_barrier_arrive(barrier_id, thread_count):
+    """CTA named barrier one-sided arrive (bar.arrive).
+
+    Signals that the calling threads have arrived at the named barrier without
+    waiting for other participants.  Unlike ``T.sync_threads(barrier_id, n)``
+    which maps to ``bar.sync`` (arrive + wait), this call only *arrives* and
+    returns immediately, allowing the calling warp group to continue working
+    while the other side waits.
+
+    This is useful in warp-specialized producer/consumer pipelines:
+
+    .. code-block:: python
+
+        # Producer warp group: signal readiness, keep going
+        T.named_barrier_arrive(ready_barrier, total_threads)
+
+        # Consumer warp group: block until producer has arrived
+        T.sync_threads(ready_barrier, total_threads)
+
+    Args:
+        barrier_id:   Named barrier index (0-15). May be a variable (PrimExpr).
+        thread_count: Total number of CTA threads participating in the barrier.
+                      May be a variable (PrimExpr).
+
+    Lowers to: ``asm volatile("bar.arrive %0, %1;" : : "r"(id), "r"(cnt));``
+    """
+    return tirx.call_intrin("handle", tirx.op.Op.get("tl.named_barrier_arrive"), barrier_id, thread_count)
 
 
 def sync_warp(mask: int = None):

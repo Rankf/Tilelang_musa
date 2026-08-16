@@ -11,11 +11,11 @@
 #include "op/builtin.h"
 #include "op/utils.h"
 #include "support/check.h"
-#include "target/utils.h"
+#include "backend/common/target_utils.h"
 #include "transform/common/loop_fusion_utils.h"
 #include "transform/loop_partition.h"
 #include "transform/loop_vectorize.h"
-#include "transform/ptx_async_copy_injector.h"
+#include "cuda/transform/ptx_async_copy_injector.h"
 
 #include <tvm/ir/cast.h>
 #include <tvm/runtime/logging.h>
@@ -25,8 +25,10 @@
 #include <tvm/tirx/stmt_functor.h>
 #include <tvm/tirx/transform.h>
 
+#include <cctype>
 #include <cstdint>
 #include <sstream>
+#include <string>
 #include <vector>
 
 namespace tvm {
@@ -69,6 +71,27 @@ PrimExpr GetCopyMbarPhaseExpr(const Map<String, ObjectRef> &annotations,
     phase = explicit_phase.value();
   }
   return phase;
+}
+
+std::string SanitizeIdentifierPart(const std::string &name) {
+  std::string sanitized;
+  sanitized.reserve(name.size());
+  for (unsigned char ch : name) {
+    sanitized.push_back(std::isalnum(ch) || ch == '_' ? static_cast<char>(ch)
+                                                      : '_');
+  }
+  if (sanitized.empty()) {
+    sanitized = "buffer";
+  }
+  if (std::isdigit(static_cast<unsigned char>(sanitized.front()))) {
+    sanitized.insert(sanitized.begin(), '_');
+  }
+  return sanitized;
+}
+
+std::string MakeCopyMBarrierName(const Buffer &src, const Buffer &dst) {
+  return SanitizeIdentifierPart(src->name) + "_to_" +
+         SanitizeIdentifierPart(dst->name) + "_mbarrier";
 }
 
 bool GetBoolAnnotation(const CopyNode &op, const char *key) {
@@ -143,6 +166,21 @@ bool GetIsAsyncCopy(const CopyNode &op) {
 
 bool GetNoImplicitAsyncCommitWait(const CopyNode &op) {
   return GetBoolAnnotation(op, attr::kAsyncCopyNoImplicitCommitWait);
+}
+
+PrimExpr GetLeaderScopeThreads(const CopyNode &op, const LowerArgs &T) {
+  if (auto val = op.annotations.Get("leader_scope_threads")) {
+    auto int_val = val->as<IntImmNode>();
+    ICHECK(int_val) << "T.tma_copy leader_scope_threads annotation must be an "
+                       "integer constant.";
+    ICHECK_GT(int_val->value, 0)
+        << "T.tma_copy leader_scope_threads must be positive.";
+    ICHECK_EQ(int_val->value % 32, 0)
+        << "T.tma_copy leader_scope_threads must be a multiple of warp size "
+           "(32).";
+    return IntImm(DataType::Int(32), int_val->value);
+  }
+  return T.thread_bounds->extent;
 }
 
 int to_MUtensorDescriptorDataType(DataType dtype) {
@@ -230,7 +268,7 @@ bool IsMatrixLinearLayout(const Layout &layout) {
   size_t ndim = layout->InputDim();
   Array<PrimExpr> matrix_shape{layout->InputShape()[ndim - 2],
                                layout->InputShape()[ndim - 1]};
-  Layout linear_layout = makeLinearLayout(matrix_shape);
+  Layout linear_layout = MakeLinearLayout(matrix_shape);
   if (ndim > 2) {
     Array<PrimExpr> leading_shape;
     for (size_t i = 0; i + 2 < ndim; ++i) {
@@ -354,7 +392,7 @@ private:
   static Layout ComputeLinearLayout(const Buffer &shared_tensor);
 
   static void CollectFragmentLayouts(const PrimExpr &expr,
-                                     const Map<Var, PrimExpr> &let_var_to_expr,
+                                     const Map<Var, PrimExpr> &bind_var_to_expr,
                                      const LayoutMap &existing_layouts,
                                      PrimExpr thread_extent,
                                      Range thread_bounds,
@@ -409,7 +447,7 @@ Layout Copy::ComputeLinearLayout(const Buffer &shared_tensor) {
 }
 
 void Copy::CollectFragmentLayouts(const PrimExpr &expr,
-                                  const Map<Var, PrimExpr> &let_var_to_expr,
+                                  const Map<Var, PrimExpr> &bind_var_to_expr,
                                   const LayoutMap &existing_layouts,
                                   PrimExpr thread_extent, Range thread_bounds,
                                   Map<Buffer, Layout> &result_map) {
@@ -422,8 +460,8 @@ void Copy::CollectFragmentLayouts(const PrimExpr &expr,
       }
     } else if (auto var_node = node.as<VarNode>()) {
       auto var = tvm::ffi::GetRef<Var>(var_node);
-      if (let_var_to_expr.count(var)) {
-        CollectFragmentLayouts(let_var_to_expr[var], let_var_to_expr,
+      if (bind_var_to_expr.count(var)) {
+        CollectFragmentLayouts(bind_var_to_expr[var], bind_var_to_expr,
                                existing_layouts, thread_extent, thread_bounds,
                                result_map);
       }
@@ -509,9 +547,9 @@ LayoutMap Copy::InferTMemLayout(const CopyNode &op, const LayoutInferArgs &T,
     for (int num_useful_wgs = num_threads / WARPGROUP_SIZE; num_useful_wgs >= 1;
          --num_useful_wgs) {
       int num_useful_threads = num_useful_wgs * WARPGROUP_SIZE;
-      Tcgen05Meta meta = getTcgen05MetaLd_32dp32b();
+      Tcgen05Meta meta = GetTcgen05MetaLd32Dp32B();
       auto [is_success, tmem_coord2frag, num_chunks_each_wg] =
-          expandTcgen05Layout(
+          ExpandTcgen05Layout(
               meta, phy_col_bounds->max_value - phy_col_bounds->min_value + 1,
               num_useful_threads, row_dom, col_dom);
       (void)num_chunks_each_wg;
@@ -521,7 +559,7 @@ LayoutMap Copy::InferTMemLayout(const CopyNode &op, const LayoutInferArgs &T,
       Fragment logical_coord2frag =
           Fragment(logical_coords, tmem_coord2frag->Forward(phy_indices),
                    tmem_coord2frag->ForwardThread(phy_indices, std::nullopt),
-                   make_itervar("rep", 1));
+                   MakeIterVar("rep", 1));
       results.Set(reg_buf,
                   logical_coord2frag->BindThreadRange(T.thread_bounds));
       break;
@@ -551,15 +589,15 @@ LayoutMap Copy::InferBulkLayout(const CopyNode &op, const LayoutInferArgs &T,
   // Fragment buffers used as TMA indices should be replicated on all threads.
   PrimExpr thread_extent = T.thread_bounds->extent;
   for (const auto &range : op.src_range) {
-    CollectFragmentLayouts(range->min, T.let_var_to_expr, T.layout_map,
+    CollectFragmentLayouts(range->min, T.bind_var_to_expr, T.layout_map,
                            thread_extent, T.thread_bounds, result_map);
-    CollectFragmentLayouts(range->extent, T.let_var_to_expr, T.layout_map,
+    CollectFragmentLayouts(range->extent, T.bind_var_to_expr, T.layout_map,
                            thread_extent, T.thread_bounds, result_map);
   }
   for (const auto &range : op.dst_range) {
-    CollectFragmentLayouts(range->min, T.let_var_to_expr, T.layout_map,
+    CollectFragmentLayouts(range->min, T.bind_var_to_expr, T.layout_map,
                            thread_extent, T.thread_bounds, result_map);
-    CollectFragmentLayouts(range->extent, T.let_var_to_expr, T.layout_map,
+    CollectFragmentLayouts(range->extent, T.bind_var_to_expr, T.layout_map,
                            thread_extent, T.thread_bounds, result_map);
   }
 
@@ -659,7 +697,9 @@ Stmt Copy::LowerCPAsync(const CopyNode &op, const LowerArgs &T,
   auto loop_layout = par_op->GetLoopLayout();
   Stmt lowered_loop =
       LowerParallelLoop(par_op->GetRoot(), loop_layout, T.thread_var, analyzer,
-                        T.layout_map, par_op->GetPredicate(T.thread_var));
+                        T.layout_map, par_op->GetPredicate(T.thread_var),
+                        /*parallel_loop=*/true, /*should_vectorize=*/true,
+                        par_op->LoopLayoutRequiresPaddingGuard());
 
   auto inject_result =
       InjectPTXAsyncCopy(lowered_loop, /*enable_auto_async_copy=*/true,
@@ -746,13 +786,16 @@ Stmt Copy::LowerNormal(const CopyNode &op, const LowerArgs &T,
                                         InferLevel::kStrict, InferLevel::kFree};
       for (auto level : levels) {
         par_op->InferLayout({T.target, T.thread_bounds, T.layout_map, analyzer,
-                             false, T.buffer_remap, T.let_var_to_expr, false},
+                             false, T.buffer_remap, T.bind_var_to_expr, false},
                             level);
       }
       auto loop_layout = par_op->GetLoopLayout();
       lowered_body = LowerParallelLoop(par_op->GetRoot(), loop_layout,
                                        T.thread_var, analyzer, T.layout_map,
-                                       par_op->GetPredicate(T.thread_var));
+                                       par_op->GetPredicate(T.thread_var),
+                                       /*parallel_loop=*/true,
+                                       /*should_vectorize=*/true,
+                                       par_op->LoopLayoutRequiresPaddingGuard());
     }
 
     Stmt body = lowered_body;
@@ -906,10 +949,10 @@ Stmt Copy::LowerLDSM(const CopyNode &op, const LowerArgs &T,
   IterVar row_var = loop_vars[loop_vars.size() - 2];
   PrimExpr local_layout_thread_map =
       FloorMod(local_layout->ForwardThread(local_indices, std::nullopt), 32);
-  PrimExpr matrix_8x8_thread_map = makeGemmFragment8x8()->ForwardThread(
+  PrimExpr matrix_8x8_thread_map = MakeGemmFragment8x8()->ForwardThread(
       {FloorMod(row_var, 8), FloorMod(col_var, 8)}, std::nullopt);
   PrimExpr matrix_8x8_thread_map_trans =
-      makeGemmFragment8x8Transposed()->ForwardThread(
+      MakeGemmFragment8x8Transposed()->ForwardThread(
           {FloorMod(row_var, 8), FloorMod(col_var, 8)}, std::nullopt);
   PrimExpr local_indices_flattened =
       local_tensor.OffsetOf(local_indices_transformed).back();
@@ -1138,7 +1181,7 @@ Stmt Copy::LowerTmem(const CopyNode &op, const LowerArgs &T,
     for (int num_useful_wgs = num_threads / WARPGROUP_SIZE; num_useful_wgs >= 1;
          num_useful_wgs--) {
       int num_useful_threads = num_useful_wgs * WARPGROUP_SIZE;
-      auto [is_success, target_frag, num_chunks_each_wg] = expandTcgen05Layout(
+      auto [is_success, target_frag, num_chunks_each_wg] = ExpandTcgen05Layout(
           meta, tmem_phy_col_extent, num_useful_threads, row_dom, col_dom);
       if (!is_success) {
         continue;
@@ -1202,15 +1245,15 @@ Stmt Copy::LowerTmem(const CopyNode &op, const LowerArgs &T,
   };
 
   if (is_ld) {
-    try_tcgen05_instruction(getTcgen05MetaLd_32dp32b());
-    try_tcgen05_instruction(getTcgen05MetaLd_32dp64b());
-    try_tcgen05_instruction(getTcgen05MetaLd_32dp128b());
-    try_tcgen05_instruction(getTcgen05MetaLd_32dp256b());
+    try_tcgen05_instruction(GetTcgen05MetaLd32Dp32B());
+    try_tcgen05_instruction(GetTcgen05MetaLd32Dp64B());
+    try_tcgen05_instruction(GetTcgen05MetaLd32Dp128B());
+    try_tcgen05_instruction(GetTcgen05MetaLd32Dp256B());
   } else {
-    try_tcgen05_instruction(getTcgen05MetaSt_32dp32b());
-    try_tcgen05_instruction(getTcgen05MetaSt_32dp64b());
-    try_tcgen05_instruction(getTcgen05MetaSt_32dp128b());
-    try_tcgen05_instruction(getTcgen05MetaSt_32dp256b());
+    try_tcgen05_instruction(GetTcgen05MetaSt32Dp32B());
+    try_tcgen05_instruction(GetTcgen05MetaSt32Dp64B());
+    try_tcgen05_instruction(GetTcgen05MetaSt32Dp128B());
+    try_tcgen05_instruction(GetTcgen05MetaSt32Dp256B());
   }
 
   ICHECK(have_succeeded) << "Failed to find a suitable instruction for tcgen05."
@@ -1542,10 +1585,11 @@ Stmt Copy::LowerBulk(const CopyNode &op, const LowerArgs &T,
     } else if (GetIsTmaCopy(op)) {
       LOG(FATAL) << "T.tma_copy() requires a barrier argument. "
                  << "Use T.tma_copy(src, dst, barrier=mbar[idx]).";
-    } else if (T.AllocMBarrier) {
+    } else if (T.alloc_mbarrier) {
       // Internal mbarrier (T.copy()): allocate a single barrier slot.
       // Pipeline buffer versioning expands it per stage when needed.
-      barrier_base_id = T.AllocMBarrier(1);
+      barrier_base_id =
+          T.alloc_mbarrier(1, MakeCopyMBarrierName(op.src, op.dst));
       PrimExpr mbar_idx = IntImm(DataType::Int(32), barrier_base_id);
       mbar_handle = BufferLoad(T.mbarrier_buffer->value(), {mbar_idx});
     }
@@ -1657,7 +1701,7 @@ Stmt Copy::LowerBulk(const CopyNode &op, const LowerArgs &T,
     seq.push_back(Evaluate(Call(DataType::Handle(), tma_store_arrive(), {})));
     if (!GetIsTmaCopy(op)) {
       seq.push_back(Evaluate(Call(DataType::Handle(), tma_store_wait(),
-                                  {IntImm(DataType::Int(32), 0)})));
+                                  {IntImm(DataType::Int(32), 0), Bool(true)})));
     }
     tma_copy = SeqStmt(std::move(seq));
   }
@@ -1729,8 +1773,9 @@ Stmt Copy::LowerBulk(const CopyNode &op, const LowerArgs &T,
     }
 
     // Thread-gated block: expect_tx + tma_load (+ optional arrive)
-    Stmt producer = IfThenElse(MakeTmaLeaderCondition(T.thread_bounds->extent),
-                               SeqStmt(producer_seq));
+    Stmt producer =
+        IfThenElse(MakeTmaLeaderCondition(GetLeaderScopeThreads(op, T)),
+                   SeqStmt(producer_seq));
 
     // tma_copy (from T.tma_copy()) is fire-and-forget: only emit the
     // producer (expect_tx + tma_load). The user manages synchronization
@@ -1748,8 +1793,8 @@ Stmt Copy::LowerBulk(const CopyNode &op, const LowerArgs &T,
     return SeqStmt({producer, wait_stmt});
   }
 
-  tma_copy =
-      IfThenElse(MakeTmaLeaderCondition(T.thread_bounds->extent), tma_copy);
+  tma_copy = IfThenElse(MakeTmaLeaderCondition(GetLeaderScopeThreads(op, T)),
+                        tma_copy);
 
   return tma_copy;
 }
@@ -1829,10 +1874,11 @@ Stmt Copy::LowerBulk1D(const CopyNode &op, const LowerArgs &T,
     } else if (GetIsTmaCopy(op)) {
       LOG(FATAL) << "T.tma_copy() requires a barrier argument. "
                  << "Use T.tma_copy(src, dst, barrier=mbar[idx]).";
-    } else if (T.AllocMBarrier) {
+    } else if (T.alloc_mbarrier) {
       // Internal mbarrier (T.copy()): allocate a single barrier slot.
       // Pipeline buffer versioning expands it per stage when needed.
-      barrier_base_id = T.AllocMBarrier(1);
+      barrier_base_id =
+          T.alloc_mbarrier(1, MakeCopyMBarrierName(op.src, op.dst));
       PrimExpr mbar_idx = IntImm(DataType::Int(32), barrier_base_id);
       mbar_handle = BufferLoad(T.mbarrier_buffer->value(), {mbar_idx});
     }
@@ -1862,7 +1908,7 @@ Stmt Copy::LowerBulk1D(const CopyNode &op, const LowerArgs &T,
     seq.push_back(Evaluate(Call(DataType::Handle(), tma_store_arrive(), {})));
     if (!GetIsTmaCopy(op)) {
       seq.push_back(Evaluate(Call(DataType::Handle(), tma_store_wait(),
-                                  {IntImm(DataType::Int(32), 0)})));
+                                  {IntImm(DataType::Int(32), 0), Bool(true)})));
     }
     tma_copy = SeqStmt(std::move(seq));
   }
@@ -1893,8 +1939,9 @@ Stmt Copy::LowerBulk1D(const CopyNode &op, const LowerArgs &T,
       producer_seq.push_back(barrier_after_tma_stmt.value());
     }
 
-    Stmt producer = IfThenElse(MakeTmaLeaderCondition(T.thread_bounds->extent),
-                               SeqStmt(producer_seq));
+    Stmt producer =
+        IfThenElse(MakeTmaLeaderCondition(GetLeaderScopeThreads(op, T)),
+                   SeqStmt(producer_seq));
 
     // tma_copy (from T.tma_copy()) is fire-and-forget: only emit the
     // producer (expect_tx + tma_load). The user manages synchronization
@@ -1912,8 +1959,8 @@ Stmt Copy::LowerBulk1D(const CopyNode &op, const LowerArgs &T,
     return SeqStmt({producer, wait_stmt});
   }
 
-  tma_copy =
-      IfThenElse(MakeTmaLeaderCondition(T.thread_bounds->extent), tma_copy);
+  tma_copy = IfThenElse(MakeTmaLeaderCondition(GetLeaderScopeThreads(op, T)),
+                        tma_copy);
   return tma_copy;
 }
 

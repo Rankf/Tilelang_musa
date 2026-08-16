@@ -67,7 +67,7 @@ private:
     // source provenance, not a lowered-loop heuristic: later passes may add
     // implementation loops, but only this source annotation is accepted by
     // deep iteration sampling.
-    For annotated = GetRef<For>(op);
+    For annotated = ffi::GetRef<For>(op);
     auto *node = annotated.CopyOnWrite();
     ICHECK(!node->annotations.count(kProvenanceLoopOrdinal))
         << "source loop already has provenance ordinal";
@@ -84,10 +84,11 @@ private:
     // by the offline collector.
     Evaluate evaluated = Downcast<Evaluate>(StmtExprMutator::VisitStmt_(op));
     const CallNode *call_node = evaluated->value.as<CallNode>();
-    if (call_node == nullptr || !ParseOperator(GetRef<Stmt>(op)).defined()) {
+    if (call_node == nullptr ||
+        !ParseOperator(ffi::GetRef<Stmt>(op)).defined()) {
       return evaluated;
     }
-    Call call = GetRef<Call>(call_node);
+    Call call = ffi::GetRef<Call>(call_node);
     if (call->annotations.count(kProvenanceOrdinal)) {
       return evaluated;
     }

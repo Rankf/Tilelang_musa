@@ -3,23 +3,26 @@ from typing import Any, Generic, Literal, ParamSpec, TypeVar
 from collections.abc import Callable
 
 from tilelang.jit.adapter.utils import is_cutedsl_target, is_metal_target, is_cuda_target
-from tvm.target import Target
 from tvm.tirx import PrimFunc
 
 import tilelang
 from tilelang import tvm
 from tilelang import env
+from tilelang.backend.execution_backend import resolve_execution_backend_spec
+from tvm.target import Target
 from tilelang.engine.param import CompiledArtifact, KernelParam
 from tilelang.jit.adapter import (
     BaseKernelAdapter,
+    CachedTextSource,
     CythonKernelAdapter,
     CuTeDSLKernelAdapter,
     TVMFFIKernelAdapter,
     MetalKernelAdapter,
 )
 from tilelang.profiler import Profiler, TensorSupplyType
-from tilelang.utils.target import determine_target
+from tilelang.backend.target import determine_target
 from tilelang.contrib import nvcc as tl_nvcc
+from tilelang.jit.diagnostics import jit_phase
 from tilelang.transform import PassConfigKey
 from tilelang.transform.pass_config import normalize_pass_configs
 import logging
@@ -29,6 +32,7 @@ logger = logging.getLogger(__name__)
 
 _P = ParamSpec("_P")
 _T = TypeVar("_T")
+TargetLike = str | dict[str, object] | Target
 
 
 class JITKernel(Generic[_P, _T]):
@@ -48,6 +52,7 @@ class JITKernel(Generic[_P, _T]):
     prim_func: PrimFunc = None
     artifact: CompiledArtifact = None
     adapter: BaseKernelAdapter = None
+    execution_backend_spec = None
     torch_function: Callable = None
 
     # tuner result
@@ -60,8 +65,8 @@ class JITKernel(Generic[_P, _T]):
         func: PrimFunc = None,
         out_idx: list[int] | int = None,
         execution_backend: Literal["tvm_ffi", "cython", "nvrtc", "torch", "cutedsl"] = "tvm_ffi",
-        target: str | Target = "auto",
-        target_host: str | Target = None,
+        target: TargetLike = "auto",
+        target_host: TargetLike | None = None,
         verbose: bool = False,
         pass_configs: dict[str, Any] | None = None,
         pass_instruments: list[tvm.instrument.PassInstrument] | None = None,
@@ -79,9 +84,10 @@ class JITKernel(Generic[_P, _T]):
             Index(es) of the output tensors to return (default: None).
         execution_backend : Literal["tvm_ffi", "cython", "nvrtc", "torch", "cutedsl"], optional
             Execution backend to use for kernel execution.
-        target : Union[str, Target], optional
-            Compilation target, either as a string or a TVM Target object (default: "auto").
-        target_host : Union[str, Target], optional
+        target : str, dict, or tvm.target.Target, optional
+            Compilation target (default: "auto"). Use a dict for target attributes,
+            for example {"kind": "cuda", "arch": "sm_90"}.
+        target_host : str, dict, or tvm.target.Target, optional
             Target host for cross-compilation (default: None).
         verbose : bool, optional
             Whether to enable verbose output (default: False).
@@ -92,7 +98,6 @@ class JITKernel(Generic[_P, _T]):
             Whether to create a TorchFunction from a database.
         """
         self.prim_func = func
-        self.execution_backend = execution_backend
         self.target_host = target_host
         self.verbose = verbose
 
@@ -101,18 +106,13 @@ class JITKernel(Generic[_P, _T]):
 
         self.compile_flags = [compile_flags] if isinstance(compile_flags, str) else compile_flags
 
-        # Ensure the target is always a valid TVM Target object.
+        # The wrapper is normalized here because lower/codegen still consume TVM Target.
         self.target = determine_target(target, return_object=True)
 
-        # Validate the execution backend.
-        assert execution_backend in [
-            "tvm_ffi",
-            "cython",
-            "nvrtc",
-            "torch",
-            "cutedsl",
-        ], f"Invalid execution backend. {execution_backend}"
-        if execution_backend == "cython":
+        self.execution_backend_spec = resolve_execution_backend_spec(execution_backend, self.target)
+        self.execution_backend = self.execution_backend_spec.name
+
+        if self.execution_backend == "cython":
             from tilelang.contrib.cc import get_cplus_compiler
 
             assert get_cplus_compiler() is not None, "Cython backend requires a C++ compiler, please install or use other backends."
@@ -145,12 +145,12 @@ class JITKernel(Generic[_P, _T]):
     def from_database(
         cls,
         func: PrimFunc,
-        host_kernel_source: str,
-        device_kernel_source: str,
+        host_kernel_source: CachedTextSource,
+        device_kernel_source: CachedTextSource,
         kernel_lib_path: str,
         params: list[KernelParam],
-        target: str | Target,
-        target_host: str | Target,
+        target: TargetLike,
+        target_host: TargetLike | None,
         out_idx: list[int] | int,
         execution_backend: Literal["tvm_ffi", "cython", "nvrtc", "torch", "cutedsl"],
         pass_configs: dict[str, Any] | None = None,
@@ -231,8 +231,8 @@ class JITKernel(Generic[_P, _T]):
             )
 
         # Compile the function with TVM, optimizing with shared memory lowering.
-        enable_host_codegen = execution_backend == "tvm_ffi"
-        enable_device_compile = execution_backend == "tvm_ffi"
+        enable_host_codegen = self.execution_backend_spec.enable_host_codegen
+        enable_device_compile = self.execution_backend_spec.enable_device_compile
 
         # Additional pass instruments
         pass_instruments = list(self.pass_instruments)
@@ -240,7 +240,18 @@ class JITKernel(Generic[_P, _T]):
             dump_ir_path = pass_configs.get(PassConfigKey.TL_DUMP_IR_DIR, "./dump_ir")  # Default dump path
             pass_instruments.append(tvm.ir.instrument.DumpIR(dump_dir=dump_ir_path))
 
-        with tvm.transform.PassContext(opt_level=3, config=pass_configs, instruments=pass_instruments), self.target:
+        func_name = tilelang_func.attrs.get("global_symbol", "<unknown>")
+        phase_context = {
+            "kernel": func_name,
+            "target": str(target),
+            "target_host": str(target_host) if target_host is not None else None,
+            "backend": execution_backend,
+        }
+        with (
+            jit_phase("lower", verbose=verbose, **phase_context),
+            tvm.transform.PassContext(opt_level=3, config=pass_configs, instruments=pass_instruments),
+            self.target,
+        ):
             artifact = tilelang.lower(
                 tilelang_func,
                 target=target,
@@ -251,12 +262,17 @@ class JITKernel(Generic[_P, _T]):
 
         self.artifact = artifact
 
+        def create_adapter(adapter_cls: Callable[..., BaseKernelAdapter], **kwargs: Any) -> BaseKernelAdapter:
+            with jit_phase("adapter", verbose=verbose, **phase_context):
+                return adapter_cls(**kwargs)
+
         # Create an adapter based on the specified execution backend.
         if execution_backend == "tvm_ffi":
             # Use TVMFFIKernelAdapter for interoperability with PyTorch via DLPack.
             # But we need to ensure that the runtime is enabled and the runtime module is not None.
             assert artifact.rt_mod is not None, "tvm_ffi backend requires a runtime module."
-            adapter = TVMFFIKernelAdapter(
+            adapter = create_adapter(
+                TVMFFIKernelAdapter,
                 params=artifact.params,
                 result_idx=out_idx,
                 target=target,
@@ -270,7 +286,8 @@ class JITKernel(Generic[_P, _T]):
                 compile_flags=compile_flags,
             )
         elif execution_backend == "cython":
-            adapter = CythonKernelAdapter(
+            adapter = create_adapter(
+                CythonKernelAdapter,
                 params=artifact.params,
                 result_idx=out_idx,
                 target=target,
@@ -285,7 +302,8 @@ class JITKernel(Generic[_P, _T]):
         elif execution_backend == "nvrtc":
             from tilelang.jit.adapter import NVRTCKernelAdapter
 
-            adapter = NVRTCKernelAdapter(
+            adapter = create_adapter(
+                NVRTCKernelAdapter,
                 params=artifact.params,
                 result_idx=out_idx,
                 target=target,
@@ -299,7 +317,8 @@ class JITKernel(Generic[_P, _T]):
             )
         elif execution_backend == "torch":
             assert is_metal_target(target)
-            adapter = MetalKernelAdapter(
+            adapter = create_adapter(
+                MetalKernelAdapter,
                 params=artifact.params,
                 result_idx=out_idx,
                 # target=target,
@@ -313,7 +332,8 @@ class JITKernel(Generic[_P, _T]):
             )
         elif execution_backend == "cutedsl":
             assert is_cutedsl_target(target)
-            adapter = CuTeDSLKernelAdapter(
+            adapter = create_adapter(
+                CuTeDSLKernelAdapter,
                 params=artifact.params,
                 result_idx=out_idx,
                 target=target,
@@ -335,10 +355,10 @@ class JITKernel(Generic[_P, _T]):
         self,
         params: list[KernelParam],
         result_idx: list[int] | int,
-        target: str | Target,
+        target: TargetLike,
         func_or_mod: PrimFunc | tvm.runtime.Module,
-        host_kernel_source: str,
-        device_kernel_source: str,
+        host_kernel_source: CachedTextSource,
+        device_kernel_source: CachedTextSource,
         kernel_lib_path: str,
         pass_configs: dict[str, Any] | None = None,
         compile_flags: list[str] | None = None,
@@ -617,11 +637,21 @@ class JITKernel(Generic[_P, _T]):
 
     @property
     def kernel_source(self) -> str:
-        return self.artifact.kernel_source if self.artifact else self.adapter.kernel_global_source
+        if self.artifact:
+            return self.artifact.kernel_source
+        source = getattr(self.adapter, "kernel_global_source", None)
+        if source is not None:
+            return source
+        return self.adapter.get_kernel_source(kernel_only=True) or ""
 
     @property
     def host_source(self) -> str:
-        return str(self.artifact.host_mod) if self.artifact else ""
+        if self.artifact:
+            return str(self.artifact.host_mod)
+        get_host_source = getattr(self.adapter, "get_host_source", None)
+        if get_host_source is None:
+            return ""
+        return get_host_source() or ""
 
     def export_library(self, kernel_file: str) -> None:
         """

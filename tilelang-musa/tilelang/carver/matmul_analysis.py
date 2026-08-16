@@ -18,8 +18,7 @@ from .analysis import (
 from tvm.target.target import Target
 from tvm.tirx.stmt_functor import pre_order_visit
 from .arch import get_arch, is_tensorcore_supported_precision
-from .arch.rdna import _get_rdna_tuning_config
-from tilelang.utils.target import target_get_mcpu, target_is_rdna
+from tilelang.rocm.target import target_get_mcpu, target_is_rdna
 import logging
 
 logger = logging.getLogger(__name__)
@@ -571,6 +570,8 @@ def get_tensorized_func_and_tags(
             # enable pipeline stage only for sm_80 devices
             tags["pipeline_stage"] = 2
         elif is_rdna_wmma_target(target):
+            from .arch.rdna import _get_rdna_tuning_config
+
             tags["pipeline_stage"] = _get_rdna_tuning_config(target_get_mcpu(target)).pipeline_stage
 
         # analysis async copy

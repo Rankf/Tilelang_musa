@@ -41,14 +41,14 @@ public:
   }
 
   /// Type checking methods
-  bool isSum() const { return type == int(ReduceTypeEnum::kSum); }
-  bool isAbsSum() const { return type == int(ReduceTypeEnum::kAbsSum); }
-  bool isMax() const { return type == int(ReduceTypeEnum::kMax); }
-  bool isMin() const { return type == int(ReduceTypeEnum::kMin); }
-  bool isAbsMax() const { return type == int(ReduceTypeEnum::kAbsMax); }
-  bool isBitAnd() const { return type == int(ReduceTypeEnum::kBitAnd); }
-  bool isBitOr() const { return type == int(ReduceTypeEnum::kBitOr); }
-  bool isBitXor() const { return type == int(ReduceTypeEnum::kBitXor); }
+  bool IsSum() const { return type == int(ReduceTypeEnum::kSum); }
+  bool IsAbsSum() const { return type == int(ReduceTypeEnum::kAbsSum); }
+  bool IsMax() const { return type == int(ReduceTypeEnum::kMax); }
+  bool IsMin() const { return type == int(ReduceTypeEnum::kMin); }
+  bool IsAbsMax() const { return type == int(ReduceTypeEnum::kAbsMax); }
+  bool IsBitAnd() const { return type == int(ReduceTypeEnum::kBitAnd); }
+  bool IsBitOr() const { return type == int(ReduceTypeEnum::kBitOr); }
+  bool IsBitXor() const { return type == int(ReduceTypeEnum::kBitXor); }
 };
 
 /// Wrapper class for reduction type with string-based construction
@@ -121,9 +121,10 @@ public:
   }
 
   /// Lower the operator to TIR statements
-  Stmt Lower(const LowerArgs &T, arith::Analyzer *analyzer) const override;
+  Stmt Lower(const LowerArgs &lower_args,
+             arith::Analyzer *analyzer) const override;
   /// Infer memory layout for buffers
-  LayoutMap InferLayout(const LayoutInferArgs &T,
+  LayoutMap InferLayout(const LayoutInferArgs &layout_args,
                         InferLevel level) const override;
   AccessRegions GetAccessRegions() const override;
   static const Op &Get();
@@ -136,7 +137,7 @@ struct ReduceImpl {
   const char *name;
   ReduceTargetPredicate match_target;
 
-  Stmt (*lower)(const ReduceOpNode &op, const LowerArgs &T,
+  Stmt (*lower)(const ReduceOpNode &op, const LowerArgs &lower_args,
                 arith::Analyzer *analyzer);
 };
 
@@ -149,58 +150,6 @@ public:
                                              ReduceOpNode);
   TVM_DLL
   ReduceOp(Array<PrimExpr> args,
-           Map<String, ObjectRef> annotations = Map<String, ObjectRef>());
-  static const Op &Get();
-};
-
-/// Node class for cumulative sum operations
-class CumSumOpNode : public TileOperatorNode {
-public:
-  tirx::Buffer src, dst; ///< Source and destination buffers
-  // Optional: keep the original regions used to construct this op
-  BufferRegion srcRegion_, dstRegion_;
-  int dim;      ///< Dimension along which to compute cumulative sum
-  bool reverse; ///< Whether to compute in reverse order
-  TVM_FFI_DECLARE_OBJECT_INFO_FINAL("tl.CumSumOp", CumSumOpNode,
-                                    TileOperatorNode);
-
-  static void RegisterReflection() {
-    namespace refl = reflection;
-    refl::ObjectDef<CumSumOpNode>()
-        .def_ro("src", &CumSumOpNode::src)
-        .def_ro("dst", &CumSumOpNode::dst)
-        .def_ro("srcRegion", &CumSumOpNode::srcRegion_)
-        .def_ro("dstRegion", &CumSumOpNode::dstRegion_)
-        .def_ro("dim", &CumSumOpNode::dim)
-        .def_ro("reverse", &CumSumOpNode::reverse);
-  }
-
-  Stmt Lower(const LowerArgs &T, arith::Analyzer *analyzer) const override;
-  LayoutMap InferLayout(const LayoutInferArgs &T,
-                        InferLevel level) const override;
-  static const Op &Get();
-  TileOperator Clone() const;
-};
-
-using CumSumTargetPredicate = bool (*)(Target target);
-
-struct CumSumImpl {
-  const char *name;
-  CumSumTargetPredicate match_target;
-
-  Stmt (*lower)(const CumSumOpNode &op, const LowerArgs &T,
-                arith::Analyzer *analyzer);
-};
-
-void RegisterCumSumImpl(CumSumImpl impl);
-
-/// Wrapper class for cumulative sum operations
-class CumSumOp : public TileOperator {
-public:
-  TVM_FFI_DEFINE_OBJECT_REF_METHODS_NULLABLE(CumSumOp, TileOperator,
-                                             CumSumOpNode);
-  TVM_DLL
-  CumSumOp(Array<PrimExpr> args,
            Map<String, ObjectRef> annotations = Map<String, ObjectRef>());
   static const Op &Get();
 };

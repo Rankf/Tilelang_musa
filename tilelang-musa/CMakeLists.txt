@@ -78,10 +78,11 @@ else()
 endif()
 
 # Configs
-set(TILELANG_BACKENDS CUDA MUSA)
+set(TILELANG_BACKENDS CUDA MUSA LLVM)
 
 set(TILELANG_BACKEND_DOC_CUDA "Enable CUDA backend (ON/OFF/or CUDA SDK path)")
 set(TILELANG_BACKEND_DOC_MUSA "Enable MUSA backend (ON/OFF/or MUSA SDK path)")
+set(TILELANG_BACKEND_DOC_LLVM "Enable LLVM backend")
 
 # TVM's config.cmake redefines USE_* options later, so we cache the user's choice
 # (including explicit -DUSE_XXX arguments) before we include TVM and restore it
@@ -137,6 +138,16 @@ option(TILELANG_USE_CUDA_STUBS
        "Use POSIX dlopen-based CUDA stub libraries (cuda/cudart/nvrtc) for portable wheels"
        ${_TILELANG_USE_CUDA_STUBS_DEFAULT})
 unset(_TILELANG_USE_CUDA_STUBS_DEFAULT)
+
+if(WIN32 AND NOT CYGWIN)
+  set(_TILELANG_USE_MUSA_STUBS_DEFAULT OFF)
+else()
+  set(_TILELANG_USE_MUSA_STUBS_DEFAULT ON)
+endif()
+option(TILELANG_USE_MUSA_STUBS
+       "Use POSIX dlopen-based MUSA stub libraries (musa/musart) for portable wheels"
+       ${_TILELANG_USE_MUSA_STUBS_DEFAULT})
+unset(_TILELANG_USE_MUSA_STUBS_DEFAULT)
 # Configs end
 
 include(cmake/load_tvm.cmake)
@@ -165,7 +176,7 @@ set(HIDE_PRIVATE_SYMBOLS OFF CACHE BOOL "Compile TVM with -fvisibility=hidden." 
 # Include directories for TileLang
 set(TILE_LANG_INCLUDES ${TVM_INCLUDES})
 # Add TileLang's own src/ to include path so cross-directory includes
-# can use paths relative to src/ (e.g. "target/utils.h", "op/builtin.h").
+# can use paths relative to src/ (e.g. "backend/common/target_utils.h", "op/builtin.h").
 list(INSERT TILE_LANG_INCLUDES 0 "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 # Collect source files
@@ -174,28 +185,25 @@ file(GLOB TILE_LANG_SRCS
   src/layout/*.cc
   src/transform/*.cc
   src/transform/common/*.cc
+  src/transform/pipeline/*.cc
   src/op/*.cc
-  src/backend/cpu/op/*.cc
-  src/backend/rocm/op/*.cc
-  src/backend/cuda/op/copy_analysis.cc
   src/backend/musa/op/copy_analysis.cc
-  src/backend/metal/op/*.cc
-  src/backend/webgpu/op/*.cc
-  src/target/utils.cc
-  src/target/codegen_c_host.cc
-  src/target/codegen_c.cc
-  src/target/rt_mod_c.cc
+  src/webgpu/op/*.cc
+  src/backend/common/target_utils.cc
+  src/backend/common/codegen/codegen_utils.cc
+  src/backend/common/codegen/codegen_c_host.cc
+  src/backend/musa/target_utils.cc
+  src/metal/target_utils.cc
+  src/rocm/target_utils.cc
   # intrin_rule doesn't have system dependency; always compiled regardless of backend
-  src/backend/cuda/codegen/intrin_rule_cuda.cc
   src/backend/musa/codegen/intrin_rule_musa.cc
-  src/backend/rocm/codegen/intrin_rule_hip.cc
+  src/rocm/codegen/intrin_rule_hip.cc
 )
 
 # Always include CPU-safe runtime helpers
 list(APPEND TILE_LANG_SRCS
   src/runtime/error_helpers.cc
 )
-
 # Track if the user explicitly selected a backend via cache options.
 set(TILELANG_BACKEND_USER_SELECTED OFF)
 foreach(BACKEND IN LISTS TILELANG_BACKENDS)
@@ -208,7 +216,13 @@ endforeach()
 
 # Only auto-select a backend when the user didn't specify one explicitly.
 if(NOT TILELANG_BACKEND_USER_SELECTED)
-  if($ENV{USE_MUSA})
+  if(DEFINED ENV{USE_LLVM})
+    if($ENV{USE_LLVM})
+      set(USE_LLVM ON)
+    else()
+      set(USE_LLVM OFF)
+    endif()
+  elseif($ENV{USE_MUSA})
     set(USE_MUSA ON)
   else()
     if($ENV{USE_CUDA})
@@ -225,7 +239,8 @@ endif()
 
 # Backend-local CMake files own native source lists, stubs, include paths, and
 # compile definitions. Top-level CMake only selects and delegates.
-include("${CMAKE_CURRENT_SOURCE_DIR}/src/backend/cuda/CMakeLists.txt")
+include("${CMAKE_CURRENT_SOURCE_DIR}/src/cpu/CMakeLists.txt")
+include("${CMAKE_CURRENT_SOURCE_DIR}/src/cuda/CMakeLists.txt")
 include("${CMAKE_CURRENT_SOURCE_DIR}/src/backend/musa/CMakeLists.txt")
 
 set(USE_Z3      ON CACHE STRING "Use Z3 SMT solver for TileLang optimizations")

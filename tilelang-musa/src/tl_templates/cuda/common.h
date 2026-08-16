@@ -99,10 +99,16 @@ TL_DEVICE unsigned __pack_nv_bfloat162(const bfloat16_t x, const bfloat16_t y) {
   return (v1 << 16) | v0;
 }
 
-// Pack four char values.
+// Pack four char values. Build the 32-bit pattern from unsigned bytes: a
+// negative signed char would otherwise sign-extend and flood the other lanes
+// through the OR.
 TL_DEVICE int make_int(signed char x0, signed char x1, signed char x2,
                        signed char x3) {
-  return (x3 << 24) | (x2 << 16) | (x1 << 8) | x0;
+  const unsigned int b0 = static_cast<unsigned char>(x0);
+  const unsigned int b1 = static_cast<unsigned char>(x1);
+  const unsigned int b2 = static_cast<unsigned char>(x2);
+  const unsigned int b3 = static_cast<unsigned char>(x3);
+  return static_cast<int>((b3 << 24) | (b2 << 16) | (b1 << 8) | b0);
 }
 
 // Pack eight char values.
@@ -511,6 +517,15 @@ TL_DEVICE void __sync_thread_partial(int barrier_id = 0, int thread_count = 0) {
   asm volatile("bar.sync %0, %1;" : : "r"(barrier_id), "r"(thread_count));
 }
 
+// CTA named barrier one-sided arrive (bar.arrive).
+// Signals arrival at the named barrier without waiting for other participants.
+// Useful in warp-specialized pipelines where one warp group signals readiness
+// without blocking, while the other waits with bar.sync /
+// __sync_thread_partial.
+TL_DEVICE void __named_barrier_arrive(int barrier_id, int thread_count) {
+  asm volatile("bar.arrive %0, %1;" : : "r"(barrier_id), "r"(thread_count));
+}
+
 template <int layout_type = 0, int leading_byte_offset = 0,
           int stride_byte_offset = 0, typename T>
 TL_DEVICE void initialize_wgmma_descriptor(GmmaDescriptor &descriptor,
@@ -542,6 +557,12 @@ initialize_tcgen05_descriptor(Tcgen05SMemDescriptor &descriptor,
 
 template <typename T>
 TL_DEVICE void increase_descriptor_offset(GmmaDescriptor &descriptor,
+                                          T offset) {
+  descriptor.reg32_[0] += (offset >> 4);
+}
+
+template <typename T>
+TL_DEVICE void increase_descriptor_offset(Tcgen05SMemDescriptor &descriptor,
                                           T offset) {
   descriptor.reg32_[0] += (offset >> 4);
 }

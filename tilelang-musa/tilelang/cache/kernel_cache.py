@@ -23,6 +23,8 @@ from tilelang.engine.param import KernelParam
 from tilelang.utils.language import get_prim_func_name
 from tilelang import env
 from tilelang.jit import JITKernel
+from tilelang.jit.adapter.base import CachedTextSource
+from tilelang.jit.diagnostics import jit_phase
 from tilelang import __version__
 import platform
 
@@ -52,13 +54,38 @@ class KernelCache:
 
     @staticmethod
     @functools.cache
-    def _get_compile_args() -> dict:
+    def _get_source_compile_args() -> dict:
+        if sys.platform == "win32":
+            from tilelang.contrib.msvc import create_shared as msvc_create_shared
+
+            return {"fcompile": msvc_create_shared}
+
         if sys.platform != "darwin":
             return {}
 
         from torch.utils import cpp_extension
 
         return {"options": ["-x", "objective-c++", "-g", "-std=gnu++17"] + ["-I" + i for i in cpp_extension.include_paths()]}
+
+    @staticmethod
+    @functools.cache
+    def _get_export_link_args() -> dict:
+        if sys.platform == "win32":
+            from tilelang.contrib.msvc import create_shared as msvc_create_shared
+
+            return {"fcompile": msvc_create_shared}
+
+        return {}
+
+    @staticmethod
+    @functools.cache
+    def _get_export_link_args() -> dict:
+        if sys.platform == "win32":
+            from tilelang.contrib.msvc import create_shared as msvc_create_shared
+
+            return {"fcompile": msvc_create_shared}
+
+        return {}
 
     @staticmethod
     @functools.cache
@@ -237,8 +264,8 @@ class KernelCache:
             out_idx (List[int]): Indices specifying which outputs to return.
             execution_backend (Literal): Backend type for execution. Defaults to "tvm_ffi".
             args: Arguments passed to the function.
-            target (Union[str, Target]): Compilation target platform. Defaults to "auto".
-            target_host (Union[str, Target], optional): Host target platform.
+            target (Union[str, dict, Target]): Compilation target platform. Defaults to "auto".
+            target_host (Union[str, dict, Target], optional): Host target platform.
 
         Returns:
             str: SHA256 hash key for the kernel configuration.
@@ -282,7 +309,8 @@ class KernelCache:
         Args:
             func: Function to be compiled or a prepared PrimFunc
             out_idx: Indices specifying which outputs to return
-            target: Compilation target platform (None = read from TILELANG_TARGET env var)
+            target: Compilation target platform (None = read from TILELANG_DEFAULT_TARGET env var).
+                Use a dict for target attributes, for example {"kind": "cuda", "arch": "sm_90"}.
             target_host: Host target platform
             execution_backend: Execution backend (None = read from TILELANG_EXECUTION_BACKEND)
             verbose: Enable verbose output (None = read from TILELANG_VERBOSE)
@@ -293,8 +321,9 @@ class KernelCache:
 
         Environment Variables
         ---------------------
-        TILELANG_TARGET : str
-            Default compilation target (e.g., "cuda", "llvm"). Defaults to "auto".
+        TILELANG_DEFAULT_TARGET : str
+            Default compilation target (e.g., "cuda", "llvm", or a JSON target config string).
+            Defaults to "auto".
         TILELANG_EXECUTION_BACKEND : str
             Default execution backend. Defaults to "auto".
         TILELANG_VERBOSE : str
@@ -344,34 +373,48 @@ class KernelCache:
                 )
                 return self._memory_cache[memory_key]
 
-            if verbose:
-                self.logger.debug(f"Checking disk cache for kernel {get_prim_func_name(func, '<unknown>')}")
+        if verbose:
+            self.logger.debug(f"Checking disk cache for kernel {get_prim_func_name(func, '<unknown>')}")
 
-            # Then check disk cache
-            kernel = self._load_kernel_from_disk(
-                key, target, target_host, out_idx, execution_backend, pass_configs,
-                compile_flags, func, verbose, instrumented_plan_hash=plan_hash
-            )
-            if kernel is not None:
-                if verbose:
-                    self.logger.debug(f"Found kernel in disk cache for {get_prim_func_name(func, '<unknown>')}")
-                # Populate memory cache with disk result
+        # Disk loads can be expensive for large kernel sets; keep them outside
+        # the global cache lock so independent cache hits can proceed in parallel.
+        kernel = self._load_kernel_from_disk(
+            key, target, target_host, out_idx, execution_backend, pass_configs,
+            compile_flags, func, verbose, instrumented_plan_hash=plan_hash
+        )
+        if kernel is not None:
+            if verbose:
+                self.logger.debug(f"Found kernel in disk cache for {get_prim_func_name(func, '<unknown>')}")
+            with self._lock:
+                existing = self._memory_cache.get(memory_key)
+                if existing is not None:
+                    return existing
                 self._memory_cache[memory_key] = kernel
-                return kernel
+            return kernel
 
         if verbose:
             self.logger.debug(f"No cached kernel for {get_prim_func_name(func, '<unknown>')}")
         # Compile kernel if cache miss; leave critical section
-        kernel = JITKernel(
-            func,
-            out_idx=out_idx,
-            execution_backend=execution_backend,
-            target=target,
-            target_host=target_host,
+        with jit_phase(
+            "cache.compile",
             verbose=verbose,
-            pass_configs=pass_configs,
-            compile_flags=compile_flags,
-        )
+            kernel=get_prim_func_name(func, "<unknown>"),
+            target=str(target),
+            target_host=str(target_host) if target_host is not None else None,
+            backend=execution_backend,
+            cache_key=key,
+            cache_path=self._get_cache_path(key),
+        ):
+            kernel = JITKernel(
+                func,
+                out_idx=out_idx,
+                execution_backend=execution_backend,
+                target=target,
+                target_host=target_host,
+                verbose=verbose,
+                pass_configs=pass_configs,
+                compile_flags=compile_flags,
+            )
         with self._lock:
             if env.is_cache_enabled():
                 cache_path = self._get_cache_path(key, plan_hash)
@@ -381,7 +424,12 @@ class KernelCache:
                 self._set_adapter_cache_path(kernel, cache_path)
 
         # Store in memory cache after compilation
-        self._memory_cache[memory_key] = kernel
+        self._tag_kernel_cache_entry(kernel, key, self._get_cache_path(key, plan_hash))
+        with self._lock:
+            existing = self._memory_cache.get(memory_key)
+            if existing is not None:
+                return existing
+            self._memory_cache[memory_key] = kernel
         return kernel
 
     def clear_cache(self):
@@ -408,6 +456,19 @@ class KernelCache:
             self._get_cache_root(), "instrumented", instrumented_plan_hash, key)
 
     @staticmethod
+    def _tag_kernel_cache_entry(kernel: JITKernel, key: str, cache_path: str) -> None:
+        try:
+            kernel._tilelang_cache_key = key
+            kernel._tilelang_cache_path = cache_path
+        except (AttributeError, TypeError):
+            logging.getLogger(__name__).debug(
+                "Could not tag kernel cache entry for key %s at %s",
+                key,
+                cache_path,
+                exc_info=True,
+            )
+
+    @staticmethod
     def _load_binary(path: str):
         with open(path, "rb") as file:
             binary = file.read()
@@ -423,10 +484,10 @@ class KernelCache:
         # Use atomic POSIX replace, so other processes cannot see a partial write
         os.replace(temp_path, path)
 
-    @classmethod
-    def _safe_write_executable(cls, executable: Executable, path: str):
+    @staticmethod
+    def _safe_write_executable(executable: Executable, path: str, export_kwargs: dict | None = None):
         temp_path = os.path.join(env.TILELANG_TMP_DIR, f"{os.getpid()}_{uuid.uuid4()}.so")
-        executable.export_library(temp_path, **cls._get_compile_args())
+        executable.export_library(temp_path, **(export_kwargs or {}))
         os.replace(temp_path, path)
 
     def _save_kernel_to_disk(
@@ -520,8 +581,8 @@ class KernelCache:
 
         Args:
             key (str): The hash key identifying the kernel.
-            target (Union[str, Target]): Compilation target platform. Defaults to "auto".
-            target_host (Union[str, Target], optional): Host target platform.
+            target (Union[str, dict, Target]): Compilation target platform. Defaults to "auto".
+            target_host (Union[str, dict, Target], optional): Host target platform.
             out_idx (List[int], optional): Indices specifying which outputs to return.
             execution_backend (Literal): Backend type for execution. Defaults to "tvm_ffi".
             pass_configs (dict, optional): Configuration for compiler passes.
@@ -537,13 +598,11 @@ class KernelCache:
         kernel_lib_path = os.path.join(cache_path, self.kernel_lib_path)
         params_path = os.path.join(cache_path, self.params_path)
 
-        required_files = self._get_required_files(cache_path)
-
-        if not all([os.path.exists(file) for file in required_files]):
+        missing_files = self._get_missing_complete_cache_files(cache_path)
+        if missing_files:
+            if verbose:
+                self.logger.debug("Disk cache entry is incomplete; missing files: %s", missing_files)
             return None
-
-        # Load the kernel source file (optional)
-        device_kernel_source, host_kernel_source = self._load_kernel_source(device_kernel_path, host_kernel_path, verbose)
 
         # Load kernel parameters
         kernel_params: list[KernelParam] | None = None
@@ -555,10 +614,10 @@ class KernelCache:
         except Exception:
             self.logger.exception("Error loading kernel parameters from disk")
 
-        return self._build_kernel(
+        kernel = self._build_kernel(
             func=func,
-            host_kernel_source=host_kernel_source,
-            device_kernel_source=device_kernel_source,
+            host_kernel_source=CachedTextSource(path=host_kernel_path),
+            device_kernel_source=CachedTextSource(path=device_kernel_path),
             kernel_lib_path=kernel_lib_path,
             kernel_params=kernel_params,
             target=target,
@@ -568,6 +627,9 @@ class KernelCache:
             pass_configs=pass_configs,
             compile_flags=compile_flags,
         )
+        if kernel is not None:
+            self._tag_kernel_cache_entry(kernel, key, cache_path)
+        return kernel
 
     def _clear_disk_cache(self):
         """
@@ -662,8 +724,8 @@ class KernelCache:
     def _build_kernel(
         self,
         func: Callable | None,
-        host_kernel_source: str,
-        device_kernel_source: str,
+        host_kernel_source: CachedTextSource,
+        device_kernel_source: CachedTextSource,
         kernel_lib_path: str,
         kernel_params: list[KernelParam] | None,
         target: str | Target,
@@ -675,10 +737,6 @@ class KernelCache:
     ) -> JITKernel | None:
         # Check all required components and report specific failures
         missing_components = []
-        if not host_kernel_source:
-            missing_components.append("host_kernel_source")
-        if not device_kernel_source:
-            missing_components.append("device_kernel_source")
         if not kernel_params:
             missing_components.append("kernel_params")
 

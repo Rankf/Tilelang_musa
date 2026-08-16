@@ -91,6 +91,14 @@ static constexpr const char *kDebugMergeSharedMemoryAllocations =
 // PrimFunc attribute: set by LowerTileOp to indicate TMA operations were
 // actually generated.  Read by OptimizeForTarget to pick the right pipeline.
 static constexpr const char *kHasTMA = "tl.has_tma";
+// PrimFunc attribute: Map<String, IntImm> from a shared buffer's data Var
+// name to the minimum base alignment (bytes) required by swizzle-sensitive
+// instructions that consume it (TMA bulk copy, wgmma/tcgen05 descriptors).
+// Keyed by name rather than Var so the attribute does not hold references
+// into the function body (which would perturb printing and SSA passes); a
+// name collision can only over-align, never under-align. Written by
+// LowerTileOp, consumed by MergeSharedMemoryAllocations.
+static constexpr const char *kSmemAlignmentMap = "tl.smem_alignment_map";
 static constexpr const char *kDisableSafeMemoryLegalize =
     "tl.disable_safe_memory_legalize";
 static constexpr const char *kDisableSafeCopyPredication =
@@ -114,8 +122,6 @@ static constexpr const char *kEnableAutoUnroll = "tl.enable_auto_unroll";
 static constexpr const char *kEnableFastMath = "tl.enable_fast_math";
 static constexpr const char *kPtxasRegisterUsageLevel =
     "tl.ptxas_register_usage_level";
-static constexpr const char *kEnablePTXASVerboseOutput =
-    "tl.enable_ptxas_verbose_output";
 static constexpr const char *kDisableVectorize256 = "tl.disable_vectorize_256";
 static constexpr const char *kEnableAsyncCopy = "tl.enable_async_copy";
 static constexpr const char *kEnableVectorizePlannerVerbose =
@@ -134,6 +140,8 @@ static constexpr const char *kDisableLoopUnswitching =
 // non-trivial (has side effects). Default: false (conservative).
 static constexpr const char *kLoopUnswitchingAllowNonTrivialElse =
     "tl.loop_unswitching_allow_non_trivial_else";
+static constexpr const char *kIfStmtBindingInlineReplayableBinds =
+    "tl.if_stmt_binding_inline_replayable_binds";
 
 /*!
  * \brief Enable lowering non-predicated global load/store to ldg/stg intrinsics
@@ -225,10 +233,10 @@ static constexpr const char *kGemmInstMusaFMA = "musa.fma";
 /*!
  * \brief Get the type of the CUDA tensor map
  *
- * DataType cuTensorMapType()
+ * DataType CuTensorMapType()
  *
  */
-DataType cuTensorMapType();
+DataType CuTensorMapType();
 
 /*!
  * \brief TileLang intrinsic for carrying pointer access metadata in frontend.
@@ -717,6 +725,22 @@ TVM_DLL const Op &sync_grid();
 TVM_DLL const Op &sync_warp();
 
 /*!
+ * \brief CTA named barrier one-sided arrive (bar.arrive).
+ *
+ * Signals that the calling threads have arrived at the named barrier without
+ * waiting for other participants.  Useful in warp-specialized producer/consumer
+ * pipelines where one side must signal readiness/free-buffer state without
+ * blocking, while the other side waits with bar.sync / T.sync_threads().
+ *
+ * named_barrier_arrive(barrier_id, thread_count)
+ *   barrier_id   - named barrier index (0-15)
+ *   thread_count - total number of participating threads
+ *
+ * Lowers to: asm volatile("bar.arrive %0, %1;" : : "r"(id), "r"(cnt));
+ */
+TVM_DLL const Op &named_barrier_arrive();
+
+/*!
  * \brief Programmatic dependency trigger.
  *
  * pdl_trigger()
@@ -1092,6 +1116,18 @@ TVM_DLL const Op &warp_reduce_bitor();
  *  index expression.
  */
 TVM_DLL const Op &__ldg();
+
+/*!
+ * \brief tilelang intrinsic for CUDA find-first-set bit (__ffs / __ffsll).
+ *
+ *  Returns the one-based position of the least significant set bit, or 0 when
+ *  the input is zero. CUDA codegen emits `__ffs` for 32-bit integer inputs and
+ *  `__ffsll` for 64-bit integer inputs.
+ *
+ *  Usage from TVMScript:
+ *    lane = T.__ffs(mask) - 1
+ */
+TVM_DLL const Op &__ffs();
 
 /*!
  * \brief tilelang intrinsic for global memory load with 32-bit vector width.

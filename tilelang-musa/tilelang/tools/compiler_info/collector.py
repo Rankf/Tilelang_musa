@@ -353,13 +353,31 @@ def _is_contiguous_1d_index(
     """Prove the exact row-major block/loop flattening used by version one."""
     if not isinstance(elements_per_block, int) or elements_per_block <= 0:
         return False
-    extents = [record.get("extent_value") for record in loop_records]
+    serial_loops = [
+        (loop_var, record)
+        for loop_var, record in zip(loop_vars, loop_records)
+        if record.get("thread_binding") is None
+    ]
+    extents = [record.get("extent_value") for _, record in serial_loops]
     if not extents or any(
         not isinstance(extent, int) or extent <= 0 for extent in extents
     ):
         return False
     block_axes = []
     for node in _post_order(function.body):
+        if type(node).__name__ == "For":
+            binding = getattr(node, "thread_binding", None)
+            if binding is not None:
+                axis = getattr(binding, "thread_tag", None)
+                axis = getattr(axis, "value", axis)
+                extent = _integer(node.extent)
+                if (
+                    axis is not None
+                    and str(axis).startswith("blockIdx")
+                    and extent != 1
+                ):
+                    block_axes.append(node.loop_var)
+            continue
         if type(node).__name__ != "AttrStmt" or str(node.attr_key) != "thread_extent":
             continue
         axis = getattr(getattr(node, "node", None), "thread_tag", None)
@@ -371,7 +389,7 @@ def _is_contiguous_1d_index(
                 block_axes.append(variable)
     if len(block_axes) != 1:
         return False
-    variables = [block_axes[0], *loop_vars]
+    variables = [block_axes[0], *(loop_var for loop_var, _ in serial_loops)]
     try:
         coefficients = list(tvm.arith.detect_linear_equation(index, variables))
         analyzer = tvm.arith.Analyzer()
@@ -439,6 +457,17 @@ def _multiply(values: list[int | str]) -> int | str:
 def _launch_information(function: Any) -> dict[str, Any]:
     axes: dict[str, int | str] = {}
     for node in _post_order(function.body):
+        if type(node).__name__ == "For":
+            binding = getattr(node, "thread_binding", None)
+            if binding is not None:
+                axis = getattr(binding, "thread_tag", None)
+                axis = getattr(axis, "value", axis)
+                if axis is not None:
+                    extent = _integer(node.extent)
+                    axes[str(axis)] = (
+                        extent if extent is not None else str(node.extent)
+                    )
+            continue
         if type(node).__name__ != "AttrStmt" or str(node.attr_key) != "thread_extent":
             continue
         axis = getattr(getattr(node, "node", None), "thread_tag", None)
@@ -521,7 +550,11 @@ def _source_kernel(name: str, function: Any) -> dict[str, Any]:
                 "extent": str(op.extent),
                 "extent_value": _integer(op.extent),
                 "kind": str(op.kind),
-                "thread_binding": str(op.thread_binding) if op.thread_binding else None,
+                "thread_binding": (
+                    str(op.thread_binding)
+                    if op.thread_binding is not None
+                    else None
+                ),
                 "annotations": _attrs(op.annotations),
                 "span": _span(op),
                 "evidence_level": COMPILER_OBSERVED,
@@ -1439,7 +1472,7 @@ def collect_compiler_information(
 ) -> dict[str, Any]:
     """Lower without device compilation or execution and collect compiler facts."""
     import tilelang
-    from tilelang.utils.target import determine_target
+    from tilelang.backend.target import determine_target
 
     resolved_target = determine_target(target, return_object=True)
     collector = CompilerInfoCollector()

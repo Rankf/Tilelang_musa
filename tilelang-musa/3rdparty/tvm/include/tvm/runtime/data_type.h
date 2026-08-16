@@ -71,7 +71,8 @@ class DataType {
     kFloat6_e3m2fn = kDLFloat6_e3m2fn,
     kFloat4_e2m1fn = kDLFloat4_e2m1fn,
     kCustomBegin = 129,
-    kTensorFloat32 = 130
+    kTensorFloat32 = 130,
+    kFloat4_e2m1_unpacked = 131
   };
   /*! \brief default constructor */
   DataType() { data_ = DataType::Void(); }
@@ -110,6 +111,9 @@ class DataType {
     }
     if (code == kTensorFloat32) {
       TVM_FFI_ICHECK_EQ(bits, 32);
+    }
+    if (code == kFloat4_e2m1_unpacked) {
+      TVM_FFI_ICHECK_EQ(bits, 8);
     }
   }
   /*! \return The type code. */
@@ -166,6 +170,10 @@ class DataType {
   }
   /*! \return whether type is the 4-bit custom Float4_e2m1fn variant. */
   bool is_float4() const { return bits() == 4 && code() == DataType::kFloat4_e2m1fn; }
+  /*! \return whether type is unpacked Float4E2M1 shared-memory storage. */
+  bool is_float4_e2m1_unpacked() const {
+    return bits() == 8 && code() == DataType::kFloat4_e2m1_unpacked;
+  }
   /*! \return whether type is Float8E3M4. */
   bool is_float8_e3m4() const { return bits() == 8 && code() == DataType::kFloat8_e3m4; }
   /*! \return whether type is Float8E4M3. */

@@ -12,6 +12,7 @@
 #include "tvm/ir/transform.h"
 #include <tvm/ffi/extra/structural_equal.h>
 #include <tvm/ffi/extra/structural_hash.h>
+#include <tvm/runtime/logging.h>
 #include <tvm/tirx/builtin.h>
 #include <tvm/tirx/expr.h>
 #include <tvm/tirx/op.h>
@@ -19,7 +20,10 @@
 #include <tvm/tirx/stmt_functor.h>
 #include <tvm/tirx/transform.h>
 
+#include <algorithm>
 #include <sstream>
+#include <unordered_map>
+#include <vector>
 
 namespace tvm::tl {
 using namespace tirx;

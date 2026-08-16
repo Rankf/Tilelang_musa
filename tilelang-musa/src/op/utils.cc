@@ -4,7 +4,7 @@
  */
 
 #include "utils.h"
-#include "backend/cuda/stubs/cuda.h"
+#include "cuda/stubs/cuda.h"
 #include "support/check.h"
 #include <tvm/ffi/reflection/registry.h>
 #include <tvm/ir/cast.h>
@@ -170,6 +170,10 @@ int to_CUtensorMapDataType(DataType dtype) {
   // CUDA 13 adds packed U4 TensorMap formats. The vendored CUDA stub may lag
   // the installed toolkit, so keep the enum value by CUDA's documented order.
   constexpr int kTensorMapDataType16U4Align8B = 13;
+  constexpr int kTensorMapDataType16U4Align16B = 14;
+  if (dtype.is_float4_e2m1_unpacked()) {
+    return kTensorMapDataType16U4Align16B;
+  }
   if (dtype.is_float4_e2m1fn()) {
     return kTensorMapDataType16U4Align8B;
   }

@@ -95,9 +95,6 @@ class PassConfigKey(str, Enum):
     """The PTXAS register usage level in [0, 10], which controls the
     aggressiveness of optimizations that affect register usage. Default: None"""
 
-    TL_ENABLE_PTXAS_VERBOSE_OUTPUT = "tl.enable_ptxas_verbose_output"
-    """Enable ptxas verbose output. Default: False"""
-
     TL_DEVICE_COMPILE_FLAGS = "tl.device_compile_flags"
     """Additional device compiler flags passed to nvcc/NVRTC.
 
@@ -227,6 +224,17 @@ class PassConfigKey(str, Enum):
     """Allow loop unswitching even when the else-version of the loop body has side effects.
 
     This is more aggressive and may increase code size. Default: False.
+    """
+
+    TL_IF_STMT_BINDING_INLINE_REPLAYABLE_BINDS = "tl.if_stmt_binding_inline_replayable_binds"
+    """Inline replayable scalar Bind statements while distributing if conditions.
+
+    When True (default), IfStmtBinding may rewrite a guarded sequence such as
+    ``if cond: idx = ids[i]; copy(idx); gemm()`` into separately guarded
+    statements with ``idx`` substituted at each use, provided the Bind does not
+    read a buffer written inside the same guarded body. This exposes copy and
+    compute statements to pipeline planning while preserving non-replayable
+    Bind scopes.
     """
 
     TL_DISABLE_THREAD_STORAGE_SYNC = "tl.disable_thread_storage_sync"
