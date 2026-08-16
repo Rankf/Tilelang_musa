@@ -1,0 +1,21 @@
+==PROF== '/root/s5000-calibration/scripts/run_compiler_info_elementwise_mcu_app.sh' started, pid:3788  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+==PROF== Profiling "0:0:main_kernel" - 0 (1/1): Application replay pass 0 
+2026-08-16 11:02:36  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `main` with `out_idx=None`
+2026-08-16 11:02:38  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `main`
+{"cache_condition": "warm_after_repeated_launches", "correctness": "pass", "dtype": "float32", "elements_per_block": 1024, "elements_per_thread": 4, "grid_size": 10240, "kernel_source_sha256": "1c2942a9a983d0707a11e11227380cf97ba72ce778933b777dba26120849e28c", "l2_eviction_bytes": null, "logical_read_bytes": 41943040, "logical_write_bytes": 41943040, "mcu_expected_skip": 5, "mode": "profile", "op": "relu", "schema_version": "s5000/elementwise-runtime-runner-v1", "shape": [10485760], "target_launches": 6, "threads": 256}
+==PROF== '/root/s5000-calibration/scripts/run_compiler_info_elementwise_mcu_app.sh' exit, exit code(0)  
+==PROF== Disconnected from process 3788 
+==PROF== Capture finished. Path is "/root/s5000-calibration/results/profiling/tileops_manifest_cache_sweep_20260814/relu_n10485760_warm_mid.mcu-rep"  
+[3788] python3.10@eb254eaa2fd3 
+  86 - main_kernel (10240, 1, 1)x(256, 1, 1), Context 0, Stream 0, Device 0 
+    Section: Command line profiler metrics 
+    ----------------------------- ----------- --------------- 
+    Metric Name                   Metric Unit    Metric Value 
+    ----------------------------- ----------- --------------- 
+    gpu__time_duration.max                 ns    45323.428571 
+    l1__downstream_read_bytes.sum       bytes 41946880.000000 
+    ddr__read_bytes.sum                 bytes 21662208.000000 
+    ----------------------------- ----------- --------------- 
+ 
+ 

@@ -1,7 +1,43 @@
-==ERROR== No mtgpu device found under /dev/  
-==PROF== '/root/s5000-calibration/scripts/run_compiler_info_elementwise_mcu_app.sh' started, pid:36710  
+==PROF== '/root/s5000-calibration/scripts/run_compiler_info_elementwise_mcu_app.sh' started, pid:3117  
 Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
-No mtgpu device found under /dev//home/jenkins/workspace/build.msight-compute@7/msight-compute/module/injection/mupti_injection_global_data.cpp:154: error: function profiler_target_->initContext(ctx_cfg) failed with error MUPTI_ERROR_INVALID_DEVICE.
-==ERROR== The application returned an error code (1).  
+==PROF== Profiling "0:0:main_kernel" - 0 (1/1): Application replay pass 0 
+2026-08-16 11:00:11  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:130): TileLang begins to compile kernel `main` with `out_idx=None`
+2026-08-16 11:00:12  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:138): TileLang completes to compile kernel `main`
+{"cache_condition": "warm_after_repeated_launches", "correctness": "pass", "dtype": "float32", "elements_per_block": 2048, "elements_per_thread": 8, "grid_size": 4096, "kernel_source_sha256": "9dc987000271bbd0f41f410f7698ef4e06438ed5863229fcf73f23c6c26d2155", "l2_eviction_bytes": null, "logical_read_bytes": 67108864, "logical_write_bytes": 33554432, "mcu_expected_skip": 5, "mode": "profile", "op": "add", "schema_version": "s5000/elementwise-runtime-runner-v1", "shape": [8388608], "target_launches": 6, "threads": 256}
+==PROF== '/root/s5000-calibration/scripts/run_compiler_info_elementwise_mcu_app.sh' exit, exit code(0)  
+==PROF== Disconnected from process 3117 
+==PROF== '/root/s5000-calibration/scripts/run_compiler_info_elementwise_mcu_app.sh' started, pid:3257  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+==PROF== Profiling "0:0:main_kernel" - 0 (1/1): Application replay pass 1 
+{"cache_condition": "warm_after_repeated_launches", "correctness": "pass", "dtype": "float32", "elements_per_block": 2048, "elements_per_thread": 8, "grid_size": 4096, "kernel_source_sha256": "9dc987000271bbd0f41f410f7698ef4e06438ed5863229fcf73f23c6c26d2155", "l2_eviction_bytes": null, "logical_read_bytes": 67108864, "logical_write_bytes": 33554432, "mcu_expected_skip": 5, "mode": "profile", "op": "add", "schema_version": "s5000/elementwise-runtime-runner-v1", "shape": [8388608], "target_launches": 6, "threads": 256}
+==PROF== '/root/s5000-calibration/scripts/run_compiler_info_elementwise_mcu_app.sh' exit, exit code(0)  
+==PROF== Disconnected from process 3257 
+==PROF== '/root/s5000-calibration/scripts/run_compiler_info_elementwise_mcu_app.sh' started, pid:3348  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+==PROF== Profiling "0:0:main_kernel" - 0 (1/1): Application replay pass 2 
+{"cache_condition": "warm_after_repeated_launches", "correctness": "pass", "dtype": "float32", "elements_per_block": 2048, "elements_per_thread": 8, "grid_size": 4096, "kernel_source_sha256": "9dc987000271bbd0f41f410f7698ef4e06438ed5863229fcf73f23c6c26d2155", "l2_eviction_bytes": null, "logical_read_bytes": 67108864, "logical_write_bytes": 33554432, "mcu_expected_skip": 5, "mode": "profile", "op": "add", "schema_version": "s5000/elementwise-runtime-runner-v1", "shape": [8388608], "target_launches": 6, "threads": 256}
+==PROF== '/root/s5000-calibration/scripts/run_compiler_info_elementwise_mcu_app.sh' exit, exit code(0)  
+==PROF== Disconnected from process 3348 
+==PROF== '/root/s5000-calibration/scripts/run_compiler_info_elementwise_mcu_app.sh' started, pid:3441  
+Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
+==PROF== Profiling "0:0:main_kernel" - 0 (1/1): Application replay pass 3 
+{"cache_condition": "warm_after_repeated_launches", "correctness": "pass", "dtype": "float32", "elements_per_block": 2048, "elements_per_thread": 8, "grid_size": 4096, "kernel_source_sha256": "9dc987000271bbd0f41f410f7698ef4e06438ed5863229fcf73f23c6c26d2155", "l2_eviction_bytes": null, "logical_read_bytes": 67108864, "logical_write_bytes": 33554432, "mcu_expected_skip": 5, "mode": "profile", "op": "add", "schema_version": "s5000/elementwise-runtime-runner-v1", "shape": [8388608], "target_launches": 6, "threads": 256}
+==PROF== '/root/s5000-calibration/scripts/run_compiler_info_elementwise_mcu_app.sh' exit, exit code(0)  
+==PROF== Disconnected from process 3441 
 ==PROF== Capture finished. Path is "/root/s5000-calibration/results/profiling/tileops_manifest_cache_sweep_20260814/add_n8388608_warm.mcu-rep"  
-==WARNING== No kernels were profiled.  
+[3117] python3.10@eb254eaa2fd3 
+  105 - main_kernel (4096, 1, 1)x(256, 1, 1), Context 0, Stream 0, Device 0 
+    Section: Command line profiler metrics 
+    ------------------------------ ----------- --------------- 
+    Metric Name                    Metric Unit    Metric Value 
+    ------------------------------ ----------- --------------- 
+    gpu__time_duration.max                  ns    77000.571429 
+    l1__downstream_read_bytes.sum        bytes 67188352.000000 
+    l1__downstream_write_bytes.sum       bytes 33855616.000000 
+    l1__sector_hit_rate.pct                  %       48.705443 
+    l2pu__sector_hit_rate.pct                %       33.973770 
+    ddr__read_bytes.sum                  bytes 66589696.000000 
+    ddr__write_bytes.sum                 bytes 33604000.000000 
+    ------------------------------ ----------- --------------- 
+ 
+ 
