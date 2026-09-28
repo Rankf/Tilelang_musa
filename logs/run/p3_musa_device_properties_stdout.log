@@ -1,5 +1,0 @@
-name=MTT S5000
-capability=3.1
-multi_processor_count=60
-l2_cache_size_bytes=62914560
-persisting_l2_cache_max_size_bytes=52428800

@@ -406,10 +406,25 @@ def _is_contiguous_1d_index(
 
 
 def _elementwise_expression(value: Any, store_indices: Any) -> dict[str, Any]:
-    """Classify only the exact, unfused Add/ReLU forms supported downstream."""
+    """Classify exact unfused elementwise forms supported downstream."""
+    def collect_loads(expr: Any) -> list[Any]:
+        found: list[Any] = []
+        try:
+            tvm.tirx.stmt_functor.post_order_visit(
+                expr,
+                lambda node: found.append(node)
+                if isinstance(node, tvm.tirx.BufferLoad) else None,
+            )
+        except (AttributeError, TypeError):
+            found = [
+                item for item in (getattr(expr, "a", None), getattr(expr, "b", None))
+                if isinstance(item, tvm.tirx.BufferLoad)
+            ]
+        return found
+
     root_kind = type(value).__name__
     operands = [getattr(value, "a", None), getattr(value, "b", None)]
-    loads = [item for item in operands if isinstance(item, tvm.tirx.BufferLoad)]
+    loads = collect_loads(value)
     kind = "unsupported"
     if root_kind == "Add" and len(loads) == 2:
         kind = "add"
@@ -419,6 +434,16 @@ def _elementwise_expression(value: Any, store_indices: Any) -> dict[str, Any]:
         and any(_is_zero_immediate(item) for item in operands)
     ):
         kind = "max_zero"
+    else:
+        node = value
+        while type(node).__name__ == "Cast":
+            node = getattr(node, "value", None)
+        if isinstance(node, tvm.tirx.Call) and len(loads) == 1:
+            name = _op_name(node).lower()
+            for candidate in ("exp", "log", "sqrt"):
+                if name == candidate or name.endswith("." + candidate):
+                    kind = candidate
+                    break
     same_index = bool(loads) and all(
         _same_indices(load.indices, store_indices) for load in loads
     )
@@ -665,11 +690,12 @@ def _source_kernel(name: str, function: Any) -> dict[str, Any]:
             ]
             expression = _elementwise_expression(value, indices)
             if expression["kind"] != "unsupported":
-                loads = [
-                    item
-                    for item in (getattr(value, "a", None), getattr(value, "b", None))
-                    if isinstance(item, tvm.tirx.BufferLoad)
-                ]
+                loads = []
+                tvm.tirx.stmt_functor.post_order_visit(
+                    value,
+                    lambda node: loads.append(node)
+                    if isinstance(node, tvm.tirx.BufferLoad) else None,
+                )
                 serial_factors: list[int | str] = []
                 for loop in self.loop_stack:
                     if loop["thread_binding"]:
@@ -899,7 +925,7 @@ def _source_kernel(name: str, function: Any) -> dict[str, Any]:
             ),
             "elementwise_op_count": len(elementwise_actions),
             "supported_elementwise_op_count": sum(
-                item["expression"]["kind"] in {"add", "max_zero"}
+                item["expression"]["kind"] in {"add", "max_zero", "exp", "log", "sqrt"}
                 and item["access_pattern"] == "same_index_contiguous"
                 for item in elementwise_actions
             ),

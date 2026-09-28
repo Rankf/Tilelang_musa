@@ -1,10 +1,10 @@
-"""Strict TileLang compiler-info adapter for TileSight's native models.
+"""TileLang compiler-info adapter for TileSight's native models.
 
 This module is deliberately owned by the performance-tool side.  It consumes
-``tilelang/compiler-info-v1`` artifacts, maps proven FP16 GEMM and strict FP32
-Add/ReLU facts to TileSight's existing scalar/tuple APIs, and keeps compiler
-facts, adapter rules, model assumptions, and predictions separate.  It does
-not import TileLang, run a kernel, or read profiler data.
+``tilelang/compiler-info-v1`` artifacts, maps compiler facts and optional
+workload semantics to TileSight's existing scalar/tuple APIs, and keeps
+compiler facts, adapter rules, model assumptions, and predictions separate.
+It does not import TileLang, run a kernel, or read profiler data.
 """
 
 from __future__ import annotations
@@ -214,6 +214,56 @@ def _final_kernel(artifact: dict[str, Any], source_index: int) -> dict[str, Any]
     return kernels[source_index]
 
 
+def _derived_elementwise_operation(
+    artifact: dict[str, Any],
+    kernel: dict[str, Any],
+    source_index: int,
+    operator_hint: str,
+    shape_hint: list[int] | None,
+) -> dict[str, Any]:
+    """Build semantic facts when the compiler omitted elementwise provenance."""
+    aliases = {
+        "relufwdop": "relu", "addfwdop": "add", "expfwdop": "exp",
+        "logfwdop": "log", "sqrtfwdop": "sqrt", "max_zero": "relu",
+    }
+    kind = aliases.get(operator_hint.lower(), operator_hint.lower())
+    if kind not in {"relu", "add", "exp", "log", "sqrt"}:
+        _error("unsupported_elementwise_expression", f"unsupported operator hint {operator_hint!r}")
+    expression_kind = "max_zero" if kind == "relu" else kind
+    expected_inputs = 2 if kind == "add" else 1
+    buffers = [item for item in kernel.get("buffers", []) if _is_scope(item, "global")]
+    if len(buffers) < expected_inputs + 1:
+        _error("missing_elementwise_operands", "compiler-info lacks enough global buffers")
+    shape = [int(value) for value in shape_hint] if shape_hint is not None else _static_vector_shape(buffers[0], "derived elementwise input")
+    if len(shape) != 1 or shape[0] <= 0:
+        _error("unsupported_elementwise_shape", "derived elementwise shape must be one positive vector")
+    final = _final_kernel(artifact, source_index)
+    launch = final.get("launch", {})
+    threads = _positive_int(launch.get("threads_per_block"), "invalid_launch", "final threads_per_block")
+    local = [item for item in kernel.get("buffers", []) if str(item.get("scope", "")).startswith("local")]
+    elements_per_thread = None
+    if local and isinstance(local[0].get("elements"), int) and local[0]["elements"] % threads == 0:
+        elements_per_thread = local[0]["elements"] // threads
+    if elements_per_thread is None:
+        candidates = [item.get("extent_value") for item in kernel.get("loops", []) if item.get("thread_binding") is None]
+        elements_per_thread = next((int(value) for value in reversed(candidates) if isinstance(value, int) and value > 0), None)
+    if elements_per_thread is None:
+        _error("missing_elementwise_tile", "compiler-info lacks elements per thread")
+    dtype = buffers[0].get("dtype")
+    if not isinstance(dtype, str):
+        _error("unsupported_dtype", "derived elementwise input has no dtype")
+    return {
+        "op_id": f"derived_elementwise_{kind}", "source_ordinal": 0,
+        "expression": {"kind": expression_kind, "input_count": expected_inputs, "operations_per_element": 1},
+        "reads": [{"buffer": item["name"], "scope": "global", "dtype": dtype} for item in buffers[:expected_inputs]],
+        "writes": [{"buffer": buffers[-1]["name"], "scope": "global", "dtype": dtype}],
+        "shape": shape, "dtype": dtype, "condition_context": [],
+        "elements_per_block": threads * int(elements_per_thread),
+        "elements_per_thread": int(elements_per_thread),
+        "access_pattern": "same_index_contiguous",
+    }
+
+
 def _operation_ids(operations: list[dict[str, Any]]) -> None:
     ids = [item.get("op_id") for item in operations]
     if None in ids or len(set(ids)) != len(ids):
@@ -284,18 +334,22 @@ def _prepare_elementwise_request(
     source_index: int,
     cache_condition: str | None,
 ) -> dict[str, Any]:
-    """Map one strict FP32 Add/ReLU compiler fact set to a native model call."""
-    if (
-        artifact.get("elementwise_lineage", {}).get("status")
-        != "compiler_exact_lineage"
+    """Map compiler facts to a native model call.
+
+    Source-to-lowered provenance is useful evidence, but it is not a required
+    TileSight model input.  Older compiler collectors may omit it; in that
+    case the request records the missing lineage and continues using the
+    observed elementwise operation, access path, launch, and tile facts.
+    """
+    tile_ops = kernel.get("tile_ops") or []
+    if tile_ops and any(
+        item.get("canonical_family") not in {None, "copy"}
+        for item in tile_ops
+        if isinstance(item, dict)
     ):
         _error(
-            "incomplete_elementwise_lineage",
-            "formal elementwise requests require exact source-to-lowered store lineage",
-        )
-    if kernel.get("tile_ops"):
-        _error(
-            "unsupported_fusion", "elementwise formal modeling does not accept TileOps"
+            "unsupported_fusion",
+            "elementwise modeling does not accept non-copy TileOps",
         )
     operations = kernel.get("elementwise_ops")
     if not isinstance(operations, list):
@@ -306,28 +360,26 @@ def _prepare_elementwise_request(
     operation = _one(
         operations, "ambiguous_elementwise", "source elementwise operation"
     )
-    mappings = artifact.get("elementwise_lineage", {}).get("mappings", [])
-    mapping = _one(
-        [
-            item
-            for item in mappings
-            if item.get("source_op_id") == operation.get("op_id")
-        ],
-        "inconsistent_elementwise_lineage",
-        "lineage mapping for source elementwise operation",
+    elementwise_lineage = artifact.get("elementwise_lineage") or {}
+    lineage_status = elementwise_lineage.get(
+        "status", artifact.get("lineage", {}).get("status", "unavailable")
     )
-    if (
-        not isinstance(mapping.get("lowered_instance_count"), int)
-        or mapping["lowered_instance_count"] <= 0
-    ):
-        _error(
-            "inconsistent_elementwise_lineage",
-            "elementwise store has no lowered region",
-        )
+    mappings = elementwise_lineage.get("mappings", [])
+    mapping_candidates = [
+        item for item in mappings
+        if item.get("source_op_id") == operation.get("op_id")
+    ] if isinstance(mappings, list) else []
+    mapping = mapping_candidates[0] if len(mapping_candidates) == 1 else None
+    lineage_exact = (
+        lineage_status == "compiler_exact_lineage"
+        and mapping is not None
+        and isinstance(mapping.get("lowered_instance_count"), int)
+        and mapping["lowered_instance_count"] > 0
+    )
 
     expression = operation.get("expression") or {}
     kind = expression.get("kind")
-    expected_inputs = {"max_zero": 1, "add": 2}
+    expected_inputs = {"max_zero": 1, "add": 2, "exp": 1, "log": 1, "sqrt": 1}
     if kind not in expected_inputs:
         _error(
             "unsupported_elementwise_expression",
@@ -369,8 +421,13 @@ def _prepare_elementwise_request(
             "unsupported_memory_path",
             "first elementwise version requires global buffers",
         )
-    if any(item.get("dtype") != "float32" for item in [*reads, *writes]):
-        _error("unsupported_dtype", "current elementwise adapter supports FP32 only")
+    access_dtypes = {item.get("dtype") for item in [*reads, *writes]}
+    if len(access_dtypes) != 1 or next(iter(access_dtypes)) not in {
+        "float32", "float16", "bfloat16"
+    }:
+        _error("unsupported_dtype", "elementwise adapter requires one FP32, FP16, or BF16 dtype")
+    storage_dtype = next(iter(access_dtypes))
+    element_bytes = {"float16": 2, "bfloat16": 2, "float32": 4}[storage_dtype]
 
     operation_shape = _static_vector_shape(operation, "elementwise operation")
     buffers = {item.get("name"): item for item in kernel.get("buffers", [])}
@@ -381,8 +438,8 @@ def _prepare_elementwise_request(
                 "unknown_buffer",
                 f"operation references unknown buffer {access.get('buffer')!r}",
             )
-        if buffer.get("dtype") != "float32" or not _is_scope(buffer, "global"):
-            _error("unsupported_memory_path", "referenced buffers must be global FP32")
+        if buffer.get("dtype") != storage_dtype or not _is_scope(buffer, "global"):
+            _error("unsupported_memory_path", "referenced buffers must be global and share the operation dtype")
         if (
             _static_vector_shape(buffer, f"buffer {buffer.get('name')}")
             != operation_shape
@@ -407,8 +464,11 @@ def _prepare_elementwise_request(
         _error("unsupported_tail_tile", "N must be divisible by elements_per_block")
     final = _final_kernel(artifact, source_index)
     launch = final.get("launch", {})
-    grid_size = _positive_int(
-        launch.get("grid_size"), "invalid_launch", "final grid_size"
+    observed_grid_size = launch.get("grid_size")
+    grid_size = (
+        _positive_int(observed_grid_size, "invalid_launch", "final grid_size")
+        if observed_grid_size is not None
+        else None
     )
     threads = _positive_int(
         launch.get("threads_per_block"), "invalid_launch", "final threads_per_block"
@@ -430,11 +490,14 @@ def _prepare_elementwise_request(
             "compiler_model_tile_mismatch",
             "elements_per_block disagrees with threads * elements_per_thread",
         )
-    if grid_size != n // elements_per_block:
+    model_grid_size = n // elements_per_block
+    if grid_size is not None and grid_size != model_grid_size:
         _error(
             "compiler_model_grid_mismatch",
-            f"compiler grid {grid_size} != shape/tile grid {n // elements_per_block}",
+            f"compiler grid {grid_size} != shape/tile grid {model_grid_size}",
         )
+    if grid_size is None:
+        grid_size = model_grid_size
     if cache_condition is None:
         _error(
             "missing_cache_condition",
@@ -446,22 +509,54 @@ def _prepare_elementwise_request(
             "elementwise cache_condition must be either 'cold' or 'warm'",
         )
 
-    model_name = {
-        "max_zero": "elementwise_n_0_pipeline_wave",
-        "add": "elementwise_n_n_pipeline_wave",
-    }[kind]
-    mem_levels = (
-        S5000_FP32_RELU_MEMORY_LEVELS
-        if kind == "max_zero"
-        else S5000_FP32_ADD_MEMORY_LEVELS
+    model_name = (
+        "elementwise_n_n_pipeline_wave" if kind == "add"
+        else "elementwise_n_0_pipeline_wave"
     )
+    mem_levels = {
+        "in1": [1, 0, 0, element_bytes],
+        **({"in2": [1, 0, 0, element_bytes]} if kind == "add" else {}),
+        "out1": [1, 0, 1, element_bytes],
+    }
     arguments = {
         "op_shape": [n],
         "tb_shape": [elements_per_block],
         "dim_threads": [threads],
         "mem_levels": deepcopy(mem_levels),
         "num_ops": 1,
+        "compute_resource": "sfu" if kind in {"exp", "log", "sqrt"} else "vector_alu",
+        # TileOPs roofline convention: max-zero is one compare/select;
+        # Add counts two operations per output element.
+        "compute_ops_per_element": 2 if kind == "add" else 1,
     }
+    if kind in {"exp", "log", "sqrt"}:
+        arguments["special_math_op"] = kind
+    if storage_dtype == "bfloat16":
+        arguments["compute_profile_key"] = {
+            "max_zero": "bf16_vector_alu",
+            "add": "bf16_vector_alu",
+            "exp": "bf16_exp_f32_sequence",
+            "log": "bf16_log_f32_sequence",
+            "sqrt": "bf16_sqrt_f32_sequence",
+        }[kind]
+    active_cta = launch.get("active_blocks_per_multiprocessor")
+    if active_cta is not None:
+        active_cta = _positive_int(
+            active_cta,
+            "invalid_resource_fact",
+            "active_blocks_per_multiprocessor",
+        )
+        arguments["occupancy_hint"] = {
+            "active_cta_per_sm": active_cta,
+            "source": launch.get(
+                "occupancy_source", "exact_binary_musa_occupancy_api"
+            ),
+            "confidence": "high",
+            "registers_per_thread": launch.get("registers_per_thread"),
+            "dynamic_shared_memory_bytes": launch.get(
+                "dynamic_shared_memory_bytes", 0
+            ),
+        }
     identity = {
         "compilation_id": artifact.get("compilation_id"),
         "kernel_id": kernel["kernel_id"],
@@ -471,15 +566,22 @@ def _prepare_elementwise_request(
     }
     compiler_facts = {
         "grid_size": grid_size,
+        "grid_size_source": (
+            "compiler_observed" if observed_grid_size is not None else "model_derived"
+        ),
         "threads_per_block": threads,
         "warp_size": warp_size,
         "warps_per_block": warps,
         "elements_per_block": elements_per_block,
         "elements_per_thread": elements_per_thread,
-        "dtype": "float32",
+        "dtype": storage_dtype,
+        "expression_kind": kind,
         "target": compiler_target,
-        "lineage_status": artifact["elementwise_lineage"]["status"],
+        "lineage_status": lineage_status,
+        "lineage_evidence": "compiler_exact" if lineage_exact else "unavailable",
     }
+    if active_cta is not None:
+        compiler_facts["active_blocks_per_multiprocessor"] = active_cta
     request = {
         "schema_version": MODEL_REQUEST_SCHEMA,
         "request_id": None,
@@ -493,11 +595,16 @@ def _prepare_elementwise_request(
             "compiler_observed": [
                 "op_shape",
                 "dim_threads",
-                "grid_size",
+                *(["grid_size"] if observed_grid_size is not None else []),
                 "threads_per_block",
                 "warps_per_block",
                 "dtype",
                 "operation_id",
+                *(
+                    ["active_blocks_per_multiprocessor"]
+                    if active_cta is not None
+                    else []
+                ),
             ],
             "semantic_derived": [
                 "expression_kind",
@@ -524,6 +631,17 @@ def _prepare_elementwise_request(
             "compiler_observed_register_count",
             "compiler_observed_spill_bytes",
             "runtime_measurements",
+            *([] if lineage_exact else ["compiler_observed_source_to_lowered_lineage"]),
+            *(
+                []
+                if observed_grid_size is not None
+                else ["compiler_observed_grid_size"]
+            ),
+            *(
+                []
+                if active_cta is not None
+                else ["exact_binary_active_cta_per_mp"]
+            ),
         ],
         "diagnostics": [],
     }
@@ -544,12 +662,21 @@ def prepare_tilesight_request(
     *,
     kernel_id: str | None = None,
     cache_condition: str | None = None,
+    operator_hint: str | None = None,
+    shape_hint: list[int] | None = None,
 ) -> dict[str, Any]:
-    """Build one strict GEMM/Add/ReLU request from compiler-only information."""
+    """Build one request from compiler facts and optional workload semantics."""
     artifact, source = _load_artifact(compiler_info)
     compiler_target = _require_s5000_compiler_target(artifact)
     kernel, source_index = _select_source_kernel(artifact, kernel_id)
-    if kernel.get("elementwise_ops"):
+    if kernel.get("elementwise_ops") or operator_hint is not None:
+        if not kernel.get("elementwise_ops"):
+            kernel = deepcopy(kernel)
+            kernel["elementwise_ops"] = [
+                _derived_elementwise_operation(
+                    artifact, kernel, source_index, operator_hint, shape_hint
+                )
+            ]
         return _prepare_elementwise_request(
             artifact,
             source,
@@ -557,11 +684,6 @@ def prepare_tilesight_request(
             kernel,
             source_index,
             cache_condition,
-        )
-    if artifact.get("lineage", {}).get("status") != "compiler_exact_lineage":
-        _error(
-            "incomplete_compiler_lineage",
-            "formal model requests require exact source-to-lowered TileOp lineage",
         )
     operations = kernel.get("tile_ops", [])
     if not isinstance(operations, list):
@@ -651,12 +773,13 @@ def prepare_tilesight_request(
         _error(
             "unknown_buffer", f"operation references unknown buffer {error.args[0]!r}"
         )
-    if tuple(item.get("dtype") for item in (buffer_a, buffer_b, buffer_c)) != (
-        "float16",
-        "float16",
-        "float16",
-    ):
-        _error("unsupported_dtype", "current formal adapter supports FP16 A/B/C only")
+    operand_dtypes = tuple(item.get("dtype") for item in (buffer_a, buffer_b, buffer_c))
+    if operand_dtypes not in {
+        ("float16", "float16", "float16"),
+        ("bfloat16", "bfloat16", "bfloat16"),
+    }:
+        _error("unsupported_dtype", "formal adapter supports uniform FP16 or BF16 A/B/C")
+    storage_dtype = operand_dtypes[0]
     if accumulator_buffer.get("dtype") != "float32":
         _error(
             "unsupported_accumulator_dtype",
@@ -677,10 +800,18 @@ def prepare_tilesight_request(
     stage_num = _positive_int(
         pipeline.get("num_stages"), "invalid_pipeline_stage", "pipeline num_stages"
     )
+    if storage_dtype == "bfloat16" and stage_num != 1:
+        _error(
+            "unsupported_bf16_pipeline_stage",
+            "formal S5000 BF16 GEMM support is limited to stage_num=1 until the shared multi-stage formula is validated",
+        )
     final = _final_kernel(artifact, source_index)
     launch = final.get("launch", {})
-    grid_size = _positive_int(
-        launch.get("grid_size"), "invalid_launch", "final grid_size"
+    observed_grid_size = launch.get("grid_size")
+    grid_size = (
+        _positive_int(observed_grid_size, "invalid_launch", "final grid_size")
+        if observed_grid_size is not None
+        else None
     )
     threads = _positive_int(
         launch.get("threads_per_block"), "invalid_launch", "final threads_per_block"
@@ -700,11 +831,13 @@ def prepare_tilesight_request(
         )
     warp_shape = derive_warp_shape(bm, bn, bk, warps)
     expected_grid = math.ceil(m / bm) * math.ceil(n / bn)
-    if grid_size != expected_grid:
+    if grid_size is not None and grid_size != expected_grid:
         _error(
             "compiler_model_grid_mismatch",
             f"compiler grid {grid_size} != shape/tile grid {expected_grid}",
         )
+    if grid_size is None:
+        grid_size = expected_grid
     compiler_flops = (
         kernel.get("static_workload", {}).get("per_kernel_launch", {}).get("flops")
     )
@@ -732,6 +865,20 @@ def prepare_tilesight_request(
         "column_panel": None,
         "raster_axis": "legacy",
     }
+    if storage_dtype == "bfloat16":
+        arguments["compute_profile_key"] = "bf16_mma_bf16_bf16_f32"
+    active_cta = launch.get("active_blocks_per_multiprocessor")
+    if active_cta is not None:
+        active_cta = _positive_int(
+            active_cta, "invalid_resource_fact", "active_blocks_per_multiprocessor"
+        )
+        arguments["occupancy_hint"] = {
+            "active_cta_per_sm": active_cta,
+            "source": launch.get("occupancy_source", "exact_binary_musa_occupancy_api"),
+            "confidence": "high",
+            "registers_per_thread": launch.get("registers_per_thread"),
+            "dynamic_shared_memory_bytes": dynamic_shared,
+        }
     identity = {
         "compilation_id": artifact.get("compilation_id"),
         "kernel_id": kernel["kernel_id"],
@@ -748,16 +895,32 @@ def prepare_tilesight_request(
     }
     compiler_facts = {
         "grid_size": grid_size,
+        "grid_size_source": (
+            "compiler_observed" if observed_grid_size is not None else "model_derived"
+        ),
         "threads_per_block": threads,
         "warp_size": warp_size,
         "warps_per_block": warps,
         "dynamic_shared_memory_bytes": dynamic_shared,
         "accumulator_buffer": accumulator_access["buffer"],
         "accumulator_dtype": accumulator_buffer["dtype"],
+        "dtype": storage_dtype,
+        "input_dtypes": [storage_dtype, storage_dtype],
+        "output_dtype": storage_dtype,
         "flops": compiler_flops,
         "target": compiler_target,
-        "lineage_status": artifact["lineage"]["status"],
+        "lineage_status": artifact.get("lineage", {}).get(
+            "status", "unavailable"
+        ),
+        "lineage_evidence": (
+            "compiler_exact"
+            if artifact.get("lineage", {}).get("status")
+            == "compiler_exact_lineage"
+            else "unavailable"
+        ),
     }
+    if active_cta is not None:
+        compiler_facts["active_blocks_per_multiprocessor"] = active_cta
     request = {
         "schema_version": MODEL_REQUEST_SCHEMA,
         "request_id": None,
@@ -774,7 +937,7 @@ def prepare_tilesight_request(
                 "op_shape",
                 "tb_shape",
                 "stage_num",
-                "grid_size",
+                *(["grid_size"] if observed_grid_size is not None else []),
                 "threads_per_block",
                 "warps_per_block",
                 "dynamic_shared_memory_bytes",
@@ -828,6 +991,12 @@ def prepare_tilesight_request(
             "compiler_observed_spill_bytes",
             "mixed_precision_exact_register_footprint",
             "runtime_measurements",
+            *(
+                []
+                if artifact.get("lineage", {}).get("status")
+                == "compiler_exact_lineage"
+                else ["compiler_observed_source_to_lowered_lineage"]
+            ),
         ],
         "diagnostics": [],
     }
@@ -915,6 +1084,56 @@ def _json_value(value: Any) -> Any:
     return str(value)
 
 
+def _add_available_performance_fields(prediction: dict[str, Any]) -> None:
+    """Add only metrics derivable from the static model itself.
+
+    These are not runtime measurements: they are explicit algebraic views of
+    fields already present in the prediction.  Fields whose numerator is not
+    available (for example a GEMM traffic ledger without compiler facts) are
+    deliberately omitted instead of emitting placeholders.
+    """
+    latency_us = prediction.get("latency_us")
+    operations = prediction.get("compute_operations")
+    if isinstance(latency_us, (int, float)) and latency_us > 0:
+        if isinstance(operations, (int, float)) and operations >= 0:
+            # operations / (microseconds * 1e6) = tera-operations/s
+            prediction["compute_throughput_tflops"] = (
+                float(operations) / float(latency_us) / 1_000_000.0
+            )
+        cache = prediction.get("cache_detail")
+        if isinstance(cache, dict):
+            read_bytes = cache.get("read_working_set_bytes")
+            write_bytes = cache.get("logical_output_write_bytes")
+            if all(isinstance(v, (int, float)) and v >= 0
+                   for v in (read_bytes, write_bytes)):
+                logical_traffic = float(read_bytes) + float(write_bytes)
+                prediction["logical_traffic_bytes"] = logical_traffic
+                prediction["effective_bandwidth_gb_s"] = (
+                    logical_traffic / float(latency_us) / 1_000.0
+                )
+    pipeline = prediction.get("pipeline")
+    if isinstance(pipeline, dict):
+        memory_time = pipeline.get("memory_per_iteration_us")
+        compute_time = pipeline.get("compute_per_iteration_us")
+        if (isinstance(memory_time, (int, float)) and
+                isinstance(compute_time, (int, float))):
+            if compute_time > memory_time:
+                resource = prediction.get("compute_resource") or "compute"
+                prediction["bottleneck"] = "compute"
+                prediction["critical_resource"] = resource
+                prediction["reason"] = (
+                    f"per-iteration compute time ({compute_time:.6g} us) "
+                    f"> memory service time ({memory_time:.6g} us)"
+                )
+            else:
+                prediction["bottleneck"] = "memory"
+                prediction["critical_resource"] = "memory_service"
+                prediction["reason"] = (
+                    f"per-iteration memory service time ({memory_time:.6g} us) "
+                    f"> compute time ({compute_time:.6g} us)"
+                )
+
+
 def _build_gemm_result(
     request: dict[str, Any], model_result: Any, arch: Any
 ) -> dict[str, Any]:
@@ -960,6 +1179,10 @@ def _build_gemm_result(
         "latency_us": model_result.total_latency * 1e6,
         "per_tile_latency_us": model_result.per_tile_latency * 1e6,
         "compute_util_pct": model_result.compute_util * 100,
+        "compute_resource": model_result.compute_resource,
+        "compute_operations": model_result.compute_operations,
+        "compute_peak_ops_per_s": model_result.compute_peak_ops_per_s,
+        "compute_profile_key": model_result.compute_profile_key,
         "ddr_util_pct": model_result.ddr_util * 100,
         "l2_util_pct": model_result.l2_util * 100,
         "smem_util_pct": model_result.smem_util * 100,
@@ -968,11 +1191,12 @@ def _build_gemm_result(
         "waves": model_result.waves,
         "modeled_smem_footprint_bytes": model_result.smem_footprint,
         "modeled_register_footprint": model_result.reg_footprint,
+        "occupancy": _json_value(model_result.occupancy_detail),
         "modeled_register_footprint_metadata": {
             "value_kind": "model_predicted",
             "compiler_validated": False,
             "unit": "TileSight internal 4-byte register units",
-            "limitation": "mixed FP32 accumulator / FP16 output width is not exact",
+            "limitation": "mixed FP32 accumulator / 16-bit output width is not exact",
         },
         "pipeline": {
             "prologue_us": detail.prologue_time * 1e6 if detail else None,
@@ -989,11 +1213,21 @@ def _build_gemm_result(
         },
         "cache_detail": _json_value(getattr(model_result, "cache_detail", None)),
     }
+    _add_available_performance_fields(prediction)
     result = {
         "schema_version": MODEL_RESULT_SCHEMA,
         "request_id": request["request_id"],
         "identity": deepcopy(request["identity"]),
         "architecture": str(getattr(arch, "core", type(arch).__name__)),
+        "operator": "gemm",
+        "shape": list(arguments["op_shape"]),
+        "dtype": compiler["dtype"],
+        "precision": {
+            "input_dtypes": compiler["input_dtypes"],
+            "accumulator_dtype": compiler["accumulator_dtype"],
+            "output_dtype": compiler["output_dtype"],
+            "compute_profile_key": arguments.get("compute_profile_key"),
+        },
         "prediction": _json_value(prediction),
         "compiler_validation": {
             "status": "all_consistent",
@@ -1048,11 +1282,24 @@ def _build_elementwise_result(
     if diagnostics:
         raise ModelConsistencyError(diagnostics)
     detail = model_result.pipeline_detail
+    public_detail = (
+        getattr(model_result, "dispatch_pipeline_detail", None) or detail
+    )
+    dispatch_components = getattr(model_result, "dispatch_components", None)
+    public_pipeline_scope = (
+        "continuous_cta_scaled"
+        if getattr(model_result, "dispatch_pipeline_detail", None) is not None
+        else "reference_unscaled"
+    )
     prediction = {
         "value_kind": "model_predicted",
         "latency_us": model_result.total_latency * 1e6,
         "per_tile_latency_us": model_result.per_tile_latency * 1e6,
         "compute_util_pct": model_result.compute_util * 100,
+        "compute_resource": model_result.compute_resource,
+        "compute_operations": model_result.compute_operations,
+        "compute_peak_ops_per_s": model_result.compute_peak_ops_per_s,
+        "compute_profile_key": model_result.compute_profile_key,
         "ddr_util_pct": model_result.ddr_util * 100,
         "l2_util_pct": model_result.l2_util * 100,
         "smem_util_pct": model_result.smem_util * 100,
@@ -1061,26 +1308,84 @@ def _build_elementwise_result(
         "waves": model_result.waves,
         "modeled_smem_footprint_bytes": model_result.smem_footprint,
         "modeled_register_footprint": model_result.reg_footprint,
+        "occupancy": _json_value(model_result.occupancy_detail),
         "pipeline": {
-            "prologue_us": detail.prologue_time * 1e6 if detail else None,
-            "steady_per_iteration_us": detail.steady_time_per_iter * 1e6
-            if detail
+            "stage_count": 1,
+            "pipeline_mode": (
+                "occupancy_interleaved_single_stage"
+                if model_result.tiles_per_sm > 1 else "serial_single_stage"
+            ),
+            "intra_tile_overlap": False,
+            "inter_tile_overlap_modeled": model_result.tiles_per_sm > 1,
+            "effective_interleaving_depth": model_result.tiles_per_sm,
+            "prologue_us": public_detail.prologue_time * 1e6 if public_detail else None,
+            "steady_per_iteration_us": public_detail.steady_time_per_iter * 1e6
+            if public_detail
             else None,
-            "epilogue_us": detail.epilogue_time * 1e6 if detail else None,
-            "memory_per_iteration_us": detail.mem_time_per_iter * 1e6
-            if detail
+            "epilogue_us": public_detail.epilogue_time * 1e6 if public_detail else None,
+            "memory_per_iteration_us": public_detail.mem_time_per_iter * 1e6
+            if public_detail
             else None,
-            "compute_per_iteration_us": detail.compute_time_per_iter * 1e6
-            if detail
+            "compute_per_iteration_us": public_detail.compute_time_per_iter * 1e6
+            if public_detail
             else None,
+            "pipeline_scope": public_pipeline_scope,
+            **({"continuous_dispatch": _json_value(dispatch_components)}
+               if dispatch_components is not None else {}),
+            "synchronization_count": 0,
+            "synchronization_us": 0.0,
+            "synchronization_status": "no_explicit_sync_in_elementwise_model",
         },
         "cache_detail": _json_value(getattr(model_result, "cache_detail", None)),
+        "cache_behavior": {
+            "status": "available",
+            "value_kind": "model_predicted",
+            "cache_condition": request["model_scenario"]["cache_condition"],
+            "access_pattern": "single_pass_streaming",
+            "temporal_reuse": False,
+            "reuse_distance_bytes": None,
+            "reuse_distance_status": "not_applicable_no_second_read",
+            "cache_conflict_status": "not_modeled",
+            "replacement_policy": "not_modeled",
+            "l2_hit_rate_pct": model_result.l2_hit_rate * 100,
+            "l2_prediction_method": _json_value(
+                getattr(model_result, "cache_detail", {}).get(
+                    "l2_prediction_method"
+                ) if getattr(model_result, "cache_detail", None) else None
+            ),
+            "read_working_set_bytes": _json_value(
+                getattr(model_result, "cache_detail", {}).get(
+                    "read_working_set_bytes"
+                ) if getattr(model_result, "cache_detail", None) else None
+            ),
+            "effective_l2_capacity_bytes": _json_value(
+                getattr(model_result, "cache_detail", {}).get(
+                    "l2_capacity_bytes"
+                ) if getattr(model_result, "cache_detail", None) else None
+            ),
+        },
     }
+    _add_available_performance_fields(prediction)
     result = {
         "schema_version": MODEL_RESULT_SCHEMA,
         "request_id": request["request_id"],
         "identity": deepcopy(request["identity"]),
         "architecture": str(getattr(arch, "core", type(arch).__name__)),
+        "operator": {
+            "max_zero": "relu", "add": "add", "exp": "exp",
+            "log": "log", "sqrt": "sqrt",
+        }[compiler["expression_kind"]],
+        "shape": [n],
+        "dtype": compiler["dtype"],
+        "precision": {
+            "input_dtypes": (
+                [compiler["dtype"], compiler["dtype"]]
+                if compiler["expression_kind"] == "add" else [compiler["dtype"]]
+            ),
+            "accumulator_dtype": None,
+            "output_dtype": compiler["dtype"],
+            "compute_profile_key": arguments.get("compute_profile_key"),
+        },
         "model_scenario": deepcopy(request["model_scenario"]),
         "prediction": _json_value(prediction),
         "compiler_validation": {

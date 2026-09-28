@@ -1,9 +1,0 @@
-Traceback (most recent call last):
-  File "<string>", line 1, in <module>
-  File "/root/s5000-calibration/DeepStack-ae-source/src/tilesight/tilesight/__init__.py", line 5, in <module>
-    from .compare_with_ncu import *
-  File "/root/s5000-calibration/DeepStack-ae-source/src/tilesight/tilesight/compare_with_ncu/__init__.py", line 3, in <module>
-    from .process_statistics import *
-  File "/root/s5000-calibration/DeepStack-ae-source/src/tilesight/tilesight/compare_with_ncu/process_statistics.py", line 4, in <module>
-    import plotly.graph_objects as go
-ModuleNotFoundError: No module named 'plotly'

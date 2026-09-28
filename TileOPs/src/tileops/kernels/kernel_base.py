@@ -88,6 +88,18 @@ class Kernel(ABC):
         """
         if cls.supported_archs is None:
             return
+        # ``supported_archs`` is the CUDA SM capability allow-list carried by
+        # the upstream TileOPs kernels.  It is not an S5000 capability table.
+        # On MUSA, TileLang-MUSA performs the actual target validation during
+        # compilation; querying a CUDA SM here both fails (Torch-MUSA has no
+        # ``torch.cuda`` runtime) and would compare unrelated numbering
+        # schemes.  Keep the original check for CUDA unchanged.
+        musa = getattr(torch, "musa", None)
+        # Do not relax CUDA validation on a host that exposes both backends.
+        cuda = getattr(torch, "cuda", None)
+        cuda_available = bool(cuda is not None and cuda.is_available())
+        if musa is not None and musa.is_available() and not cuda_available:
+            return
         from tileops.utils import get_sm_version
         arch = get_sm_version()
         if arch not in cls.supported_archs:

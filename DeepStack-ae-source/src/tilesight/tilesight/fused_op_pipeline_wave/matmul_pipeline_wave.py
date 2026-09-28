@@ -30,7 +30,9 @@ def calculate_matmul_pipeline_wave(op_shape, tb_shape, wp_shape, stage_num, arch
                                    mem_levels, row_panel=1, batch=1,
                                    mma_type="wmma",
                                    column_panel=None,
-                                   raster_axis="legacy"):
+                                   raster_axis="legacy",
+                                   compute_profile_key=None,
+                                   occupancy_hint=None):
     """Pipeline-aware GEMM 性能模型入口。
 
     The optional `column_panel` argument specifies the M-direction sub-block
@@ -145,7 +147,11 @@ def calculate_matmul_pipeline_wave(op_shape, tb_shape, wp_shape, stage_num, arch
     # ---- Compute overheads (tensor core shape mismatch) ----
     assert hasattr(arch, 'get_tensor_core_minimum_ptx'), \
         "arch.get_tensor_core_minimum_ptx does not exist"
-    minimum_tc_ptx_shape = arch.get_tensor_core_minimum_ptx(bytes=in1_level[-1])
+    minimum_tc_ptx_shape = (
+        arch.get_tensor_instruction_shape(compute_profile_key)
+        if compute_profile_key is not None
+        else arch.get_tensor_core_minimum_ptx(bytes=in1_level[-1])
+    )
     compute_overheads = min(1,
                            math.ceil(wp_m) / minimum_tc_ptx_shape[0]
                            * math.ceil(wp_n) / minimum_tc_ptx_shape[1]
@@ -312,6 +318,7 @@ def calculate_matmul_pipeline_wave(op_shape, tb_shape, wp_shape, stage_num, arch
         l1_5_io=l1_5_io_per_iter,
         smem_io=smem_per_iter,
         compute_flops=compute_per_iter,
+        compute_profile_key=compute_profile_key,
     )
 
     prologue_epilogue = PrologueEpilogueResources(
@@ -339,8 +346,10 @@ def calculate_matmul_pipeline_wave(op_shape, tb_shape, wp_shape, stage_num, arch
     # ================================================================
     # Occupancy
     # ================================================================
-    tiles_per_sm = compute_occupancy(
-        smem_footprint, reg_footprint, warps_per_block, arch, mma_type)
+    occupancy_detail = compute_occupancy(
+        smem_footprint, reg_footprint, warps_per_block, arch, mma_type,
+        occupancy_hint=occupancy_hint, return_detail=True)
+    tiles_per_sm = occupancy_detail["active_cta_per_sm"]
 
     # ================================================================
     # Pipeline latency (SM-level, 考虑 occupancy 交织)
@@ -390,7 +399,10 @@ def calculate_matmul_pipeline_wave(op_shape, tb_shape, wp_shape, stage_num, arch
 
     # roofline 理论最短时间
     ddr_time_roofline = total_ddr / arch.ddr_bandwidth if arch.ddr_bandwidth > 0 else 0
-    compute_time_roofline = resources_to_times(0, 0, 0, total_compute, arch, in1_level[-1])[4]
+    compute_time_roofline = resources_to_times(
+        0, 0, 0, total_compute, arch, in1_level[-1],
+        compute_resource="tensor_core", compute_profile_key=compute_profile_key,
+    )[4]
 
     ddr_util = ddr_time_roofline / total_latency if total_latency > 0 else 0
     compute_util = compute_time_roofline / total_latency if total_latency > 0 else 0
@@ -414,6 +426,14 @@ def calculate_matmul_pipeline_wave(op_shape, tb_shape, wp_shape, stage_num, arch
         l2_hit_rate=l2_hit_rate,
         smem_util=smem_util,
         compute_util=compute_util,
+        compute_resource="tensor_core",
+        compute_operations=total_compute,
+        compute_peak_ops_per_s=(
+            float(arch.resolve_compute_profile(compute_profile_key)["peak_ops_per_s"])
+            if compute_profile_key is not None else arch.fp16_tensor_flops
+        ),
+        compute_profile_key=compute_profile_key,
+        occupancy_detail=occupancy_detail,
         smem_footprint=smem_footprint,
         reg_footprint=reg_footprint,
         tiles_per_sm=tiles_per_sm,

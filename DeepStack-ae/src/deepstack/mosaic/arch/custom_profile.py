@@ -304,6 +304,9 @@ class StackedGpuConfig:
     l1_noc_bytes_per_cycle: float
     dram: DramInterfaceConfig
     tensor_instruction_shapes: Mapping[float, tuple[int, int, int]]
+    # Deprecated compatibility input.  New configurations should describe
+    # every special-math operation through ``special_math_service_profiles``.
+    log_sequence_ops_per_s: float | None = None
     chip_energy_config: "ChipEnergyConfig | None" = None
     ddr_max_utilization: float = 0.9
     l2_max_utilization: float = 0.9
@@ -322,8 +325,158 @@ class StackedGpuConfig:
     l1_cache_peak_bandwidth_bytes_per_s: float | None = None
     l1_cache_max_utilization: float | None = None
     tma_bypasses_ordinary_l1: bool = False
+    # Kernel residency limits.  These are separate from max threads/block and
+    # from the device property's architectural CTA ceiling.  When absent,
+    # TileSight keeps the upstream legacy occupancy calculation available.
+    max_resident_threads_per_sm: int | None = None
+    max_resident_warps_per_sm: int | None = None
+    # Deliberately use a new name.  The upstream TileSight occupancy function
+    # probes ``max_blocks_per_sm`` and otherwise defaults to 24; defining that
+    # old attribute here would mutate the preserved legacy result.
+    max_architectural_ctas_per_sm: int | None = None
+    # Optional empirical Log timing adapter. Disabled preserves upstream math.
+    cta_overlap_adapter_enabled: bool = False
+    cta_overlap_eta_inf: float = 0.0
+    cta_overlap_startup_loss: float = 0.0
+    cta_overlap_fixed_overhead_us: float = 0.0
+    # Deprecated compatibility input for removed operation-specific CTA
+    # adapters.  It is retained for old callers but is not used by the model.
+    special_math_cta_overlap_profiles: Mapping[str, Mapping[str, object]] | None = None
+    # Unified per-operation SFU service description.  A profile may provide a
+    # measured sustained semantic-operation rate.  Missing rates retain the
+    # ordinary SFU peak/utilisation path.
+    special_math_service_profiles: Mapping[str, Mapping[str, object]] | None = None
+    ordinary_fp16_unary_dirty_retention_bytes: int | None = None
+    # Explicit dtype/instruction profiles.  Legacy callers leave this empty
+    # and retain byte-width based behavior.
+    compute_profiles: Mapping[str, Mapping[str, object]] | None = None
+    enable_bf16_profiles: bool = False
+    # How Elementwise converts resident CTA capacity into kernel duration.
+    # The default preserves upstream's repeated analytical-wave behavior.
+    elementwise_wave_dispatch_mode: str = "repeated_resident_batch"
+    elementwise_wave_fixed_head_us: float = 0.0
+    # Generic cache-state service slope for the opt-in continuous CTA path.
+    # A value of 1.0 preserves the upstream memory-time calculation.
+    elementwise_wave_memory_service_scales: Mapping[str, float] | None = None
 
     def __post_init__(self) -> None:
+        if self.elementwise_wave_dispatch_mode not in {
+                "repeated_resident_batch", "continuous_cta_dispatch"}:
+            raise ValueError(
+                "elementwise_wave_dispatch_mode must be "
+                "'repeated_resident_batch' or 'continuous_cta_dispatch'"
+            )
+        if (not isinstance(self.elementwise_wave_fixed_head_us, Real)
+                or not math.isfinite(self.elementwise_wave_fixed_head_us)
+                or self.elementwise_wave_fixed_head_us < 0):
+            raise ValueError(
+                "elementwise_wave_fixed_head_us must be finite and nonnegative"
+            )
+        if self.elementwise_wave_memory_service_scales is not None:
+            if not isinstance(self.elementwise_wave_memory_service_scales, Mapping):
+                raise TypeError(
+                    "elementwise_wave_memory_service_scales must be a mapping"
+                )
+            for cache_condition, scale in self.elementwise_wave_memory_service_scales.items():
+                if cache_condition not in {"cold", "warm"}:
+                    raise ValueError(
+                        "elementwise memory service scales support only cold/warm"
+                    )
+                if (not isinstance(scale, Real) or not math.isfinite(scale)
+                        or scale <= 0):
+                    raise ValueError(
+                        "elementwise memory service scales must be finite and positive"
+                    )
+        if not isinstance(self.enable_bf16_profiles, bool):
+            raise ValueError('enable_bf16_profiles must be bool')
+        if self.compute_profiles is not None:
+            if not isinstance(self.compute_profiles, Mapping):
+                raise TypeError('compute_profiles must be a mapping')
+            for key, profile in self.compute_profiles.items():
+                if not isinstance(key, str) or not key or not isinstance(profile, Mapping):
+                    raise ValueError('compute profile keys must be non-empty strings and values mappings')
+                alias_of = profile.get('alias_of')
+                if alias_of is not None:
+                    if not isinstance(alias_of, str) or not alias_of:
+                        raise ValueError(f'compute profile alias {key!r} requires a non-empty alias_of')
+                    continue
+                if profile.get('resource') not in {'tensor_core', 'vector_alu', 'sfu', 'int_alu'}:
+                    raise ValueError(f'invalid compute profile resource for {key!r}')
+                rate = profile.get('peak_ops_per_s')
+                if not isinstance(rate, Real) or not math.isfinite(rate) or rate <= 0:
+                    raise ValueError(f'compute profile {key!r} requires positive peak_ops_per_s')
+                util = profile.get('max_utilization', 1.0)
+                if not isinstance(util, Real) or not math.isfinite(util) or not 0 < util <= 1:
+                    raise ValueError(f'compute profile {key!r} max_utilization must be in (0, 1]')
+            for key, profile in self.compute_profiles.items():
+                alias_of = profile.get('alias_of')
+                if alias_of is not None:
+                    target = self.compute_profiles.get(alias_of)
+                    if target is None or target.get('alias_of') is not None:
+                        raise ValueError(
+                            f'compute profile alias {key!r} must reference a concrete profile'
+                        )
+        if not isinstance(self.cta_overlap_adapter_enabled, bool):
+            raise ValueError('cta_overlap_adapter_enabled must be bool')
+        if not math.isfinite(self.cta_overlap_eta_inf) or not 0 <= self.cta_overlap_eta_inf <= 1:
+            raise ValueError('cta_overlap_eta_inf must be finite and in [0, 1]')
+        if not math.isfinite(self.cta_overlap_startup_loss) or self.cta_overlap_startup_loss < 0:
+            raise ValueError('cta_overlap_startup_loss must be finite and nonnegative')
+        if not math.isfinite(self.cta_overlap_fixed_overhead_us) or self.cta_overlap_fixed_overhead_us < 0:
+            raise ValueError('cta_overlap_fixed_overhead_us must be finite and nonnegative')
+        if self.log_sequence_ops_per_s is not None and (
+                not math.isfinite(self.log_sequence_ops_per_s) or self.log_sequence_ops_per_s <= 0):
+            raise ValueError('log_sequence_ops_per_s must be finite and positive')
+        if self.special_math_cta_overlap_profiles is not None:
+            if not isinstance(self.special_math_cta_overlap_profiles, Mapping):
+                raise TypeError('special_math_cta_overlap_profiles must be a mapping')
+            for operation, profile in self.special_math_cta_overlap_profiles.items():
+                if operation not in {'exp', 'sqrt'} or not isinstance(profile, Mapping):
+                    raise ValueError('special-math CTA profiles support only exp and sqrt mappings')
+                if not isinstance(profile.get('enabled', False), bool):
+                    raise ValueError('special-math CTA profile enabled must be bool')
+                eta = profile.get('eta_inf', 0.0)
+                loss = profile.get('startup_loss', 0.0)
+                overhead = profile.get('fixed_overhead_us', 0.0)
+                if not isinstance(eta, Real) or not math.isfinite(eta) or not 0 <= eta <= 1:
+                    raise ValueError('special-math CTA eta_inf must be finite and in [0, 1]')
+                if not isinstance(loss, Real) or not math.isfinite(loss) or loss < 0:
+                    raise ValueError('special-math CTA startup_loss must be finite and nonnegative')
+                if not isinstance(overhead, Real) or not math.isfinite(overhead) or overhead < 0:
+                    raise ValueError('special-math CTA fixed_overhead_us must be finite and nonnegative')
+        if self.special_math_service_profiles is not None:
+            if not isinstance(self.special_math_service_profiles, Mapping):
+                raise TypeError('special_math_service_profiles must be a mapping')
+            for operation, profile in self.special_math_service_profiles.items():
+                if operation not in {'exp', 'log', 'sqrt'} or not isinstance(profile, Mapping):
+                    raise ValueError(
+                        'special-math service profiles support only exp, log, and sqrt mappings'
+                    )
+                rate = profile.get('effective_service_rate_ops_per_s')
+                if rate is not None and (
+                        not isinstance(rate, Real) or not math.isfinite(rate) or rate <= 0):
+                    raise ValueError(
+                        'special-math effective service rate must be finite and positive'
+                    )
+                overlap = profile.get('cta_overlap', {})
+                if not isinstance(overlap, Mapping):
+                    raise TypeError('special-math cta_overlap must be a mapping')
+                if not isinstance(overlap.get('enabled', False), bool):
+                    raise ValueError('special-math CTA profile enabled must be bool')
+                eta = overlap.get('eta_inf', 0.0)
+                loss = overlap.get('startup_loss', 0.0)
+                overhead = overlap.get('fixed_overhead_us', 0.0)
+                if not isinstance(eta, Real) or not math.isfinite(eta) or not 0 <= eta <= 1:
+                    raise ValueError('special-math CTA eta_inf must be finite and in [0, 1]')
+                if not isinstance(loss, Real) or not math.isfinite(loss) or loss < 0:
+                    raise ValueError('special-math CTA startup_loss must be finite and nonnegative')
+                if not isinstance(overhead, Real) or not math.isfinite(overhead) or overhead < 0:
+                    raise ValueError('special-math CTA fixed_overhead_us must be finite and nonnegative')
+        if self.ordinary_fp16_unary_dirty_retention_bytes is not None:
+            _positive_int(
+                self.ordinary_fp16_unary_dirty_retention_bytes,
+                'ordinary_fp16_unary_dirty_retention_bytes',
+            )
         if not isinstance(self.name, str) or not self.name.strip():
             raise ValueError("name must be a non-empty string")
         for field in (
@@ -387,6 +540,9 @@ class StackedGpuConfig:
             "l1_cache_capacity_bytes_per_sm",
             "l1_cache_line_bytes",
             "l1_cache_sector_bytes",
+            "max_resident_threads_per_sm",
+            "max_resident_warps_per_sm",
+            "max_architectural_ctas_per_sm",
         ):
             value = getattr(self, field)
             if value is not None:
@@ -430,6 +586,46 @@ class ConfigurableStackedGpu(Arch):
         self.fp32_cores_per_sm = config.fp32_cores_per_sm
         self.int32_cores_per_sm = config.int32_cores_per_sm
         self.sfu_cores_per_sm = config.sfu_cores_per_sm
+        profiles = {
+            key: dict(value)
+            for key, value in (config.special_math_service_profiles or {}).items()
+        }
+        # Normalize the measured SFU service rate.  Deprecated CTA-overlap
+        # fields are intentionally not copied into runtime profiles.
+        if config.log_sequence_ops_per_s is not None:
+            profiles.setdefault('log', {}).setdefault(
+                'effective_service_rate_ops_per_s', config.log_sequence_ops_per_s
+            )
+            profiles['log'].setdefault('rate_kind', 'legacy_measured_sustained_sequence')
+
+        self.special_math_service_profiles = profiles
+        # Deprecated attributes remain readable for one compatibility cycle.
+        log_profile = profiles.get('log', {})
+        self.log_sequence_ops_per_s = log_profile.get(
+            'effective_service_rate_ops_per_s'
+        )
+        self.cta_overlap_adapter_enabled = False
+        self.cta_overlap_eta_inf = 0.0
+        self.cta_overlap_startup_loss = 0.0
+        self.cta_overlap_fixed_overhead_us = 0.0
+        self.special_math_cta_overlap_profiles = {}
+        self.ordinary_fp16_unary_dirty_retention_bytes = (
+            config.ordinary_fp16_unary_dirty_retention_bytes
+        )
+        self.compute_profiles = {
+            key: dict(value) for key, value in (config.compute_profiles or {}).items()
+        }
+        self.enable_bf16_profiles = config.enable_bf16_profiles
+        self.elementwise_wave_dispatch_mode = (
+            config.elementwise_wave_dispatch_mode
+        )
+        self.elementwise_wave_fixed_head_us = (
+            float(config.elementwise_wave_fixed_head_us)
+        )
+        self.elementwise_wave_memory_service_scales = {
+            key: float(value)
+            for key, value in (config.elementwise_wave_memory_service_scales or {}).items()
+        }
         self.sm_sub_partitions = config.sm_sub_partitions
         self.l1_smem_throughput_per_cycle = (
             config.shared_memory_throughput_bytes_per_cycle
@@ -458,6 +654,11 @@ class ConfigurableStackedGpu(Arch):
         self.l1_cache_bandwidth = config.l1_cache_peak_bandwidth_bytes_per_s
         self.l1_cache_max_util = config.l1_cache_max_utilization
         self.tma_bypasses_ordinary_l1 = config.tma_bypasses_ordinary_l1
+        self.max_resident_threads_per_sm = config.max_resident_threads_per_sm
+        self.max_resident_warps_per_sm = config.max_resident_warps_per_sm
+        self.max_architectural_ctas_per_sm = (
+            config.max_architectural_ctas_per_sm
+        )
         self.chip_energy_config = config.chip_energy_config
         self.ddr_transaction_size = config.dram.transaction_bytes
         self.ddr_stack = config.dram.channels_per_connected_layer
@@ -573,6 +774,27 @@ class ConfigurableStackedGpu(Arch):
             raise ValueError(
                 f"unsupported tensor element width {bytes}; choose one of: {choices}"
             ) from exc
+
+    def resolve_compute_profile(self, key: str) -> dict[str, object]:
+        if key.startswith("bf16_") and not self.enable_bf16_profiles:
+            raise ValueError(f"BF16 compute profile {key!r} is disabled")
+        try:
+            profile = dict(self.compute_profiles[key])
+        except KeyError as exc:
+            raise ValueError(f"missing compute profile {key!r}") from exc
+        alias_of = profile.get("alias_of")
+        if alias_of is not None:
+            profile = dict(self.compute_profiles[alias_of])
+            profile["resolved_from_alias"] = key
+            profile["canonical_key"] = alias_of
+        return profile
+
+    def get_tensor_instruction_shape(self, key: str) -> tuple[int, int, int]:
+        profile = self.resolve_compute_profile(key)
+        shape = profile.get("instruction_shape")
+        if not isinstance(shape, (tuple, list)) or len(shape) != 3:
+            raise ValueError(f"compute profile {key!r} has no instruction_shape")
+        return tuple(int(value) for value in shape)
 
     def set_to_spec(self) -> "ConfigurableStackedGpu":
         return self

@@ -389,6 +389,31 @@ TL_DEVICE void DP4A(InDatatype *a, InDatatype *b, OutDatatype *c) {
 
 namespace tl {
 
+// Bridge TileLang's native four-lane FP32 vector to MUSA's public cache-policy
+// Store intrinsics without scalarizing the surrounding kernel.  These helpers
+// are measurement probes: none of the SDK declarations documents a
+// Kernel-exit physical-DDR completion guarantee.  The caller must provide a
+// 16-byte aligned address, as for every tl_f4 store.
+TL_DEVICE float4 to_float4(tl_f4 value) {
+  return make_float4(value[0], value[1], value[2], value[3]);
+}
+
+TL_DEVICE void stwb4(float *ptr, tl_f4 value) {
+  __stwb(reinterpret_cast<float4 *>(ptr), to_float4(value));
+}
+
+TL_DEVICE void stcg4(float *ptr, tl_f4 value) {
+  __stcg(reinterpret_cast<float4 *>(ptr), to_float4(value));
+}
+
+TL_DEVICE void stcs4(float *ptr, tl_f4 value) {
+  __stcs(reinterpret_cast<float4 *>(ptr), to_float4(value));
+}
+
+TL_DEVICE void stwt4(float *ptr, tl_f4 value) {
+  __stwt(reinterpret_cast<float4 *>(ptr), to_float4(value));
+}
+
 enum class DataType : int {
   kInt4 = 0,
   kUInt4 = 1,

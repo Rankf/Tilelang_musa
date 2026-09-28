@@ -1,1 +1,0 @@
-Error: input wrong option combination. Please run 'mthreads-gmi -h' for help.

@@ -1,8 +1,0 @@
-[mtgpu as info] Compiling entry function 'main_kernel' for 'mp_31' 
-[mtgpu as info] Register usage(DWord = 4 Bytes): Temp 45, Attr 4, Shared 69, Coef 0, Slot 11, Internal 2
-[mtgpu as info] Shared memory: 0 Bytes
-[mtgpu as info] Local memory: 0 Bytes
-[mtgpu as info] Stack frame: 0 Bytes
-[mtgpu as info] Spill load: 0 Bytes
-[mtgpu as info] Spill store: 0 Bytes
-

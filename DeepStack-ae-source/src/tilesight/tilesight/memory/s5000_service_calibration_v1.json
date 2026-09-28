@@ -1,0 +1,66 @@
+{
+  "schema_version": "s5000/memory-service-calibration-v1",
+  "calibration_scope": "idle isolated microbenchmarks; never target-op runtime input",
+  "source": "results/processed/p3_memory/aggregate_global_initial.json",
+  "curves": [
+    {
+      "access_class": "ordinary_cached_read_write_1to1",
+      "cache_condition": "cold",
+      "vector_elements": 8,
+      "startup_us": 2.2481571544300425,
+      "observations": [
+        {"logical_bytes": 524288, "latency_us": 2.2481571544300425, "sample_count": 3, "case_id": "copy_ws_256k"},
+        {"logical_bytes": 8388608, "latency_us": 5.321010790373149, "sample_count": 3, "case_id": "copy_ws_4m"},
+        {"logical_bytes": 33554432, "latency_us": 14.15621635996697, "sample_count": 3, "case_id": "copy_ws_16m"},
+        {"logical_bytes": 134217728, "latency_us": 102.69012934044946, "sample_count": 3, "case_id": "copy_ws_64m"},
+        {"logical_bytes": 536870912, "latency_us": 405.54399490356445, "sample_count": 3, "case_id": "copy_ws_256m"},
+        {"logical_bytes": 1073741824, "latency_us": 814.3159866333008, "sample_count": 3, "case_id": "copy_ws_512m"}
+      ],
+      "evidence_status": "three_process_parameter_eligible",
+      "limitations": [
+        "TileLang copy uses vector=8 while the ReLU holdout uses float4",
+        "the ineligible copy_ws_1m point is intentionally excluded"
+      ]
+    },
+    {
+      "access_class": "ordinary_cached_read_write_1to1",
+      "cache_condition": "warm",
+      "vector_elements": 8,
+      "startup_us": 2.118687262901893,
+      "observations": [
+        {"logical_bytes": 524288, "latency_us": 2.118687262901893, "sample_count": 3, "case_id": "copy_ws_256k"},
+        {"logical_bytes": 8388608, "latency_us": 5.417535159963528, "sample_count": 3, "case_id": "copy_ws_4m"},
+        {"logical_bytes": 33554432, "latency_us": 13.611955396363657, "sample_count": 3, "case_id": "copy_ws_16m"},
+        {"logical_bytes": 134217728, "latency_us": 101.69974459877497, "sample_count": 3, "case_id": "copy_ws_64m"},
+        {"logical_bytes": 536870912, "latency_us": 402.65002250671387, "sample_count": 3, "case_id": "copy_ws_256m"},
+        {"logical_bytes": 1073741824, "latency_us": 808.0719947814941, "sample_count": 3, "case_id": "copy_ws_512m"}
+      ],
+      "evidence_status": "three_process_parameter_eligible",
+      "limitations": ["warm means graph-replay observation in the P3 copy family"]
+    },
+    {
+      "access_class": "ordinary_cached_two_read_one_write",
+      "cache_condition": "warm",
+      "vector_elements": 8,
+      "startup_us": 0.0,
+      "observations": [
+        {"logical_bytes": 201326592, "latency_us": 145.30546014959162, "sample_count": 3, "case_id": "triad_64m"},
+        {"logical_bytes": 805306368, "latency_us": 574.2799895150321, "sample_count": 3, "case_id": "triad_256m"}
+      ],
+      "evidence_status": "three_process_parameter_eligible",
+      "limitations": ["only two workload sizes; interpolation confidence is medium"]
+    },
+    {
+      "access_class": "ordinary_cached_write_only",
+      "cache_condition": "warm",
+      "vector_elements": 8,
+      "startup_us": 0.0,
+      "observations": [
+        {"logical_bytes": 67108864, "latency_us": 25.020782633608345, "sample_count": 3, "case_id": "fill_64m"},
+        {"logical_bytes": 268435456, "latency_us": 191.31524222237724, "sample_count": 3, "case_id": "fill_256m"}
+      ],
+      "evidence_status": "three_process_parameter_eligible",
+      "limitations": ["only two workload sizes; interpolation confidence is medium"]
+    }
+  ]
+}

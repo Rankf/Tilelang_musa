@@ -1,2 +1,0 @@
-6f2fdeb7b1982bcd4bb810f96f58311182029ab1eb08665656f98ba2532a1a56  benchmarks/p3_musa_device_properties.mu
-564813c645aa212455317f71fce77f5d20441b6cbf59c0e5d3589db579a9bde1  results/derived/p3_musa_device_properties

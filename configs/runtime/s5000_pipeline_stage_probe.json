@@ -1,0 +1,25 @@
+{
+  "schema_version": "s5000/pipeline-stage-probe-plan-v1",
+  "architecture": "S5000",
+  "sdk": "5.2",
+  "threads": 256,
+  "blocks_per_mp": 4,
+  "dynamic_shared_bytes": 24576,
+  "event_samples": 10,
+  "families": [
+    {"id": "memory_bound", "math_repeats": 1},
+    {"id": "balanced_candidate", "math_repeats": 16},
+    {"id": "compute_bound", "math_repeats": 128}
+  ],
+  "development_iterations": [4, 8, 16],
+  "holdout_iterations": [6, 24],
+  "stages": [1, 2, 3],
+  "formal_timing_instrumented": false,
+  "diagnostic_instrumented": true,
+  "acceptance": {
+    "max_cv_pct": 3.0,
+    "max_relative_error_pct": 10.0,
+    "short_kernel_absolute_error_us": 2.0,
+    "max_phase_error_pct": 15.0
+  }
+}

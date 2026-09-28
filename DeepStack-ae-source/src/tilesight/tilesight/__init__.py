@@ -1,10 +1,10 @@
-# from .tab_meeting_materials.model_predictor_wrapper import model_predictor_wrapper
-# from .tab_meeting_materials.op_predictor_wrapper import op_predictor_wrapper
+"""Lightweight TileSight package entry point.
 
-from .arch import *
-from .compare_with_ncu import *
-from .fused_op_dtype import *
-from .fusion_support import *
-from .util import *
-from .welder_info_extract import *
-from .welder_modeling_top import *
+Optional NCU/plotting, Welder and fused-op helpers are intentionally not
+imported here.  The historical eager imports made core architecture imports
+require optional matplotlib/scipy packages.
+"""
+
+from .arch import *  # noqa: F401,F403
+
+__all__ = []

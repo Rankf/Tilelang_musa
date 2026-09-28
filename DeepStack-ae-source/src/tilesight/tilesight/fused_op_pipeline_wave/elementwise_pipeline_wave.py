@@ -17,11 +17,13 @@ from .resource_types import (
 )
 from .occupancy import compute_occupancy
 from .pipeline_overlap import (
+    compute_capacity_for_resource,
     compute_pipeline_tile_latency,
     compute_pipeline_tile_latency_with_occupancy,
     resources_to_times,
 )
 from .wave_model import compute_wave_adjusted_latency
+from tilesight.memory import estimate_kernel_scope_writeback
 
 log = logging.getLogger(__name__)
 
@@ -50,37 +52,85 @@ def _compute_thread_overhead(thread_per_tb):
 
 
 def _build_result(tile_res, tiles_per_sm, arch, l2_hit_rate, data_bytes=4,
-                  cache_detail=None):
+                  cache_detail=None, occupancy_detail=None,
+                  cache_condition="cold"):
     """从 TileResources 构建 PipelineResult 的通用流程。"""
+    from .wave_model import compute_wave_geometry
+    total_tiles = int(np.prod(tile_res.grids))
+    model_waves = compute_wave_geometry(total_tiles, tiles_per_sm, arch)['waves_float']
     # Pipeline latency
     sm_latency, pipeline_detail = compute_pipeline_tile_latency_with_occupancy(
-        tile_res, tiles_per_sm, arch, data_bytes=data_bytes)
+        tile_res, tiles_per_sm, arch, data_bytes=data_bytes, model_waves=model_waves)
     per_tile_latency, _ = compute_pipeline_tile_latency(
         tile_res, arch, data_bytes=data_bytes)
 
     # Wave adjustment (传入 tile_res 以便 tail wave 精确重算 active_sms 带宽)
     total_tiles = int(np.prod(tile_res.grids))
+    dispatch_mode = getattr(
+        arch, "elementwise_wave_dispatch_mode", "repeated_resident_batch"
+    )
+    memory_service_scale = 1.0
+    if dispatch_mode == "continuous_cta_dispatch":
+        profiles = getattr(arch, "elementwise_wave_memory_service_scales", {})
+        memory_service_scale = float(profiles.get(cache_condition, 1.0))
     total_latency, wave_info = compute_wave_adjusted_latency(
         sm_latency, tiles_per_sm, total_tiles, arch,
         pipeline_detail=pipeline_detail,
-        tile_res=tile_res, data_bytes=data_bytes)
+        tile_res=tile_res, data_bytes=data_bytes,
+        dispatch_mode=dispatch_mode,
+        fixed_head_time=(
+            float(getattr(arch, "elementwise_wave_fixed_head_us", 0.0)) * 1e-6
+            if dispatch_mode == "continuous_cta_dispatch" else 0.0
+        ),
+        memory_service_scale=memory_service_scale,
+    )
+    dispatch_detail = wave_info.get("continuous_pipeline_detail")
+    dispatch_components = wave_info.get("continuous_dispatch")
+
+    # 将内部已建模的计算量正式带到结果层。此前这里只返回 latency，
+    # PipelineResult.compute_util 因而一直保留默认值 0。
+    per_tile_compute = (
+        tile_res.per_iter.compute_flops * tile_res.num_iterations
+        + tile_res.prologue_epilogue.epilogue_compute_flops
+    )
+    total_compute = per_tile_compute * total_tiles
+    compute_resource = tile_res.per_iter.compute_resource
+    compute_peak = compute_capacity_for_resource(
+        arch, data_bytes, compute_resource, tile_res.per_iter.special_math_op,
+        tile_res.per_iter.compute_profile_key,
+    )
+    compute_roofline_time = (
+        total_compute / compute_peak if compute_peak > 0 else 0.0
+    )
+    compute_util = (
+        compute_roofline_time / total_latency if total_latency > 0 else 0.0
+    )
 
     return PipelineResult(
         per_tile_latency=per_tile_latency,
         total_latency=total_latency,
+        compute_util=compute_util,
+        compute_resource=compute_resource,
+        compute_operations=total_compute,
+        compute_peak_ops_per_s=compute_peak,
+        compute_profile_key=tile_res.per_iter.compute_profile_key,
+        occupancy_detail=occupancy_detail or {},
         l2_hit_rate=l2_hit_rate,
         smem_footprint=tile_res.smem_footprint,
         reg_footprint=tile_res.reg_footprint,
         tiles_per_sm=tiles_per_sm,
         waves=wave_info['waves_float'],
         pipeline_detail=pipeline_detail,
+        dispatch_pipeline_detail=dispatch_detail,
+        dispatch_components=dispatch_components,
         cache_detail=cache_detail,
     )
 
 
 def _estimate_elementwise_cache(read_working_set_bytes,
                                 logical_output_write_bytes, arch,
-                                cache_condition):
+                                cache_condition, *,
+                                dirty_retention_capacity_bytes=None):
     """Estimate cache residency for one standalone element-wise kernel.
 
     ``cache_condition`` describes input residency before the modeled kernel.
@@ -113,17 +163,18 @@ def _estimate_elementwise_cache(read_working_set_bytes,
         prediction_method = "warm_working_set_exceeds_l2_capacity"
         prediction_range_pct = None
 
-    resident_working_set = (
-        read_working_set_bytes + logical_output_write_bytes
+    writeback = estimate_kernel_scope_writeback(
+        # First-stage approximation: Elementwise integration does not yet
+        # provide per-wave input last-use information.  The generic module
+        # keeps this approximation explicit for replacement by phase two.
+        live_read_bytes=read_working_set_bytes,
+        logical_output_write_bytes=logical_output_write_bytes,
+        effective_l2_capacity_bytes=l2_capacity,
+        store_path="ordinary_cached",
+        cache_condition=cache_condition,
+        dirty_retention_capacity_bytes=dirty_retention_capacity_bytes,
+        work_mode="single_kernel",
     )
-    if resident_working_set <= l2_capacity:
-        kernel_scope_ddr_write = 0
-        deferred_writeback = logical_output_write_bytes
-        write_prediction_method = "dirty_output_resident_in_l2_during_kernel"
-    else:
-        kernel_scope_ddr_write = logical_output_write_bytes
-        deferred_writeback = 0
-        write_prediction_method = "writeback_reaches_ddr_in_kernel_scope"
 
     return {
         "cache_condition": cache_condition,
@@ -131,12 +182,18 @@ def _estimate_elementwise_cache(read_working_set_bytes,
         "l2_prediction_method": prediction_method,
         "l2_prediction_range_pct": prediction_range_pct,
         "read_working_set_bytes": read_working_set_bytes,
-        "logical_output_write_bytes": logical_output_write_bytes,
-        "resident_working_set_bytes": resident_working_set,
-        "kernel_scope_ddr_write_bytes": kernel_scope_ddr_write,
-        "deferred_writeback_bytes": deferred_writeback,
-        "ddr_write_prediction_method": write_prediction_method,
+        "logical_output_write_bytes": writeback["logical_output_write_bytes"],
+        "resident_working_set_bytes": writeback["resident_pressure_bytes"],
+        "kernel_scope_ddr_write_bytes": writeback["kernel_scope_ddr_write_bytes"],
+        "deferred_writeback_bytes": writeback["deferred_writeback_bytes"],
+        "ddr_write_prediction_method": writeback["write_prediction_method"],
+        # The primary TileSight performance model retains the upstream
+        # full-output cost convention.  Kernel-window/deferred estimates stay
+        # available as an independent diagnostic and MCU comparison scope.
+        "performance_model_ddr_write_bytes": logical_output_write_bytes,
+        "performance_model_write_scope": "full_logical_output_writeback_cost",
         "l2_capacity_bytes": l2_capacity,
+        "writeback_analysis": writeback,
     }
 
 
@@ -145,7 +202,14 @@ def _estimate_elementwise_cache(read_working_set_bytes,
 # =====================================================================
 def calculate_N_0_elementwise_pipeline_wave(op_shape, tb_shape, dim_threads,
                                             arch, mem_levels, num_ops=1, *,
-                                            cache_condition="cold"):
+                                            cache_condition="cold",
+                                            compute_resource="vector_alu",
+                                            compute_ops_per_element=None,
+                                            special_math_op=None,
+                                            compute_profile_key=None,
+                                            occupancy_hint=None,
+                                            overlap_adapter_key=None,
+                                            ddr_write_scope="full_logical"):
     """N_0 element-wise pipeline-aware model.
 
     Args:
@@ -185,8 +249,16 @@ def calculate_N_0_elementwise_pipeline_wave(op_shape, tb_shape, dim_threads,
     l2_read_io = _apply_wave_bytes_correction(l2_read_io, arch)
     l2_store_io = _apply_wave_bytes_correction(l2_store_io, arch)
 
-    ddr_write_io = _apply_wave_bytes_correction(
-        cache_detail["kernel_scope_ddr_write_bytes"], arch)
+    # Preserve TileSight's original full logical output-write cost in the
+    # primary latency model.  The partial in-kernel writeback estimate is a
+    # separate measurement-scope diagnostic and must not redefine latency.
+    if ddr_write_scope == "full_logical":
+        selected_write_io = logical_l2_store_io
+    elif ddr_write_scope == "kernel_scope":
+        selected_write_io = cache_detail["kernel_scope_ddr_write_bytes"]
+    else:
+        raise ValueError("ddr_write_scope must be full_logical or kernel_scope")
+    ddr_write_io = _apply_wave_bytes_correction(selected_write_io, arch)
     ddr_io = (l2_read_io * (1 - l2_hit_rate) + ddr_write_io) * DDR_non_ideal_para
 
     if arch.core in ("A100", "H100", "B200"):
@@ -204,7 +276,11 @@ def calculate_N_0_elementwise_pipeline_wave(op_shape, tb_shape, dim_threads,
                      + per_tile_elements * out1_level[1] * out1_level[-1])
 
     overheads = _compute_thread_overhead(thread_per_tb)
-    per_tile_compute = 2 * per_tile_elements * overheads * num_ops
+    if compute_ops_per_element is None:
+        compute_ops_per_element = 2 * num_ops
+    per_tile_compute = (
+        compute_ops_per_element * per_tile_elements * overheads
+    )
     per_tile_smem *= overheads
 
     # ---- Footprint ----
@@ -219,6 +295,9 @@ def calculate_N_0_elementwise_pipeline_wave(op_shape, tb_shape, dim_threads,
     per_iter = PerIterationResources(
         ddr_io=per_tile_ddr, l2_io=per_tile_l2,
         smem_io=per_tile_smem, compute_flops=per_tile_compute,
+        compute_resource=compute_resource,
+        special_math_op=special_math_op,
+        compute_profile_key=compute_profile_key,
     )
     pe = PrologueEpilogueResources(
         store_ddr_io=0, store_l2_io=0, store_smem_io=0,
@@ -229,14 +308,20 @@ def calculate_N_0_elementwise_pipeline_wave(op_shape, tb_shape, dim_threads,
         smem_footprint=smem_footprint, reg_footprint=reg_footprint,
         warps_per_block=max(int(thread_per_tb / 32), 1),
         grids=tuple(grids),
+        # Compatibility argument only; special math uses service profiles.
+        overlap_adapter_key=None,
     )
 
-    tiles_per_sm = compute_occupancy(
+    occupancy_detail = compute_occupancy(
         smem_footprint, reg_footprint,
-        max(int(thread_per_tb / 32), 1), arch)
+        max(int(thread_per_tb / 32), 1), arch,
+        occupancy_hint=occupancy_hint, return_detail=True)
+    tiles_per_sm = occupancy_detail["active_cta_per_sm"]
 
     return _build_result(tile_res, tiles_per_sm, arch, l2_hit_rate,
-                         data_bytes=out1_level[-1], cache_detail=cache_detail)
+                         data_bytes=out1_level[-1], cache_detail=cache_detail,
+                         occupancy_detail=occupancy_detail,
+                         cache_condition=cache_condition)
 
 
 # =====================================================================
@@ -244,7 +329,11 @@ def calculate_N_0_elementwise_pipeline_wave(op_shape, tb_shape, dim_threads,
 # =====================================================================
 def calculate_N_1_elementwise_pipeline_wave(in1_shape, in2_shape, in1_tb_shape,
                                             dim_threads, arch, mem_levels,
-                                            num_ops=1):
+                                            num_ops=1, *,
+                                            compute_resource="vector_alu",
+                                            compute_ops_per_element=None,
+                                            compute_profile_key=None,
+                                            occupancy_hint=None):
     """N_1 element-wise pipeline-aware model.
 
     Args:
@@ -308,7 +397,11 @@ def calculate_N_1_elementwise_pipeline_wave(in1_shape, in2_shape, in1_tb_shape,
                      + np.prod(in1_tb_shape) * out1_level[1] * out1_level[-1])
 
     overheads = _compute_thread_overhead(thread_per_tb)
-    per_tile_compute = 2 * np.prod(in1_tb_shape) * overheads * num_ops
+    if compute_ops_per_element is None:
+        compute_ops_per_element = 2 * num_ops
+    per_tile_compute = (
+        compute_ops_per_element * np.prod(in1_tb_shape) * overheads
+    )
     per_tile_smem *= overheads
 
     # ---- Footprint ----
@@ -323,6 +416,8 @@ def calculate_N_1_elementwise_pipeline_wave(in1_shape, in2_shape, in1_tb_shape,
     per_iter = PerIterationResources(
         ddr_io=per_tile_ddr, l2_io=per_tile_l2,
         smem_io=per_tile_smem, compute_flops=per_tile_compute,
+        compute_resource=compute_resource,
+        compute_profile_key=compute_profile_key,
     )
     pe = PrologueEpilogueResources()
     tile_res = TileResources(
@@ -333,12 +428,17 @@ def calculate_N_1_elementwise_pipeline_wave(in1_shape, in2_shape, in1_tb_shape,
         grids=tuple(grids),
     )
 
-    tiles_per_sm = compute_occupancy(
+    occupancy_detail = compute_occupancy(
         smem_footprint, reg_footprint,
-        max(int(thread_per_tb / 32), 1), arch)
+        max(int(thread_per_tb / 32), 1), arch,
+        occupancy_hint=occupancy_hint, return_detail=True)
+    tiles_per_sm = occupancy_detail["active_cta_per_sm"]
 
+    # Broadcast reuse/traffic above is derived from the two shapes.  This
+    # path has no externally supplied cache state or cache-detail object.
     return _build_result(tile_res, tiles_per_sm, arch, l2_hit_rate,
-                         data_bytes=out1_level[-1])
+                         data_bytes=out1_level[-1],
+                         occupancy_detail=occupancy_detail)
 
 
 # =====================================================================
@@ -346,7 +446,11 @@ def calculate_N_1_elementwise_pipeline_wave(in1_shape, in2_shape, in1_tb_shape,
 # =====================================================================
 def calculate_N_N_elementwise_pipeline_wave(op_shape, tb_shape, dim_threads,
                                             arch, mem_levels, num_ops=1, *,
-                                            cache_condition="cold"):
+                                            cache_condition="cold",
+                                            compute_resource="vector_alu",
+                                            compute_ops_per_element=None,
+                                            compute_profile_key=None,
+                                            occupancy_hint=None):
     """N_N element-wise pipeline-aware model.
 
     Args:
@@ -389,8 +493,9 @@ def calculate_N_N_elementwise_pipeline_wave(op_shape, tb_shape, dim_threads,
     l2_read_io = _apply_wave_bytes_correction(l2_read_io, arch)
     l2_store_io = _apply_wave_bytes_correction(l2_store_io, arch)
 
-    ddr_write_io = _apply_wave_bytes_correction(
-        cache_detail["kernel_scope_ddr_write_bytes"], arch)
+    # Preserve TileSight's original full logical output-write cost in the
+    # primary latency model.  See the N_0 path above for scope semantics.
+    ddr_write_io = _apply_wave_bytes_correction(logical_l2_store_io, arch)
     ddr_io = (l2_read_io * (1 - l2_hit_rate) + ddr_write_io) * DDR_non_ideal_para
 
     if arch.core in ("A100", "H100", "B200"):
@@ -409,7 +514,11 @@ def calculate_N_N_elementwise_pipeline_wave(op_shape, tb_shape, dim_threads,
                      + per_tile_elements * out1_level[1] * out1_level[-1])
 
     overheads = _compute_thread_overhead(thread_per_tb)
-    per_tile_compute = 2 * per_tile_elements * overheads * num_ops
+    if compute_ops_per_element is None:
+        compute_ops_per_element = 2 * num_ops
+    per_tile_compute = (
+        compute_ops_per_element * per_tile_elements * overheads
+    )
     per_tile_smem *= overheads
 
     # ---- Footprint ----
@@ -426,6 +535,8 @@ def calculate_N_N_elementwise_pipeline_wave(op_shape, tb_shape, dim_threads,
     per_iter = PerIterationResources(
         ddr_io=per_tile_ddr, l2_io=per_tile_l2,
         smem_io=per_tile_smem, compute_flops=per_tile_compute,
+        compute_resource=compute_resource,
+        compute_profile_key=compute_profile_key,
     )
     pe = PrologueEpilogueResources()
     tile_res = TileResources(
@@ -436,9 +547,13 @@ def calculate_N_N_elementwise_pipeline_wave(op_shape, tb_shape, dim_threads,
         grids=tuple(grids),
     )
 
-    tiles_per_sm = compute_occupancy(
+    occupancy_detail = compute_occupancy(
         smem_footprint, reg_footprint,
-        max(int(thread_per_tb / 32), 1), arch)
+        max(int(thread_per_tb / 32), 1), arch,
+        occupancy_hint=occupancy_hint, return_detail=True)
+    tiles_per_sm = occupancy_detail["active_cta_per_sm"]
 
     return _build_result(tile_res, tiles_per_sm, arch, l2_hit_rate,
-                         data_bytes=out1_level[-1], cache_detail=cache_detail)
+                         data_bytes=out1_level[-1], cache_detail=cache_detail,
+                         occupancy_detail=occupancy_detail,
+                         cache_condition=cache_condition)

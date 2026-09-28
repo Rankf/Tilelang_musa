@@ -33,6 +33,7 @@ logs/
 core_*.mudmp
 *.mcu-rep
 *.msys-rep
+!evidence/legacy/*.mcu-rep
 
 # ---- 本地仓库元数据/镜像（项目源码快照本身仍由顶层仓库跟踪） ----
 .git/

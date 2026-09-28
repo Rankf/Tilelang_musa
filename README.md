@@ -3,6 +3,12 @@
 基于 **DeepStack** 引擎，为 **MTT S5000** GPU 构建算子级性能分析工具。
 服务手工算子优化与 Agent 算子评估两个场景。
 
+> 当前 TileSight/S5000 公式、运行时接口、实测结果和后续工作统一入口：
+> [docs/tilesight_s5000/README.md](docs/tilesight_s5000/README.md)。历史完成率和旧交接结论应以该文档为准进行校正。
+>
+> 目录导航、第一批交付包入口和缓存清理边界见
+> [当前结构与工作状态](docs/tilesight_s5000/current/00_project_map_20260928.md)。
+
 ---
 
 ## 一、项目结构
@@ -25,7 +31,10 @@ s5000-calibration/
 │   ├── p3_musa_*.mu           # 原生 MUSA 探针
 │   ├── p3_tilelang_*.py       # 全局内存测试
 │   └── p4_musa_*.mu/.cpp      # Occupancy 探针
-├── configs/                   # 配置文件（48 个）
+├── configs/                   # 校准配置
+│   └── runtime/               # Event/MCU/MSYS runtime-only 采集配置
+├── docs/tilesight_s5000/      # 当前统一说明与 2026-09-16 交接文档
+├── evidence/legacy/           # 已版本化的历史 profiler 原始证据
 ├── musa_operator_fixes/       # MUSA 算子适配（自定义）
 │   ├── gemm/dense/            # GEMM 适配
 │   │   └── mp31_fp16_nn.py    # MusaMP31DenseGemmKernel

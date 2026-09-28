@@ -14,7 +14,17 @@ class PerIterationResources:
     l2_io: float = 0.0          # L2 流量 (bytes)
     l1_5_io: float = 0.0        # L1.5 流量 (bytes), 0 if no L1.5
     smem_io: float = 0.0        # SMEM 读写 (bytes)
-    compute_flops: float = 0.0  # 计算量 (FLOPs)
+    compute_flops: float = 0.0  # 计算量（按算子 roofline 约定的 operations）
+    # 矩阵模型默认 Tensor Core；Elementwise 应显式选择 vector_alu、
+    # sfu 或 int_alu，避免把所有操作除以同一个计算峰值。
+    compute_resource: str = "tensor_core"
+    # Semantic operation selecting an optional per-op SFU service profile.
+    # It is intentionally separate from ``compute_resource``: Log remains an
+    # SFU workload rather than appearing as a fabricated hardware resource.
+    special_math_op: Optional[str] = None
+    # Optional dtype-aware architecture profile.  None preserves the legacy
+    # byte-width based capacity lookup exactly.
+    compute_profile_key: Optional[str] = None
 
 
 @dataclass
@@ -59,6 +69,10 @@ class TileResources:
     reg_footprint: float         # 寄存器数 (per warp, 4-byte units)
     warps_per_block: int         # 每个 thread block 的 warp 数
     grids: Tuple[int, ...]       # 空间维度 (gridM, gridN) 等
+    # Optional operation key for an architecture-scoped resident-CTA adapter.
+    # It does not change the preserved upstream formula unless the architecture
+    # explicitly provides a matching profile.
+    overlap_adapter_key: Optional[str] = None
 
 
 @dataclass
@@ -83,6 +97,11 @@ class PipelineResult:
     l2_hit_rate: float = 0.0
     smem_util: float = 0.0
     compute_util: float = 0.0
+    compute_resource: str = "not_specified"
+    compute_operations: float = 0.0
+    compute_peak_ops_per_s: float = 0.0
+    compute_profile_key: Optional[str] = None
+    occupancy_detail: dict = field(default_factory=dict)
 
     # Footprint
     smem_footprint: float = 0.0
@@ -94,6 +113,11 @@ class PipelineResult:
 
     # Pipeline 各阶段时间（用于调试/可视化）
     pipeline_detail: Optional[PipelineDetail] = None
+    # Dispatch-path detail used for the public latency.  For continuous CTA
+    # this is the memory-scaled fill/steady/drain decomposition; the legacy
+    # pipeline_detail remains available as the unscaled reference.
+    dispatch_pipeline_detail: Optional[PipelineDetail] = None
+    dispatch_components: Optional[Dict] = None
 
     # 缓存模型已有的分 operand 明细；不参与延迟或利用率计算。
     cache_detail: Optional[Dict] = None

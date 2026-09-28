@@ -1,0 +1,57 @@
+{
+  "schema_version": "s5000/runtime-collection-case-v1",
+  "case": {
+    "case_id": "tileops_sqrt_fp16_4096x4096_cold_builtin",
+    "operator": "SqrtFwdOp",
+    "shape": [4096, 4096],
+    "dtype": "float16",
+    "kernel_name": "main_kernel"
+  },
+  "launch": {
+    "command": [
+      "/root/miniconda3/envs/tilefoundry_lq/bin/python",
+      "benchmarks/tileops_unary_runtime.py",
+      "sqrt",
+      "--shape", "4096", "4096",
+      "--dtype", "float16",
+      "--samples", "30",
+      "--cache-condition", "cold"
+    ],
+    "working_directory": "/root/iie/ruankefan/Tilelang_musa",
+    "environment": {
+      "MTHREADS_VISIBLE_DEVICES": "5",
+      "TORCH_DEVICE_BACKEND_AUTOLOAD": "0",
+      "PYTHONPATH": "/root/iie/ruankefan/Tilelang_musa/TileOPs/src:/root/iie/ruankefan/Tilelang_musa"
+    }
+  },
+  "tool_command_prefix": ["/usr/local/bin/musa52-run"],
+  "workload_command_prefix": ["/usr/local/bin/musa52-run"],
+  "tools": {
+    "event": {"repeats": 3},
+    "mcu": {
+      "repeats": 3,
+      "command": ["/root/iie/ruankefan/official-tools/moore-perf-compute-1.3.0/opt/moore-threads/moore-perf-compute/1.3.0/target-linux-x86_64/mcu"],
+      "device": 0,
+      "launch_skip": 1,
+      "launch_count": 1,
+      "replay_mode": "application",
+      "dump_mode": "interval",
+      "metrics": [
+        "gpu__time_duration.max",
+        "launch__waves_per_multiprocessor",
+        "ddr__read_bytes.sum",
+        "ddr__write_bytes.sum",
+        "ddr__throughput.avg.pct_of_peak_sustained_elapsed",
+        "l2pu__sector_hit_rate.pct",
+        "mp__throughput.avg.pct_of_peak_sustained_elapsed",
+        "mp__data_pipe_lsu_wavefronts_mem_shared_op_ld.max.pct_of_peak_sustained_elapsed",
+        "mp__data_pipe_lsu_wavefronts_mem_shared_op_st.max.pct_of_peak_sustained_elapsed"
+      ]
+    },
+    "msys": {
+      "repeats": 3,
+      "command": ["/root/iie/ruankefan/official-tools/moore-perf-system-1.8.0/opt/moore-threads/moore-perf-system/1.8.0/target-linux-x86_64/msys"],
+      "device": 0
+    }
+  }
+}

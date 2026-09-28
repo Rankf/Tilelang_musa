@@ -44,6 +44,18 @@ _MANIFEST_INT_SCALAR_DTYPES = (
 )
 
 
+def _is_supported_accelerator_tensor(tensor: torch.Tensor) -> bool:
+    """Return whether ``tensor`` is resident on a supported GPU backend.
+
+    TileOPs originated on CUDA, where ``Tensor.is_cuda`` is the appropriate
+    predicate.  Torch-MUSA deliberately exposes MUSA tensors separately, so
+    treating ``is_cuda`` as the generic accelerator test rejects an otherwise
+    valid MUSA input before the TileLang backend can compile it.  Keep the
+    CUDA path unchanged while accepting the optional Torch-MUSA attribute.
+    """
+    return bool(tensor.is_cuda or getattr(tensor, "is_musa", False))
+
+
 def _validate_scalar_param_repr(
     param_name: str, value, dtype: torch.dtype, op_name: str,
     *, allow_nonfinite_float: bool = False,
@@ -742,8 +754,8 @@ class UnaryOp(_PerDtypeKernels, Op):
 
     def _validate_input(self, input: torch.Tensor) -> None:
         """Validate the input against the manifest dtype union and the numel."""
-        if not input.is_cuda:
-            raise ValueError("Input must be a CUDA tensor")
+        if not _is_supported_accelerator_tensor(input):
+            raise ValueError("Input must be a CUDA tensor or MUSA tensor")
         self._validate_dtypes(input)
         if input.numel() != self.N_total:
             raise ValueError(
@@ -877,8 +889,9 @@ class BinaryOp(_PerDtypeKernels, Op):
     ) -> torch.Tensor:
         a_name = getattr(self, "_input_name", "input")
         b_name = getattr(self, "_other_name", "other")
-        if not input.is_cuda or not other.is_cuda:
-            raise ValueError("Inputs must be CUDA tensors")
+        if (not _is_supported_accelerator_tensor(input)
+                or not _is_supported_accelerator_tensor(other)):
+            raise ValueError("Inputs must be CUDA tensors or MUSA tensors")
         self._validate_dtypes(input, other)
         if other.dtype != input.dtype:
             raise ValueError(
