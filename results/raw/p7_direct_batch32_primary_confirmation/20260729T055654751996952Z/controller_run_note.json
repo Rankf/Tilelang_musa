@@ -1,7 +1,0 @@
-{
-  "controller_action": "stopped_after_primary_confirmation_evidence",
-  "reason": "Trial 1 had a profiler-exit MUSA unknown error followed by a CPU-active double-free/corruption hang. Trial 2 independently failed during event-batch synchronize after 18 completed samples. Trial 3 completed before the runner termination signal took effect.",
-  "result": "The batch-unroll=32 candidate is rejected for calibration: only 1 of 3 original-shape confirmation processes passed.",
-  "device_after_stop": "mthreads-gmi reported 0% GPU, 0 MiB and no running GPU process.",
-  "immutability": "No P5 or P6 artifact was changed."
-}

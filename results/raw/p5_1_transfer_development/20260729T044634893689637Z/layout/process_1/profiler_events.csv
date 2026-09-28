@@ -1,4 +1,0 @@
-case_id,key,count,self_device_us
-dev_stride1_8m,strided_kernel,100,2259.443
-dev_stride4_8m,strided_kernel,100,11437.57600000001
-dev_stride8_8m,strided_kernel,59,11841.176000000001

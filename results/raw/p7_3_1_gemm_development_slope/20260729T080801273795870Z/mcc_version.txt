@@ -1,5 +1,0 @@
-clang version 14.0.0 (git@sh-code.mthreads.com:sw/mtcc.git 23a614460b10fbb6ac5be3673102c6d8524d969a)
-mcc version 4.3.5
-Target: x86_64-unknown-linux-gnu
-Thread model: posix
-InstalledDir: /usr/local/musa-4.3.5/bin

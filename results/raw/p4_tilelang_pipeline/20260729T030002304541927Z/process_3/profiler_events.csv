@@ -1,5 +1,0 @@
-case_id,key,count,self_device_us
-pipeline_fp16_1024_stage1,main_kernel,50,1161.5219999999997
-pipeline_fp16_1024_stage2,main_kernel,50,986.1619999999991
-pipeline_fp16_1024_stage3,main_kernel,50,1209.041000000001
-pipeline_fp16_1024_stage4,main_kernel,50,1232.322

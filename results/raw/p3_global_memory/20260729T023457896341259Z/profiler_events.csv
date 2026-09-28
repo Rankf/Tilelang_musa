@@ -1,4 +1,0 @@
-case_id,key,count,self_device_us
-read_sum_64m,read_sum_kernel,100,9050.612000000001
-read_sum_256m,read_sum_kernel,36,11750.893999999998
-read_sum_512m,read_sum_kernel,19,12038.696000000002

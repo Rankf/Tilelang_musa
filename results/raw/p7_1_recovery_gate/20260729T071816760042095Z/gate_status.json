@@ -1,1 +1,0 @@
-{"phase":"P7.1","status":"pass","reason":"three device-level mthreads-gmi JSON queries validated; no residual P2/P7 process, open mtgpu device, or mapped MUSA runtime found"}

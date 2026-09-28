@@ -1,4 +1,0 @@
-case_id,key,count,self_device_us
-p6v3_gemm_896x1152x1024,main_kernel,50,1269.4019999999998
-p6v3_reduce_6144x512,main_kernel,50,3688.0049999999997
-p6v3_fused_exp_add_24m,fused_exp_add_kernel,50,10613.695000000005

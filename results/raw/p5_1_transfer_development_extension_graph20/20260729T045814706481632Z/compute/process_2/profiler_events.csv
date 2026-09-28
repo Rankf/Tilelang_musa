@@ -1,3 +1,0 @@
-case_id,key,count,self_device_us
-devext_g20_gemm_1536x1024x1536,main_kernel,50,1892.2829999999992
-devext_g20_reduce_8192x1024,main_kernel,50,5903.130000000005

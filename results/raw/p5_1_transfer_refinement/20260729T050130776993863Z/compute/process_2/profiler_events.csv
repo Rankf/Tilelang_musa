@@ -1,3 +1,0 @@
-case_id,key,count,self_device_us
-refine_fused_exp_add_12m,fused_exp_add_kernel,50,5318.450000000001
-refine_fused_exp_add_20m,fused_exp_add_kernel,50,8807.016999999998

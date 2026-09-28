@@ -1,8 +1,0 @@
-case_id,key,count,self_device_us
-shared_base_r0,shared_read_kernel,100,2540.764
-shared_seq_r32,shared_read_kernel,100,3899.8870000000006
-shared_seq_r128,shared_read_kernel,90,10611.661
-shared_risk_stride2_r128,shared_read_risk_kernel,95,10533.46000000001
-shared_risk_stride4_r128,shared_read_risk_kernel,95,10522.660000000007
-shared_risk_stride8_r128,shared_read_risk_kernel,99,10509.620000000006
-shared_perm_stride15_r128,shared_read_risk_kernel,95,10542.539999999999

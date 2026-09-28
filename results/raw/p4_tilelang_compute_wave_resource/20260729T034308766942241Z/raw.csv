@@ -1,4 +1,0 @@
-query_index,source_sha256,dynamic_shared_bytes,max_threads_per_block,static_shared_bytes,local_bytes_per_thread,registers_per_thread,active_cta_per_mp,status
-1,136268f9040f242d0f7d8afaf8578d627a1c1748d9e516c807332883f90084f2,0,1024,0,0,3,12,pass
-2,136268f9040f242d0f7d8afaf8578d627a1c1748d9e516c807332883f90084f2,0,1024,0,0,3,12,pass
-3,136268f9040f242d0f7d8afaf8578d627a1c1748d9e516c807332883f90084f2,0,1024,0,0,3,12,pass

@@ -1,1 +1,0 @@
-mcc -O2 /root/s5000-calibration/benchmarks/p3_musa_pointer_chase.mu -L/usr/local/musa-4.3.5/lib -lmusart -o /root/s5000-calibration/results/derived/p3_pointer_chase/p3_pointer_chase_20260729T023150716396955Z 

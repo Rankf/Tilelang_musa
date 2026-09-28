@@ -1,6 +1,0 @@
-.....Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
-....
-----------------------------------------------------------------------
-Ran 9 tests in 7.227s
-
-OK

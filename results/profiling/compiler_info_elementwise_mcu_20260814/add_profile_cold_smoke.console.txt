@@ -1,2 +1,0 @@
-Loading tilelang libs from dev root: /root/s5000-calibration/tilelang-musa/build
-{"cache_condition": "cold_explicit_l2_eviction", "correctness": "pass", "dtype": "float32", "elements_per_block": 2048, "elements_per_thread": 8, "grid_size": 8, "kernel_source_sha256": "9dc987000271bbd0f41f410f7698ef4e06438ed5863229fcf73f23c6c26d2155", "l2_eviction_bytes": 268435456, "mcu_expected_skip": 0, "mode": "profile-cold", "op": "add", "schema_version": "s5000/elementwise-runtime-runner-v1", "shape": [16384], "target_launches": 100, "threads": 256}

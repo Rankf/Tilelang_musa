@@ -1,2 +1,0 @@
-MUSA_HOME=/usr/local/musa-4.3.5
-MUSA_LAUNCH_BLOCKING=1

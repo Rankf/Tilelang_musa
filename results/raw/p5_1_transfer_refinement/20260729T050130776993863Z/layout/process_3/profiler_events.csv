@@ -1,5 +1,0 @@
-case_id,key,count,self_device_us
-refine_stride2_8m,strided_kernel,100,6804.613000000006
-refine_stride3_8m,strided_kernel,100,9304.976999999997
-refine_stride5_8m,strided_kernel,83,11457.181999999995
-refine_stride7_8m,strided_kernel,66,11794.302000000003

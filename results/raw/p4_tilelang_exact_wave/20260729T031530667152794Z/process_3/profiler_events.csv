@@ -1,7 +1,0 @@
-case_id,key,count,self_device_us
-tl_exact_wave_479,fixed_grid_copy_kernel,100,9738.179
-tl_exact_wave_480,fixed_grid_copy_kernel,100,9695.818
-tl_exact_wave_481,fixed_grid_copy_kernel,100,9757.257
-tl_exact_wave_959,fixed_grid_copy_kernel,59,11725.021
-tl_exact_wave_960,fixed_grid_copy_kernel,59,11913.822
-tl_exact_wave_961,fixed_grid_copy_kernel,58,11577.981000000005
