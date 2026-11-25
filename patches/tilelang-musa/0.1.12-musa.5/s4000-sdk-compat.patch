@@ -1,0 +1,266 @@
+From f47c2546310df1fa2048a219c840cc0a88bdde7c Mon Sep 17 00:00:00 2001
+From: Rankf <85118207+Rankf@users.noreply.github.com>
+Date: Tue, 24 Nov 2026 15:13:45 +0800
+Subject: [PATCH] Probe MUSA SDK template features and honor MUSA stream
+ handles
+
+---
+ maint/scripts/probe_musa_headers.py    | 46 ++++++++++++++++++++++++++
+ src/tl_templates/musa/common.h         |  4 +++
+ src/tl_templates/musa/cvt.h            |  3 ++
+ src/tl_templates/musa/fop.h            | 24 ++++++++++++++
+ src/tl_templates/musa/musa_fp8.h       |  6 ++++
+ src/tl_templates/musa/reduce.h         |  6 ++--
+ tilelang/jit/adapter/base.py           |  4 +--
+ tilelang/jit/adapter/cython/adapter.py |  4 +++
+ 8 files changed, 93 insertions(+), 4 deletions(-)
+ create mode 100644 maint/scripts/probe_musa_headers.py
+
+diff --git a/maint/scripts/probe_musa_headers.py b/maint/scripts/probe_musa_headers.py
+new file mode 100644
+index 0000000..05bfc8a
+--- /dev/null
++++ b/maint/scripts/probe_musa_headers.py
+@@ -0,0 +1,46 @@
++"""Probe the target SDK and generate the optional MUSA template configuration."""
++import argparse
++import os
++from pathlib import Path
++import subprocess
++import tempfile
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument('--mcc', default='mcc')
++    parser.add_argument('--arch', required=True)
++    parser.add_argument('--output', required=True, type=Path)
++    args = parser.parse_args()
++    header = '#include <musa_fp8.h>\n#include <musa_fp16.h>\n'
++    options = []
++    with tempfile.TemporaryDirectory() as temp:
++        src = Path(temp) / 'probe.mu'
++        def compile_test(body):
++            src.write_text(header + '__global__ void probe() { ' + body + ' }\n')
++            return subprocess.run([args.mcc, '--cuda-device-only', '--cuda-gpu-arch=' + args.arch,
++                '-std=c++17', '-c', str(src), '-o', str(src.with_suffix('.o'))],
++                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
++        control = compile_test('')
++        if control.returncode:
++            raise SystemExit(control.stdout)
++        probes = [
++            ('__mt_fp8_e8m0 value;', 'TILELANG_MUSA_DISABLE_E8M0', '__mt_fp8_e8m0'),
++            ('__half a = __ushort_as_half(0); (void)__hmax_nan(a,a); (void)__hmin_nan(a,a);',
++             'TILELANG_MUSA_PORTABLE_HALF_NAN', '_nan'),
++        ]
++        for body, macro, diagnostic in probes:
++            result = compile_test(body)
++            if result.returncode:
++                if diagnostic not in result.stdout:
++                    raise SystemExit(result.stdout)
++                options.append(macro)
++    config = '#pragma once\n' + ''.join(f'#define {option} 1\n' for option in options)
++    with tempfile.NamedTemporaryFile(mode='w', dir=args.output.parent, delete=False) as f:
++        f.write(config)
++    os.replace(f.name, args.output)
++    print(config, end='')
++
++
++if __name__ == '__main__':
++    main()
+diff --git a/src/tl_templates/musa/common.h b/src/tl_templates/musa/common.h
+index 1f2fa42..96c5cd0 100644
+--- a/src/tl_templates/musa/common.h
++++ b/src/tl_templates/musa/common.h
+@@ -1,5 +1,9 @@
+ #pragma once
+ 
++#if __has_include("sdk_compat_config.h")
++#include "sdk_compat_config.h"
++#endif
++
+ #include "atomic.h"
+ #include <cstdio> // snprintf
+ #include <musa_bf16.h>
+diff --git a/src/tl_templates/musa/cvt.h b/src/tl_templates/musa/cvt.h
+index 9fe6a36..f5be599 100644
+--- a/src/tl_templates/musa/cvt.h
++++ b/src/tl_templates/musa/cvt.h
+@@ -317,6 +317,7 @@ TL_DEVICE fp8_e5_4_t cvt_float_to_fp8e5m2_x4(float4 in) {
+   return out;
+ }
+ 
++#if !defined(TILELANG_MUSA_DISABLE_E8M0)
+ TL_DEVICE fp8_e8_2_t cvt_float_to_fp8e8m0_x2(float2 in) {
+   return make_fp8_e8_2_t(fp8_e8_t(in.x), fp8_e8_t(in.y));
+ }
+@@ -352,6 +353,8 @@ TL_DEVICE bfloat164_t cvt_fp8e8m0_to_bfloat16_x4(fp8_e8_4_t in) {
+   return cvt_float_to_bfloat16_x4(value);
+ }
+ 
++#endif
++
+ } // namespace tl
+ 
+ #undef TL_USE_MUSA_DIRECT_CVT_BUILTINS
+\ No newline at end of file
+diff --git a/src/tl_templates/musa/fop.h b/src/tl_templates/musa/fop.h
+index bce7db7..dda757d 100644
+--- a/src/tl_templates/musa/fop.h
++++ b/src/tl_templates/musa/fop.h
+@@ -32,11 +32,35 @@ TL_DEVICE half_t scalar_min(half_t a, half_t b) {
+ }
+ 
+ TL_DEVICE half_t scalar_max_nan(half_t a, half_t b) {
++#if defined(TILELANG_MUSA_PORTABLE_HALF_NAN)
++  if (__hisnan(a.to_half()) || __hisnan(b.to_half())) {
++    return half_t(__ushort_as_half(0x7e00));
++  }
++  const unsigned short lhs = __half_as_ushort(a.to_half());
++  const unsigned short rhs = __half_as_ushort(b.to_half());
++  if (((lhs | rhs) & 0x7fff) == 0) {
++    return half_t(__ushort_as_half(lhs & rhs));
++  }
++  return scalar_max(a, b);
++#else
+   return half_t(__hmax_nan(a.to_half(), b.to_half()));
++#endif
+ }
+ 
+ TL_DEVICE half_t scalar_min_nan(half_t a, half_t b) {
++#if defined(TILELANG_MUSA_PORTABLE_HALF_NAN)
++  if (__hisnan(a.to_half()) || __hisnan(b.to_half())) {
++    return half_t(__ushort_as_half(0x7e00));
++  }
++  const unsigned short lhs = __half_as_ushort(a.to_half());
++  const unsigned short rhs = __half_as_ushort(b.to_half());
++  if (((lhs | rhs) & 0x7fff) == 0) {
++    return half_t(__ushort_as_half(lhs | rhs));
++  }
++  return scalar_min(a, b);
++#else
+   return half_t(__hmin_nan(a.to_half(), b.to_half()));
++#endif
+ }
+ 
+ TL_DEVICE bfloat16_t scalar_max(bfloat16_t a, bfloat16_t b) {
+diff --git a/src/tl_templates/musa/musa_fp8.h b/src/tl_templates/musa/musa_fp8.h
+index e980850..b7d8485 100644
+--- a/src/tl_templates/musa/musa_fp8.h
++++ b/src/tl_templates/musa/musa_fp8.h
+@@ -6,7 +6,9 @@
+ 
+ using fp8_e4_t = tl::float_e4m3_t;
+ using fp8_e5_t = tl::float_e5m2_t;
++#if !defined(TILELANG_MUSA_DISABLE_E8M0)
+ using fp8_e8_t = __mt_fp8_e8m0;
++#endif
+ 
+ struct __MUSA_ALIGN__(2) fp8_e4_2_t {
+   fp8_e4_t x;
+@@ -78,6 +80,7 @@ struct __MUSA_ALIGN__(32) fp8_e5_32_t {
+   }
+ };
+ 
++#if !defined(TILELANG_MUSA_DISABLE_E8M0)
+ struct __MUSA_ALIGN__(2) fp8_e8_2_t {
+   fp8_e8_t x;
+   fp8_e8_t y;
+@@ -112,6 +115,7 @@ struct __MUSA_ALIGN__(32) fp8_e8_32_t {
+     return *this;
+   }
+ };
++#endif
+ 
+ // Pack two fp8_e4_t values.
+ __forceinline__ __device__ fp8_e4_2_t make_fp8_e4_2_t(fp8_e4_t x, fp8_e4_t y) {
+@@ -235,6 +239,7 @@ __forceinline__ __device__ fp8_e5_32_t make_fp8_e5_32_t(
+   return result;
+ }
+ 
++#if !defined(TILELANG_MUSA_DISABLE_E8M0)
+ // Pack two fp8_e8_t values.
+ TL_DEVICE fp8_e8_2_t make_fp8_e8_2_t(fp8_e8_t x, fp8_e8_t y) {
+   fp8_e8_2_t result;
+@@ -293,3 +298,4 @@ TL_DEVICE fp8_e8_32_t make_fp8_e8_32_t(
+                               y12, y13, y14, y15);
+   return result;
+ }
++#endif
+diff --git a/src/tl_templates/musa/reduce.h b/src/tl_templates/musa/reduce.h
+index 68444e4..3776192 100644
+--- a/src/tl_templates/musa/reduce.h
++++ b/src/tl_templates/musa/reduce.h
+@@ -1,5 +1,7 @@
+ #pragma once
+ 
++#include "fop.h"
++
+ #include "common.h"
+ #include <type_traits>
+ 
+@@ -50,7 +52,7 @@ struct MaxOpNan {
+   }
+ 
+   TL_DEVICE half_t operator()(half_t const &x, half_t const &y) {
+-    return half_t(__hmax_nan(x.to_half(), y.to_half()));
++    return scalar_max_nan(x, y);
+   }
+ };
+ 
+@@ -79,7 +81,7 @@ struct MinOpNan {
+   }
+ 
+   TL_DEVICE half_t operator()(half_t const &x, half_t const &y) {
+-    return half_t(__hmin_nan(x.to_half(), y.to_half()));
++    return scalar_min_nan(x, y);
+   }
+ };
+ 
+diff --git a/tilelang/jit/adapter/base.py b/tilelang/jit/adapter/base.py
+index 12443f3..77d568a 100644
+--- a/tilelang/jit/adapter/base.py
++++ b/tilelang/jit/adapter/base.py
+@@ -66,7 +66,7 @@ class BaseKernelAdapter(ABC):
+         time) so that any upstream stream guards are respected. If CUDA is
+         unavailable, it returns a lambda that yields 0.
+         """
+-        if torch.cuda.is_available():
++        if torch.cuda is not getattr(torch, "musa", None) and torch.cuda.is_available():
+             try:
+                 torch.cuda._lazy_init()
+                 current_device = torch._C._cuda_getDevice
+@@ -92,7 +92,7 @@ class BaseKernelAdapter(ABC):
+         fetches the current device according to PyTorch. On CPU or when CUDA is
+         unavailable, returns ``torch.device('cpu')``.
+         """
+-        if torch.cuda.is_available():
++        if torch.cuda is not getattr(torch, "musa", None) and torch.cuda.is_available():
+             try:
+                 torch.cuda._lazy_init()
+                 current_device = torch._C._cuda_getDevice
+diff --git a/tilelang/jit/adapter/cython/adapter.py b/tilelang/jit/adapter/cython/adapter.py
+index 9a391c5..48f1e5e 100644
+--- a/tilelang/jit/adapter/cython/adapter.py
++++ b/tilelang/jit/adapter/cython/adapter.py
+@@ -349,6 +349,8 @@ class CythonKernelAdapter(BaseKernelAdapter):
+     def _convert_torch_func(self) -> Callable:
+         """Returns a PyTorch-compatible function wrapper for the kernel."""
+ 
++        musa_target = is_musa_target(self.target)
++
+         def lambda_forward(*args, stream: int = -1, skip_tensor_validation: bool = False):
+             """
+             Args:
+@@ -357,6 +359,8 @@ class CythonKernelAdapter(BaseKernelAdapter):
+                 skip_tensor_validation: Whether to skip tensor attributes validation which
+                 includes shape, dtype, device, etc.
+             """
++            if musa_target and stream == -1:
++                stream = int(torch.musa.current_stream().musa_stream)
+             return self.cython_wrapper.forward([*args], stream=stream, skip_tensor_validation=skip_tensor_validation)
+ 
+         return lambda_forward
+-- 
+2.34.1
+

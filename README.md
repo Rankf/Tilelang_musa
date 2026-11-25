@@ -175,3 +175,7 @@ PYTHONPATH=... python3 analyze_op.py add --N 16777216 -o report.json
 **默认忽略**：results/, logs/, .venv-tilelang-musa/, __pycache__/, build/, core_*.mudmp。在更换或重置 S5000 服务器前，已审核且无法从源码重建的校准证据可作为快照显式提交。
 
 **上游源码快照**：DeepStack-ae/、DeepStack-ae-source/、TileOPs/ 和 tilelang-musa/ 由顶层仓库跟踪，以确保租赁服务器重置后可完整恢复。子目录中的 `.git` 元数据和本地镜像 DeepStack-git/ 不提交。
+
+### S4000 的 TileLang-MUSA SDK 兼容补丁
+
+[0.1.12+musa.5 的修改说明、应用步骤和真机验证](patches/tilelang-musa/0.1.12-musa.5/README.md)
