@@ -179,3 +179,7 @@ PYTHONPATH=... python3 analyze_op.py add --N 16777216 -o report.json
 ### S4000 的 TileLang-MUSA SDK 兼容补丁
 
 [0.1.12+musa.5 的修改说明、应用步骤和真机验证](patches/tilelang-musa/0.1.12-musa.5/README.md)
+
+### S4000 的 TileOPs 算子分析
+
+TileSight 的初步分析适配覆盖 TileOPs `2aa61fb` 的 17 个算子族、212 个已实现算子和 2,407 个 workload × dtype 组合。结果是未校准的 S4000 模型估算。实现和逐用例数据维护在 [Rankf/tilesight-s5000](https://github.com/Rankf/tilesight-s5000/tree/eadd52bd27de5b378c7f86fddcc94a0b286c6b77/tileops_program)，可查看[逐算子清单](https://github.com/Rankf/tilesight-s5000/blob/eadd52bd27de5b378c7f86fddcc94a0b286c6b77/tileops_program/results/s4000/inventory.md)和[全量验证报告](https://github.com/Rankf/tilesight-s5000/blob/eadd52bd27de5b378c7f86fddcc94a0b286c6b77/tileops_program/results/s4000/matrix-summary.md)。
